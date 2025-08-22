@@ -1,0 +1,75 @@
+2025-08-21 16:57:36,627 | ERROR | HTTP exception: 404 - Not Found
+2025-08-21 16:59:18,111 | INFO | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-21 16:59:18,111 | INFO | Response status: 200
+2025-08-21 16:59:18,111 | WARNING | 응답 본문을 읽을 수 없습니다
+2025-08-21 16:59:18,749 | INFO | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-21 16:59:18,749 | INFO | Response status: 200
+2025-08-21 16:59:18,749 | WARNING | 응답 본문을 읽을 수 없습니다
+2025-08-21 16:59:19,615 | INFO | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-21 16:59:19,616 | INFO | Response status: 200
+2025-08-21 16:59:19,616 | WARNING | 응답 본문을 읽을 수 없습니다
+2025-08-21 16:59:20,134 | INFO | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-21 16:59:20,134 | INFO | Response status: 200
+2025-08-21 16:59:20,134 | WARNING | 응답 본문을 읽을 수 없습니다
+2025-08-21 17:00:21,810 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-21 17:00:21,810 | INFO     | app.main | ✅ 예외 핸들러 설정 완료
+2025-08-21 17:00:21,820 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-21 17:00:21,820 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-21 17:00:21,821 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-21 17:00:21,821 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-21 17:00:21,821 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 08:23:53,869 | ERROR    | app.main | 🔴 HTTP Exception | Path: /healthy | Status: 404 | Detail: Not Found
+2025-08-22 09:23:16,885 | INFO     | app.middleware.response | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-22 09:23:16,886 | INFO     | app.middleware.response | Response status: 200
+2025-08-22 09:23:16,886 | WARNING  | app.middleware.response | 응답 본문을 읽을 수 없습니다
+2025-08-22 09:48:47,719 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-22 09:48:47,719 | INFO     | app.main | ✅ 예외 핸들러 설정 완료
+2025-08-22 09:48:47,729 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-22 09:48:47,729 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-22 09:48:47,730 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-22 09:48:47,730 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-22 09:48:47,730 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 09:48:56,169 | ERROR    | app.main | 🔴 HTTP Exception | Path: /models | Status: 404 | Detail: Not Found
+2025-08-22 09:48:56,920 | ERROR    | app.main | 🔴 HTTP Exception | Path: /models | Status: 404 | Detail: Not Found
+2025-08-22 09:49:06,571 | ERROR    | app.main | 🔴 HTTP Exception | Path: /models | Status: 404 | Detail: Not Found
+2025-08-22 09:49:25,354 | INFO     | app.middleware.response | Response type: <class 'starlette.middleware.base._StreamingResponse'>
+2025-08-22 09:49:25,354 | INFO     | app.middleware.response | Response status: 200
+2025-08-22 09:49:25,355 | WARNING  | app.middleware.response | 응답 본문을 읽을 수 없습니다
+2025-08-22 09:49:32,354 | ERROR    | app.main | 🔴 HTTP Exception | Path: /healty | Status: 404 | Detail: Not Found
+2025-08-22 09:49:33,136 | ERROR    | app.main | 🔴 HTTP Exception | Path: /healty | Status: 404 | Detail: Not Found
+2025-08-22 09:49:48,217 | ERROR    | app.main | 🔴 HTTP Exception | Path: /healty | Status: 404 | Detail: Not Found
+2025-08-22 09:50:23,964 | ERROR    | app.main | 🔴 HTTP Exception | Path: /heaity | Status: 404 | Detail: Not Found
+2025-08-22 09:51:55,607 | INFO     | app.main | 🛑 FastAPI 애플리케이션 종료
+2025-08-22 09:52:00,248 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-22 09:52:00,248 | INFO     | app.main | ✅ 예외 핸들러 설정 완료
+2025-08-22 09:52:00,257 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-22 09:52:00,257 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-22 09:52:00,258 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-22 09:52:00,258 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-22 09:52:00,258 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 09:53:44,035 | INFO     | app.main | 🛑 FastAPI 애플리케이션 종료
+2025-08-22 09:53:47,506 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-22 09:53:47,506 | INFO     | app.main | ✅ 예외 핸들러 설정 완료
+2025-08-22 09:53:47,516 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-22 09:53:47,516 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-22 09:53:47,517 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-22 09:53:47,517 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-22 09:53:47,517 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 09:53:58,636 | INFO     | app.main | 🛑 FastAPI 애플리케이션 종료
+2025-08-22 09:54:02,448 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-22 09:54:02,448 | INFO     | app.main | ✅ 예외 핸들러 설정 완료
+2025-08-22 09:54:02,457 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-22 09:54:02,457 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-22 09:54:02,458 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-22 09:54:02,458 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-22 09:54:02,458 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 09:54:23,390 | INFO     | app.main | 🛑 FastAPI 애플리케이션 종료
+2025-08-22 09:54:26,933 | INFO     | app.main | ✅ 미들웨어 설정 완료
+2025-08-22 09:54:26,933 | INFO     | app.handlers.exception_handlers | ✅ 예외 핸들러 설정 완료
+2025-08-22 09:54:26,944 | INFO     | app.main | ✅ 라우터 설정 완료 - Prefix: /api/v1
+2025-08-22 09:54:26,944 | INFO     | app.main | 🎉 FastAPI 애플리케이션 설정 완료
+2025-08-22 09:54:26,944 | INFO     | app.main | 🚀 FastAPI 애플리케이션 시작
+2025-08-22 09:54:26,944 | INFO     | app.main | 📋 설정: FastAPI Common Response v1.0.0
+2025-08-22 09:54:26,945 | INFO     | app.main | 🌐 CORS Origins: ['http://localhost:3000', 'http://localhost:5173']
+2025-08-22 09:55:53,034 | ERROR    | app.handlers.exception_handlers | 🔴 HTTP Exception | Path: /models | Status: 404 | Detail: Not Found
+2025-08-22 14:39:54,186 | ERROR    | app.handlers.exception_handlers | 🔴 HTTP Exception | Path: /favicon.ico | Status: 404 | Detail: Not Found

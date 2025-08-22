@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "study"
+version = "0.1.0"
+description = "FastAPI-based LLM service with Kafka message processing"
+authors = ["albin <ybkim@aipim.io>"]
+readme = "README.md"
+package-mode = false
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "0.104.1"
+uvicorn = {extras = ["standard"], version = "0.24.0"}
+# torch = "^2.1.0"  # pip로 별도 설치
+transformers = "^4.40.0"
+huggingface-hub = "^0.23.0"
+pydantic = "2.5.0"
+pydantic-settings = "2.1.0"
+aiokafka = "^0.10.0"
+numpy = "<2.0.0"
+gunicorn = "^21.2.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-asyncio = "^0.21.0"
+black = "^23.0.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.0"
+pre-commit = "^3.0.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = [
+    "--strict-markers",
+    "--verbose",
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
