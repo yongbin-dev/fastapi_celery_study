@@ -32,6 +32,7 @@ cp .env.example .env
 ```
 
 `.env` 파일 내용 예시:
+
 ```
 VITE_API_URL=http://localhost:8000
 ```
@@ -54,7 +55,7 @@ yarn dev
 
 이제 `http://localhost:5173` (또는 터미널에 표시된 다른 포트)에서 애플리케이션을 확인할 수 있습니다.
 
-##  NPM 스크립트
+## NPM 스크립트
 
 - `yarn dev`: 개발 서버를 시작합니다.
 - `yarn build`: 프로덕션용으로 앱을 빌드합니다.
@@ -79,3 +80,5 @@ src/
 ├── layouts/            # 페이지 레이아웃 컴포넌트
 └── App.tsx             # 애플리케이션 최상위 루트 컴포넌트
 ```
+
+git config user.name "ybkim" && git config user.email "dydqls5757@gmail.com"
