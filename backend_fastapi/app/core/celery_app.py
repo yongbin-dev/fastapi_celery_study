@@ -18,7 +18,7 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
-    timezone="UTC",
+    timezone="Asia/Seoul",
     enable_utc=True,
     
     # 결과 백엔드 설정
