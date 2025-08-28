@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "Bash(redis-cli:*)",
+      "Bash(mkdir:*)",
+      "Bash(pytest:*)",
+      "Bash(PYTHONPATH=. pytest -v)",
+      "Bash(pip install:*)",
+      "Bash(poetry add:*)",
+      "Bash(poetry show:*)",
+      "Bash(alembic current:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(sqlacodegen:*)",
+      "Bash(alembic revision:*)",
+      "Bash(alembic downgrade:*)",
+      "Bash(psql:*)",
+      "Bash(alembic stamp:*)",
+      "Bash(grep:*)",
+      "Bash(docker exec:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
