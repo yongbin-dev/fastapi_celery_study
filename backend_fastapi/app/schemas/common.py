@@ -13,6 +13,6 @@ class ApiResponse(BaseModel, Generic[T]):
     status : str
     timestamp:str
     meta: Optional[PaginationMeta] = None
-    data: Optional[T] = None
+    data: Any
     error_code: Optional[str] = None
     details: Optional[dict[str, Any]] = None

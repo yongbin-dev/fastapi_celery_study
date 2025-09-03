@@ -1,0 +1,36 @@
+services:
+  redis:
+    container_name: redis-server
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - shared-app-network
+
+  postgres:
+    container_name: postgres-server
+    image: postgres:15-alpine
+    environment:
+      PGTZ: Asia/Seoul
+      POSTGRES_DB: study_db
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: "1"
+      POSTGRES_HOST_AUTH_METHOD: trust
+    restart: always
+    ports:
+      - "15432:5432"
+    volumes:
+      - /Users/aipim/yb/python/fastapi_celery_study/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa -d study_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shared-app-network
+
+networks:
+  shared-app-network:
+    external: true

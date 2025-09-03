@@ -320,8 +320,8 @@ def ai_pipeline_orchestrator(self, input_data: Dict[str, Any]) -> str:
     
     # 체인 실행
     result = pipeline.apply_async()
-    
-    return result.id  # 최종 작업 ID 반환
+
+    return result  # 최종 작업 ID 반환
 
 
 @celery_app.task(bind=True, name="app.tasks.long_running_task")

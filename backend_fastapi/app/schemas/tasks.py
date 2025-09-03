@@ -46,17 +46,6 @@ class TaskStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
-class TaskInfo(BaseModel):
-    """태스크 정보 모델"""
-    task_id: str
-    status: str
-    task_name: str
-    date_done: str
-    result: Optional[dict] = None
-    traceback: Optional[str] = None
-    task_time: str
-
-
 class TaskStatistics(BaseModel):
     """태스크 통계 모델"""
     total_found: int
@@ -76,11 +65,31 @@ class TaskFilters(BaseModel):
     limit: int
 
 
+class TaskInfoResponse(BaseModel):
+    # id : int
+
+    task_id: str
+    status: str
+    task_name: str
+    args: str
+    kwargs: str
+    result: str
+    error_message: str
+    traceback: str
+    retry_count: int
+    task_time: str
+    completed_time: str
+
+    # status : str
+    # task_name : str
+    # date_done : str
+    # result : str
+    # traceback : str
+    # task_time : str
+
 class TaskHistoryResponse(BaseModel):
     """태스크 히스토리 응답 모델"""
-    tasks: list[TaskInfo]
-    statistics: TaskStatistics
-    filters_applied: TaskFilters
+    tasks: list[TaskInfoResponse]
 
 
 # AI 파이프라인 관련 스키마

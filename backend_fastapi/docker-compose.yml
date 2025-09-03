@@ -1,74 +1,27 @@
 services:
-  app:
-    build: .
-    ports:
-      - "5050:5050"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=5050
-      - WORKERS=4
-      - DATABASE_URL=postgresql+asyncpg://sa:1@localhost:15432/postgres
-      - REDIS_URL=redis://redis:6379/0
-      - TZ=Asia/Seoul
-    networks:
-      - app-network
 
   worker:
     build: .
-    depends_on:
-      - redis
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis-server:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis-server:6379/0
       - TZ=Asia/Seoul
-    command: python -m celery -A app.core.celery_app worker --loglevel=info
+    command: python -m celery -A app.core.celery_app worker --loglevel=info --pool=solo
     networks:
-      - app-network
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    environment:
-      - TZ=Asia/Seoul
-    networks:
-      - app-network
+      - shared-app-network
 
   flower:
     build: .
-    depends_on:
-      - redis
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis-server:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis-server:6379/0
       - TZ=Asia/Seoul
     command: python -m celery -A app.core.celery_app flower --port=5555
     ports:
       - "5555:5555"
     networks:
-      - app-network
-
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      PGTZ: Asia/Seoul
-      POSTGRES_DB: study_db
-      POSTGRES_USER: sa
-      POSTGRES_PASSWORD: "1"
-      POSTGRES_HOST_AUTH_METHOD: trust
-    restart: always
-    ports:
-      - "15432:5432"
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sa -d study_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
+      - shared-app-network
 
 networks:
-  app-network:
-    driver: bridge
+  shared-app-network:
+    external: true

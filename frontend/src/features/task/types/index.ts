@@ -69,25 +69,6 @@ export interface ActiveTask {
 // 태스크 히스토리 응답 타입들
 export interface TaskHistoryResponse {
   tasks: HistoryTask[];
-  statistics: {
-    total_found: number;
-    returned_count: number;
-    time_range: string;
-    by_status: Record<string, number>;
-    by_task_type: Record<string, number>;
-    current_active: {
-      active_tasks: number;
-      scheduled_tasks: number;
-      reserved_tasks: number;
-    };
-    workers: string[];
-  };
-  filters_applied: {
-    hours: number;
-    status: string | null;
-    task_name: string | null;
-    limit: number;
-  };
 }
 
 export interface HistoryTask {

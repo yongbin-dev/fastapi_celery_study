@@ -1,20 +1,17 @@
 # app/api/v1/endpoints/tasks_router.py
-
+import logging
 from typing import Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.params import Query
-
+from sqlalchemy.ext.asyncio import AsyncSession
 from ....schemas.tasks import (
     TaskRequest, LongTaskRequest, TaskHistoryResponse,
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse
 )
+from ....dependencies import get_database
 from ....schemas.common import ApiResponse
 from ....services.task_service import TaskService, get_task_service
-from ....dependencies import (
-    validate_task_id,
-    validate_history_params
-)
 from ....utils.response_builder import ResponseBuilder
 
 router = APIRouter()
@@ -128,15 +125,16 @@ async def get_tasks_history(
         hours: Optional[int] = Query(1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168),
         status: Optional[str] = Query(None, description="필터링할 상태"),
         task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
-        limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000)
+        limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000),
+        db: AsyncSession = Depends(get_database)
 ) -> ApiResponse[TaskHistoryResponse]:
     """기간 내 전체 태스크 히스토리 조회"""
     try:
-        result = service.get_tasks_history(hours, status, task_name, limit)
+        result = await service.get_tasks_history(db ,hours, status, task_name, limit )
 
         return ResponseBuilder.success(
             data=result,
-            message=f"지난 {hours}시간 내 태스크 히스토리 조회 완료 (총 {result.statistics.total_found}개 중 {result.statistics.returned_count}개 반환)"
+            message=f"지난 {hours}시간 내 태스크 히스토리 조회 완료 "
         )
 
     except Exception as e:
@@ -168,7 +166,7 @@ async def create_ai_pipeline(
 async def get_pipeline_status(
         pipeline_id: str,
         service: TaskService = Depends(get_task_service)
-) -> ApiResponse[PipelineStatusResponse]:
+) -> ApiResponse[Any]:
     """AI 파이프라인 진행 상태 조회"""
     try:
         # 파이프라인 ID 검증
@@ -179,10 +177,9 @@ async def get_pipeline_status(
             )
         
         result = service.get_pipeline_status(pipeline_id)
-        
         return ResponseBuilder.success(
             data=result,
-            message=f"파이프라인 상태 조회 완료 (진행률: {result.overall_progress}%)"
+            message=f""
         )
     except HTTPException:
         raise

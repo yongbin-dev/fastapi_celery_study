@@ -28,7 +28,6 @@ export const TaskHistoryTab: React.FC = () => {
   }
 
   const tasks = data.tasks || [];
-  const statistics = data.statistics;
 
   const getStatusBadge = (status: string) => {
     const statusColors = {
@@ -228,27 +227,6 @@ export const TaskHistoryTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 통계 섹션 */}
-      {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-2xl font-bold text-blue-600">{statistics.total_found}</div>
-            <div className="text-sm text-gray-500">총 태스크</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-2xl font-bold text-green-600">{statistics.by_status?.SUCCESS || 0}</div>
-            <div className="text-sm text-gray-500">성공</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-2xl font-bold text-red-600">{statistics.by_status?.FAILURE || 0}</div>
-            <div className="text-sm text-gray-500">실패</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-2xl font-bold text-yellow-600">{statistics.current_active?.active_tasks || 0}</div>
-            <div className="text-sm text-gray-500">실행 중</div>
-          </div>
-        </div>
-      )}
 
       {/* 태스크 목록 */}
       <div className="bg-white rounded-lg border">
@@ -275,7 +253,7 @@ export const TaskHistoryTab: React.FC = () => {
                     </h4>
                   </div>
                   <div className="text-sm text-gray-500">
-                    {formatDate(task.date_done)}
+                    {formatDate(task.task_time)}
                   </div>
                 </div>
 
@@ -323,26 +301,7 @@ export const TaskHistoryTab: React.FC = () => {
         )}
       </div>
 
-      {/* 태스크 타입별 통계 */}
-      {statistics?.by_task_type && Object.keys(statistics.by_task_type).length > 0 && (
-        <div className="bg-white rounded-lg border">
-          <div className="px-6 py-4 border-b">
-            <h3 className="text-lg font-semibold">태스크 타입별 통계</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-3">
-              {Object.entries(statistics.by_task_type).map(([taskType, count]) => (
-                <div key={taskType} className="flex items-center justify-between">
-                  <span className="text-gray-700">{getTaskDisplayName(taskType)}</span>
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
-                    {count as number}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
