@@ -37,20 +37,25 @@ export interface ApiResponse<T> {
 }
 
 // 태스크 응답 타입들
-export interface TaskResponse {
+export interface TaskInfoResponse {
   task_id: string;
   status: string;
-  message: string;
-}
+  task_name: string;
+  args: string;
+  kwargs: string;
+  result: string;
+  error_message: string;
+  traceback: string;
+  retry_count: number;
+  task_time: string;
+  completed_time: string;
 
-export interface TaskStatusResponse {
-  task_id: string;
-  status: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE';
-  message: string;
-  current?: number;
-  total?: number;
-  result?: any;
-  error?: string;
+  // Chain 관련
+  root_task_id: string;
+  parent_task_id?: string;
+  chain_id?: string;
+  chain_position?: number;
+  chain_total?: number;
 }
 
 export interface ActiveTasksResponse {
@@ -68,17 +73,7 @@ export interface ActiveTask {
 
 // 태스크 히스토리 응답 타입들
 export interface TaskHistoryResponse {
-  tasks: HistoryTask[];
-}
-
-export interface HistoryTask {
-  task_id: string;
-  status: 'SUCCESS' | 'FAILURE' | 'PENDING' | 'PROGRESS' | 'REVOKED';
-  task_name: string;
-  date_done: string;
-  result?: any;
-  traceback?: string;
-  task_time: string;
+  tasks: TaskInfoResponse[];
 }
 
 // 모델 테스트 관련 타입들
@@ -97,4 +92,21 @@ export interface ModelTestResponse {
     image1_url: string;
     image2_url: string;
   };
+}
+
+export interface TaskStatusResponse {
+  task_id: string;
+  status: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE';
+  task_name: string;
+  result: string;
+  traceback: string;
+  step: number;
+  ready: boolean;
+}
+
+export interface PipelineStatusResponse {
+  pipeline_id: string;
+  overall_state: string;
+  total_steps: number;
+  tasks: TaskStatusResponse[];
 }

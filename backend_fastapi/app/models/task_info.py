@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, String, Integer, DateTime, Text
+from sqlalchemy import Column, String, Integer, DateTime, Text , JSON
 from datetime import datetime
 from typing import Optional
 
@@ -20,6 +20,15 @@ class TaskInfo(Base) :
     error_message = Column(Text, nullable=True, comment="에러 메시지")
     traceback = Column(Text, nullable=True, comment="트레이스백")
     retry_count = Column(Integer, default=0, comment="재시도 횟수")
+
+    # Chain 관련 필드들
+    root_task_id = Column(String, index=True, nullable=True)  # 체인의 루트 태스크
+    parent_task_id = Column(String, index=True, nullable=True)  # 직접적인 부모 태스크
+    chain_total = Column(Integer, nullable=True)  # 체인의 전체 태스크 수
+
+    def __repr__(self):
+        return f"<TaskInfo(task_id='{self.task_id}', status='{self.status}', root_task_id='{self.root_task_id}')>"
+
     task_time = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -37,44 +46,30 @@ class TaskInfo(Base) :
         task_id: str,
         status: str,
         task_name: str,
-        args: str = None,
-        kwargs: str = None,
-        result: str = None,
-        error_message: str = None,
-        traceback: str = None,
-        retry_count: int = 0,
-        task_time: Optional[datetime] = None,
-        completed_time: Optional[datetime] = None,
         **extra_kwargs
     ):
         super().__init__(**extra_kwargs)
         self.task_id = task_id
         self.status = status
         self.task_name = task_name
-        self.args = args
-        self.kwargs = kwargs
-        self.result = result
-        self.error_message = error_message
-        self.traceback = traceback
-        self.retry_count = retry_count
-        self.task_time = task_time or datetime.now()
-        self.completed_time = completed_time
-
-
+        self.retry_count = 0
+        self.task_time = datetime.now()
 
     def dict(self):
         """모델을 딕셔너리로 변환"""
-        return TaskInfoResponse (
-            # id = self.id,
-            task_id = self.task_id,
-            status=self.status ,
+        return TaskInfoResponse(
+            task_id=self.task_id,
+            status=self.status,
             task_name=self.task_name,
-            kwargs="",
-            args=self.args ,
-            result=self.result ,
-            error_message="",
-            traceback="",
+            args=self.args or "",
+            kwargs=self.kwargs or "",
+            result=self.result or "",
+            error_message=self.error_message or "",
+            traceback=self.traceback or "",
             retry_count=self.retry_count,
-            task_time=self.task_time.isoformat(),
-            completed_time=self.completed_time.isoformat()
+            task_time=self.task_time.isoformat() if self.task_time else None,
+            completed_time=self.completed_time.isoformat() if self.completed_time else None,
+            root_task_id=self.root_task_id or "",
+            parent_task_id=self.parent_task_id or "",
+            chain_total=self.chain_total or 0,
         )

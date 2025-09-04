@@ -14,7 +14,7 @@
 ### 개발
 - **로컬 실행**: `python -m app.main` 또는 `uvicorn app.main:app --reload --host 0.0.0.0 --port 5050`
 - **환경별 실행**: `ENVIRONMENT=production python -m app.main`
-- **Celery Worker**: `python -m celery -A app.core.celery_app worker --loglevel=info`
+- **Celery Worker**: `python -m celery -A app.core.celery_app worker --loglevel=info --logfile=logs/celery_worker_$(date +%Y-%m-%d).log`
 - **Flower (Celery 모니터링)**: `python -m celery -A app.core.celery_app flower --port=5555`
 
 ### 코드 품질

@@ -1,7 +1,8 @@
 # schemas/tasks_router.py
 
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class TaskRequest(BaseModel):
@@ -15,48 +16,6 @@ class AITaskRequest(BaseModel):
     text: str
     max_length: int = 100
 
-
-class EmailTaskRequest(BaseModel):
-    """이메일 태스크 요청 모델"""
-    to_email: str
-    subject: str
-    body: str
-
-
-class LongTaskRequest(BaseModel):
-    """긴 태스크 요청 모델"""
-    total_steps: int = 10
-
-
-class TaskResponse(BaseModel):
-    """태스크 응답 모델"""
-    task_id: str
-    status: str
-    message: str
-
-
-class TaskStatusResponse(BaseModel):
-    """태스크 상태 응답 모델"""
-    task_id: str
-    status: str
-    message: str
-    current: Optional[int] = None
-    total: Optional[int] = None
-    result: Optional[dict] = None
-    error: Optional[str] = None
-
-
-class TaskStatistics(BaseModel):
-    """태스크 통계 모델"""
-    total_found: int
-    returned_count: int
-    time_range: str
-    by_status: dict[str, int]
-    by_task_type: dict[str, int]
-    current_active: dict[str, int]
-    workers: list[str]
-
-
 class TaskFilters(BaseModel):
     """태스크 필터 정보 모델"""
     hours: int
@@ -64,10 +23,18 @@ class TaskFilters(BaseModel):
     task_name: Optional[str] = None
     limit: int
 
+class TaskStatusResponse(BaseModel):
+    """태스크 상태 응답 모델"""
+    task_id: Optional[str] = None
+    status: Optional[str] = None
+    task_name: Optional[str] = None
+    result: Optional[str] = None
+    traceback: Optional[str] = None
+    step: Optional[int] = None
+    ready: Optional[bool] = False
+    progress: Optional[int] = 0
 
 class TaskInfoResponse(BaseModel):
-    # id : int
-
     task_id: str
     status: str
     task_name: str
@@ -77,65 +44,16 @@ class TaskInfoResponse(BaseModel):
     error_message: str
     traceback: str
     retry_count: int
-    task_time: str
-    completed_time: str
+    task_time: Optional[str] = None
+    completed_time: Optional[str] = None
 
-    # status : str
-    # task_name : str
-    # date_done : str
-    # result : str
-    # traceback : str
-    # task_time : str
-
-class TaskHistoryResponse(BaseModel):
-    """태스크 히스토리 응답 모델"""
-    tasks: list[TaskInfoResponse]
-
+    # Chain 관련
+    root_task_id: Optional[str] = None
+    parent_task_id: Optional[str] = None
+    chain_total: Optional[int] = None
 
 # AI 파이프라인 관련 스키마
-from enum import Enum
 from datetime import datetime
-
-
-class PipelineStage(str, Enum):
-    PREPROCESSING = "preprocessing"
-    FEATURE_EXTRACTION = "feature_extraction" 
-    MODEL_INFERENCE = "model_inference"
-    POST_PROCESSING = "post_processing"
-
-
-class TaskStatus(str, Enum):
-    PENDING = "PENDING"
-    STARTED = "STARTED" 
-    PROGRESS = "PROGRESS"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
-    RETRY = "RETRY"
-    REVOKED = "REVOKED"
-
-
-class StageStatus(BaseModel):
-    """각 단계별 상태 정보"""
-    stage: int
-    stage_name: str
-    status: str
-    progress: int = 0
-    message: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    duration: Optional[float] = None  # 초 단위
-    error: Optional[str] = None
-
-
-class PipelineProgress(BaseModel):
-    """파이프라인 전체 진행 상태"""
-    pipeline_id: str
-    current_stage: int
-    total_stages: int = 4
-    overall_progress: int = 0  # 0-100
-    stages: list[StageStatus] = []
-    start_time: Optional[str] = None
-    estimated_completion: Optional[str] = None
 
 
 class AIPipelineRequest(BaseModel):
@@ -145,6 +63,14 @@ class AIPipelineRequest(BaseModel):
     priority: int = 5  # 1-10, 높을수록 우선순위
     callback_url: Optional[str] = None  # 완료 시 웹훅 URL
 
+class PipelineStatusResponse(BaseModel):
+    """파이프라인 상태 응답"""
+    pipeline_id: str
+    overall_state: str
+    total_steps: int
+    current_stage: Optional[int] = 0
+    start_time: Optional[str] = None
+    tasks: list[TaskStatusResponse] = []
 
 class AIPipelineResponse(BaseModel):
     """AI 파이프라인 응답"""
@@ -153,14 +79,36 @@ class AIPipelineResponse(BaseModel):
     message: str
     estimated_duration: Optional[int] = None  # 예상 소요 시간 (초)
 
+class ChainSummary(BaseModel):
+    chain_id: str
+    total_tasks: int
+    completed_tasks: int
+    failed_tasks: int
+    running_tasks: int
+    status: str  # RUNNING, COMPLETED, FAILED, PENDING
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    tasks: list[TaskInfoResponse]
 
-class PipelineStatusResponse(BaseModel):
-    """파이프라인 상태 응답"""
-    pipeline_id: str
-    status: str
-    current_stage: int
-    current_stage_name: str
-    overall_progress: int
-    stages: list[StageStatus]
-    result: Optional[dict] = None
-    error: Optional[str] = None
+
+from enum import Enum
+
+class PipelineStage(str, Enum):
+    PREPROCESSING = "preprocessing"
+    FEATURE_EXTRACTION = "feature_extraction"
+    MODEL_INFERENCE = "model_inference"
+    POST_PROCESSING = "post_processing"
+
+
+class TaskStatus(str, Enum):
+    PENDING = "PENDING"
+    STARTED = "STARTED"
+    PROGRESS = "PROGRESS"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    RETRY = "RETRY"
+    REVOKED = "REVOKED"
+
+
+
+

@@ -5,25 +5,9 @@ import {
   TaskManagementTab,
   TaskModelsTab
 } from '../components';
-import { useCancelTask } from '../hooks';
 
 export const TaskPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'management' | 'history' | 'model' | 'etc'>('management');
-  const [cancelingTasks, setCancelingTasks] = useState<Set<string>>(new Set());
-  const cancelTask = useCancelTask();
-
-  const handleCancelTask = async (taskId: string) => {
-    setCancelingTasks(prev => new Set(prev).add(taskId));
-    try {
-      await cancelTask.mutateAsync(taskId);
-    } finally {
-      setCancelingTasks(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(taskId);
-        return newSet;
-      });
-    }
-  };
 
   const tabs = [
     { id: 'management' as const, label: '태스크 관리' },
@@ -36,10 +20,7 @@ export const TaskPage: React.FC = () => {
     switch (activeTab) {
       case 'management':
         return (
-          <TaskManagementTab
-            onCancelTask={handleCancelTask}
-            cancelingTasks={cancelingTasks}
-          />
+          <TaskManagementTab />
         );
 
       case 'history':

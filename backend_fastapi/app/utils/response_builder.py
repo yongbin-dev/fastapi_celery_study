@@ -36,6 +36,7 @@ class ResponseBuilder:
             status=ResponseStatus.ERROR.value,
             message=message,
             timestamp=datetime.now().isoformat(),
+            data=None,
             error_code=error_code,
             details=details
         )
