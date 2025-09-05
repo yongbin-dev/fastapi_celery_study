@@ -28,29 +28,23 @@ class TaskStatusResponse(BaseModel):
     task_id: Optional[str] = None
     status: Optional[str] = None
     task_name: Optional[str] = None
-    result: Optional[str] = None
+    stages: Optional[str] = None
     traceback: Optional[str] = None
     step: Optional[int] = None
     ready: Optional[bool] = False
     progress: Optional[int] = 0
 
 class TaskInfoResponse(BaseModel):
-    task_id: str
-    status: str
-    task_name: str
-    args: str
-    kwargs: str
-    result: str
-    error_message: str
-    traceback: str
-    retry_count: int
-    task_time: Optional[str] = None
-    completed_time: Optional[str] = None
-
-    # Chain 관련
-    root_task_id: Optional[str] = None
-    parent_task_id: Optional[str] = None
-    chain_total: Optional[int] = None
+    """TaskStatusResponse + pipeline_id 포함, result -> stages로 변경"""
+    task_id: Optional[str] = None
+    status: Optional[str] = None
+    task_name: Optional[str] = None
+    stages: Optional[str] = None
+    traceback: Optional[str] = None
+    step: Optional[int] = None
+    ready: Optional[bool] = False
+    progress: Optional[int] = 0
+    pipeline_id: Optional[str] = None
 
 # AI 파이프라인 관련 스키마
 from datetime import datetime
@@ -69,7 +63,7 @@ class PipelineStatusResponse(BaseModel):
     overall_state: str
     total_steps: int
     current_stage: Optional[int] = 0
-    start_time: Optional[str] = None
+    start_time: Optional[datetime] = None
     tasks: list[TaskStatusResponse] = []
 
 class AIPipelineResponse(BaseModel):

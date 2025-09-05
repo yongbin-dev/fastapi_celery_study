@@ -5,13 +5,21 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import settings
 
-# 비동기 엔진 생성
+# 비동기 엔진 생성 (서울 시간대 설정)
+database_url = settings.DATABASE_URL
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    database_url,
     echo=settings.DB_ECHO,
     future=True,
     pool_size=20,
     max_overflow=0,
+    # asyncpg용 서버 설정 (서울 시간대 설정)
+    connect_args={
+        "server_settings": {
+            "timezone": "Asia/Seoul"
+        }
+    }
 )
 
 # 비동기 세션 팩토리

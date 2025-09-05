@@ -14,7 +14,8 @@ services:
     container_name: postgres-server
     image: postgres:15-alpine
     environment:
-      PGTZ: Asia/Seoul
+      TZ: Asia/Seoul
+      PGTZ: Asia/Seoul  
       POSTGRES_DB: study_db
       POSTGRES_USER: sa
       POSTGRES_PASSWORD: "1"
@@ -89,7 +90,7 @@ services:
     image: grafana/grafana:10.1.5
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "4000:3000"
     volumes:
       - /Users/aipim/yb/python/fastapi_celery_study/grafana-data:/var/lib/grafana
     restart: unless-stopped

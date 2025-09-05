@@ -35,6 +35,13 @@ def init_sync_db():
 
             # AsyncPG URL을 동기식 psycopg2 URL로 변환
             sync_database_url = settings.DATABASE_URL.replace("+asyncpg", "")
+            
+            # 서울 시간대 설정 추가
+            if "?" in sync_database_url:
+                sync_database_url += "&options=-c timezone=Asia/Seoul"
+            else:
+                sync_database_url += "?options=-c timezone=Asia/Seoul"
+                
             logger.info(f"동기 데이터베이스 URL: {sync_database_url}")
 
             # 동기식 엔진 생성
@@ -92,33 +99,33 @@ def get_sync_db_session():
                 logger.error(f"데이터베이스 세션 종료 실패: {e}")
 
 
-def extract_chain_info(task, task_id: str) -> Dict[str, Any]:
-    """태스크에서 chain 관련 정보를 추출 (TaskInfo 모델 구조에 맞춤)"""
-    chain_info = {}
+def extract_task_pipeline_id(task, task_id: str) -> Dict[str, Any]:
+    """태스크에서 단계 정보 및 pipeline_id 추출 (chain_id를 pipeline_id로 사용)"""
+    task_info = {}
 
     try:
+        # 태스크 이름에서 단계 정보 추출 (예: step_1, step_2 등)
+
+        # Chain ID를 Pipeline ID로 사용
         if hasattr(task, 'request'):
-            # Root task ID (체인의 첫 번째 태스크)
+            # Root task ID를 pipeline_id로 사용 (체인의 루트가 파이프라인 ID)
             if hasattr(task.request, 'root_id') and task.request.root_id:
-                chain_info['root_task_id'] = task.request.root_id
-
-            # Parent task ID (직접적인 부모)
-            if hasattr(task.request, 'parent_id') and task.request.parent_id:
-                chain_info['parent_task_id'] = task.request.parent_id
-
-            # Chain 정보
-            if hasattr(task.request, 'chain') and task.request.chain:
-                chain_signatures = task.request.chain
-                chain_info['chain_total'] = len(chain_signatures) + 1  # 현재 태스크 포함
+                task_info['pipeline_id'] = task.request.root_id
+                logger.info(f"🔗 Pipeline ID 설정: {task.request.root_id} for task: {task_id}")
+            # 루트 ID가 없으면 현재 태스크 ID를 pipeline_id로 사용
+            elif not hasattr(task.request, 'parent_id') or not task.request.parent_id:
+                task_info['pipeline_id'] = task_id
+                logger.info(f"🔗 Pipeline ID 설정 (루트): {task_id}")
+        
 
     except Exception as e:
-        logger.warning(f"Chain 정보 추출 중 오류: {e}")
+        logger.warning(f"태스크 단계 정보 추출 중 오류: {e}")
 
-    return chain_info
+    return task_info
 
 
-def save_task_info_safely(task_id: str, status: str, task_name: str, **extra_fields) -> bool:
-    """태스크 정보를 안전하게 저장하는 헬퍼 함수 (TaskInfo 생성자 사용)"""
+def save_task_info_safely(task_id: str, status: str,  **extra_fields) -> bool:
+    """태스크 정보를 안전하게 저장하는 헬퍼 함수 (새로운 TaskInfo 생성자 사용)"""
     global TaskInfo
 
     if TaskInfo is None:
@@ -131,14 +138,15 @@ def save_task_info_safely(task_id: str, status: str, task_name: str, **extra_fie
                 logger.warning("데이터베이스 세션을 생성할 수 없어 태스크 정보 저장을 건너뜁니다")
                 return False
 
-            # TaskInfo 생성자를 사용하여 객체 생성
-            # TaskInfo가 None이 아님을 확인했으므로 안전하게 호출 가능
+            # 새로운 TaskInfo 생성자 파라미터에 맞춰 필터링
+            allowed_fields = {'stages', 'traceback', 'step', 'ready', 'progress', 'pipeline_id'}
+            filtered_fields = {k: v for k, v in extra_fields.items() if k in allowed_fields}
+            
             if TaskInfo is not None:  # 타입 체커를 위한 추가 체크
                 task_info = TaskInfo(
                     task_id=task_id,
                     status=status,
-                    task_name=task_name,
-                    **extra_fields
+                    **filtered_fields
                 )
 
                 db.add(task_info)
@@ -185,27 +193,16 @@ def update_task_info_safely(task_id: str, updates: Dict[str, Any]) -> bool:
 def task_prerun_handler(task_id=None, task=None, args=None, kwargs=None, **kwds):
     """태스크 시작 전 실행되는 시그널 (Chain 지원 버전)"""
     try:
-        task_name = task.name if task else "Unknown"
-        logger.info(f"태스크 시작: {task_name} (ID: {task_id})")
 
-        # Chain 관련 정보 추출
-        chain_info = extract_chain_info(task, task_id)
+        # 단계 정보 추출
+        step_info = extract_task_pipeline_id(task, task_id)
 
-        # Chain 정보가 있으면 로그에 추가 정보 출력
-        if chain_info.get('root_task_id'):
-            logger.info(f"🔗 Chain 태스크: {task_name} (Root: {chain_info['root_task_id']}, "
-                        f"Parent: {chain_info.get('parent_task_id', 'None')}, "
-                        f"Total: {chain_info.get('chain_total', '?')})")
-
-        # TaskInfo 생성자를 사용하여 저장
+        # TaskInfo 생성자를 사용하여 저장 (새로운 필드만)
         extra_fields = {
-            "task_time": datetime.now(),
-            "args": str(args) if args else None,
-            "kwargs": str(kwargs) if kwargs else None,
-            **chain_info  # chain 관련 정보 추가
+            **step_info  # step, ready, progress 정보 추가
         }
 
-        if save_task_info_safely(task_id, "STARTED", task_name, **extra_fields):
+        if save_task_info_safely(task_id, "STARTED",  **extra_fields):
             logger.info(f"태스크 시작 정보 저장 완료: {task_id}")
         else:
             logger.warning(f"태스크 시작 정보 저장 실패: {task_id}")
@@ -219,13 +216,12 @@ def task_postrun_handler(sender=None, task_id=None, task=None, args=None, kwargs
                          retval=None, state=None, **kwds):
     """태스크 완료 후 실행되는 시그널 (개선된 버전)"""
     try:
-        task_name = task.name if task else "Unknown"
-        logger.info(f"태스크 완료: {task_name} (ID: {task_id}) - 상태: {state}")
 
         updates = {
             "status": state,
-            "result": str(retval) if retval else None,
-            "completed_time": datetime.now()
+            "stages": str(retval) if retval else None,
+            "ready": True,
+            "progress": 100 if state == "SUCCESS" else 0
         }
 
         if update_task_info_safely(task_id, updates):
@@ -250,14 +246,12 @@ def task_success_handler(sender=None, result=None, **kwds):
 def task_failure_handler(sender=None, task_id=None, exception=None, traceback=None, einfo=None, **kwds):
     """태스크 실패 시 실행되는 시그널 (개선된 버전)"""
     try:
-        task_name = sender.name if sender else "Unknown"
-        logger.error(f"태스크 실패: {task_name} (ID: {task_id}) - 오류: {exception}")
 
         updates = {
             "status": "FAILURE",
-            "error_message": str(exception) if exception else None,
             "traceback": str(traceback) if traceback else None,
-            "completed_time": datetime.now()
+            "ready": True,
+            "progress": 0
         }
 
         if update_task_info_safely(task_id, updates):
@@ -273,29 +267,18 @@ def task_failure_handler(sender=None, task_id=None, exception=None, traceback=No
 def task_retry_handler(sender=None, task_id=None, reason=None, einfo=None, **kwds):
     """태스크 재시도 시 실행되는 시그널 (개선된 버전)"""
     try:
-        task_name = sender.name if sender else "Unknown"
-        logger.warning(f"태스크 재시도: {task_name} (ID: {task_id}) - 이유: {reason}")
 
-        # 기존 retry_count를 가져와서 증가시키기 위해 조회 후 업데이트
-        with get_sync_db_session() as db:
-            if db is None:
-                logger.warning("데이터베이스 세션을 생성할 수 없어 재시도 정보 업데이트를 건너뜁니다")
-                return
+        updates = {
+            "status": "RETRY",
+            "traceback": str(reason) if reason else None,
+            "ready": False,
+            "progress": 0
+        }
 
-            global TaskInfo
-            if TaskInfo is None:
-                logger.warning("TaskInfo 모델을 로드할 수 없어 재시도 정보 업데이트를 건너뜁니다")
-                return
-
-            task_info = db.query(TaskInfo).filter(TaskInfo.task_id == task_id).first()
-            if task_info:
-                task_info.status = "RETRY"
-                task_info.retry_count = (task_info.retry_count or 0) + 1
-                task_info.error_message = str(reason) if reason else None
-                db.commit()
-                logger.info(f"태스크 재시도 정보 업데이트 완료: {task_id}")
-            else:
-                logger.warning(f"재시도할 태스크 정보를 찾을 수 없음: {task_id}")
+        if update_task_info_safely(task_id, updates):
+            logger.info(f"태스크 재시도 정보 업데이트 완료: {task_id}")
+        else:
+            logger.warning(f"태스크 재시도 정보 업데이트 실패: {task_id}")
 
     except Exception as e:
         logger.error(f"task_retry 시그널 핸들러에서 예외 발생: {e}")

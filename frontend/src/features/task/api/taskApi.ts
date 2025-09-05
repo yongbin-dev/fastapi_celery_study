@@ -4,9 +4,9 @@ import type {
   AITaskRequest,
   ModelTestRequest,
   ModelTestResponse,
+  PipelineStatusResponse,
   TaskHistoryRequest,
   TaskInfoResponse,
-  PipelineStatusResponse,
 } from '../types';
 
 export const taskApi = {
@@ -27,7 +27,7 @@ export const taskApi = {
 
   getHistoryTasks: async (
     params: TaskHistoryRequest
-  ): Promise<TaskInfoResponse[]> => {
+  ): Promise<PipelineStatusResponse[]> => {
     // 빈 문자열인 매개변수들을 제거하고 쿼리 스트링 생성
     const searchParams = new URLSearchParams();
 
@@ -39,9 +39,9 @@ export const taskApi = {
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
     const queryString = searchParams.toString();
-    const url = `/api/v1/tasks/history${queryString ? `?${queryString}` : ''}`;
+    const url = `/api/v1/tasks/history?${queryString ? `${queryString}` : ''}`;
 
-    const response = await api.get<TaskInfoResponse[]>(url);
+    const response = await api.get<PipelineStatusResponse[]>(url);
     return response.data;
   },
 
@@ -66,14 +66,24 @@ export const taskApi = {
   },
 
   // 파이프라인 시작
-  startPipeline: async (data: { text: string; options: { model: string } }): Promise<{ pipeline_id: string }> => {
-    const response = await api.post<{ pipeline_id: string }>('/api/v1/tasks/ai-pipeline', data);
+  startPipeline: async (data: {
+    text: string;
+    options: { model: string };
+  }): Promise<{ pipeline_id: string }> => {
+    const response = await api.post<{ pipeline_id: string }>(
+      '/api/v1/tasks/ai-pipeline',
+      data
+    );
     return response.data;
   },
 
   // 파이프라인 상태 확인
-  getPipelineStatus: async (pipelineId: string): Promise<PipelineStatusResponse> => {
-    const response = await api.get<PipelineStatusResponse>(`/api/v1/tasks/ai-pipeline/${pipelineId}/status`);
+  getPipelineStatus: async (
+    pipelineId: string
+  ): Promise<PipelineStatusResponse> => {
+    const response = await api.get<PipelineStatusResponse>(
+      `/api/v1/tasks/ai-pipeline/${pipelineId}/status`
+    );
     return response.data;
   },
 

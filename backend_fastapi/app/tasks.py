@@ -6,7 +6,7 @@ from typing import Dict, Any
 from .core.celery_app import celery_app
 
 # 4단계 AI 처리 작업들
-def update_pipeline_redis_status(pipeline_id: str, stage: int, status: str, progress: int = 0):
+def update_pipeline_redis_status(pipeline_id: str, stage: int, status: str, progress: int = 0, root_task_id: str = None):
     """Redis에서 파이프라인 상태 업데이트"""
     import redis
     import json
@@ -25,6 +25,10 @@ def update_pipeline_redis_status(pipeline_id: str, stage: int, status: str, prog
         
         if pipeline_data:
             state_info = json.loads(pipeline_data)
+            
+            # root_task_id 추가/업데이트
+            if root_task_id:
+                state_info["root_task_id"] = root_task_id
             
             # 해당 단계 상태 업데이트
             for stage_info in state_info.get("stages", []):
@@ -61,10 +65,10 @@ def stage1_preprocessing(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     # 파이프라인 ID 추출 (root task ID 사용)
     pipeline_id = self.request.root_id or self.request.id
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 1, "STARTED", 0)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -74,13 +78,13 @@ def stage1_preprocessing(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
             'progress': 0
         }
     )
-    
+
     # 전처리 시뮬레이션
     time.sleep(2)
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 1, "PROGRESS", 50)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -90,12 +94,12 @@ def stage1_preprocessing(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
             'progress': 50
         }
     )
-    
+
     time.sleep(2)
-    
+
     # Redis 파이프라인 상태 업데이트 - 완료
     update_pipeline_redis_status(pipeline_id, 1, "SUCCESS", 100)
-    
+
     result = {
         'stage': 1,
         'stage_name': '데이터 전처리',
@@ -108,7 +112,7 @@ def stage1_preprocessing(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         },
         'status': 'completed'
     }
-    
+
     return result
 
 
@@ -119,10 +123,10 @@ def stage2_feature_extraction(self, stage1_result: Dict[str, Any]) -> Dict[str, 
     """
     # 파이프라인 ID 추출
     pipeline_id = self.request.root_id or self.request.id
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 2, "STARTED", 0)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -132,12 +136,12 @@ def stage2_feature_extraction(self, stage1_result: Dict[str, Any]) -> Dict[str, 
             'progress': 0
         }
     )
-    
+
     time.sleep(3)
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 2, "PROGRESS", 70)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -147,12 +151,12 @@ def stage2_feature_extraction(self, stage1_result: Dict[str, Any]) -> Dict[str, 
             'progress': 70
         }
     )
-    
+
     time.sleep(2)
-    
+
     # Redis 파이프라인 상태 업데이트 - 완료
     update_pipeline_redis_status(pipeline_id, 2, "SUCCESS", 100)
-    
+
     result = {
         'stage': 2,
         'stage_name': '특성 추출',
@@ -168,7 +172,7 @@ def stage2_feature_extraction(self, stage1_result: Dict[str, Any]) -> Dict[str, 
         },
         'status': 'completed'
     }
-    
+
     return result
 
 
@@ -179,10 +183,10 @@ def stage3_model_inference(self, stage2_result: Dict[str, Any]) -> Dict[str, Any
     """
     # 파이프라인 ID 추출
     pipeline_id = self.request.root_id or self.request.id
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 3, "STARTED", 0)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -192,12 +196,12 @@ def stage3_model_inference(self, stage2_result: Dict[str, Any]) -> Dict[str, Any
             'progress': 0
         }
     )
-    
+
     time.sleep(2)
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 3, "PROGRESS", 40)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -207,12 +211,12 @@ def stage3_model_inference(self, stage2_result: Dict[str, Any]) -> Dict[str, Any
             'progress': 40
         }
     )
-    
+
     time.sleep(4)
-    
+
     # Redis 파이프라인 상태 업데이트 - 완료
     update_pipeline_redis_status(pipeline_id, 3, "SUCCESS", 100)
-    
+
     result = {
         'stage': 3,
         'stage_name': '모델 추론',
@@ -229,7 +233,7 @@ def stage3_model_inference(self, stage2_result: Dict[str, Any]) -> Dict[str, Any
         },
         'status': 'completed'
     }
-    
+
     return result
 
 
@@ -240,10 +244,10 @@ def stage4_post_processing(self, stage3_result: Dict[str, Any]) -> Dict[str, Any
     """
     # 파이프라인 ID 추출
     pipeline_id = self.request.root_id or self.request.id
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 4, "STARTED", 0)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -253,12 +257,12 @@ def stage4_post_processing(self, stage3_result: Dict[str, Any]) -> Dict[str, Any
             'progress': 0
         }
     )
-    
+
     time.sleep(2)
-    
+
     # Redis 파이프라인 상태 업데이트
     update_pipeline_redis_status(pipeline_id, 4, "PROGRESS", 80)
-    
+
     self.update_state(
         state='PROGRESS',
         meta={
@@ -268,9 +272,9 @@ def stage4_post_processing(self, stage3_result: Dict[str, Any]) -> Dict[str, Any
             'progress': 80
         }
     )
-    
+
     time.sleep(1)
-    
+
     # Redis 파이프라인 상태 업데이트 - 완료
     update_pipeline_redis_status(pipeline_id, 4, "SUCCESS", 100)
     

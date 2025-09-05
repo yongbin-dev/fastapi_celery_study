@@ -4,13 +4,11 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from ....dependencies import get_database
 from ....schemas.common import ApiResponse
 from ....schemas.tasks import (
-    TaskInfoResponse,
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse
 )
+from ....core.database import get_db
 from ....services.task_service import TaskService, get_task_service
 from ....utils.response_builder import ResponseBuilder
 
@@ -27,21 +25,27 @@ async def image_test_task():
     )
 
 
-@router.get("/history", response_model=ApiResponse[list[TaskInfoResponse]])
+@router.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
 async def get_tasks_history(
         service: TaskService = Depends(get_task_service),
+        db: AsyncSession = Depends(get_db),
         hours: Optional[int] = Query(1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168),
         status: Optional[str] = Query(None, description="필터링할 상태"),
         task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
         limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000)
-) -> ApiResponse[list[TaskInfoResponse]]:
-    """Redis 기반 태스크 히스토리 조회"""
+) -> ApiResponse[list[PipelineStatusResponse]]:
+    """
+    태스크 히스토리 조회
+    - 1시간 이내: Redis에서 실시간 조회
+    - 1시간 초과: DB에서 영구 데이터 조회
+    """
     try:
-        result = service.get_tasks_history(hours, status, task_name, limit)
+        result = await service.get_tasks_history(db, hours, status, task_name, limit)
 
+        data_source = "Redis" if hours <= 1 else "DB"
         return ResponseBuilder.success(
             data=result,
-            message=f"지난 {hours}시간 내 태스크 히스토리 조회 완료 (Redis 기반)"
+            message=f"지난 {hours}시간 내 태스크 히스토리 조회 완료 ({data_source} 기반)"
         )
 
     except Exception as e:
@@ -104,11 +108,21 @@ async def cancel_ai_pipeline(
 ):
     """AI 파이프라인 취소"""
     try:
-        # 파이프라인 취소 (기존 태스크 취소 로직 재사용)
-        result = service.cancel_task(pipeline_id)
+        # Celery 태스크 취소
+        from ....core.celery_app import celery_app
+        celery_app.control.revoke(pipeline_id, terminate=True)
+        
+        # Redis에서 파이프라인 상태 업데이트
+        pipeline_key = f"pipeline:{pipeline_id}"
+        pipeline_data = service.redis_client.get(pipeline_key)
+        if pipeline_data:
+            import json
+            state_info = json.loads(pipeline_data)
+            state_info["status"] = "REVOKED"
+            service.redis_client.setex(pipeline_key, 3600, json.dumps(state_info))
         
         return ResponseBuilder.success(
-            data=result,
+            data={"pipeline_id": pipeline_id, "status": "REVOKED"},
             message="AI 파이프라인 취소 요청이 전송되었습니다"
         )
     except Exception as e:

@@ -392,8 +392,15 @@ DATABASE_URL = os.getenv(
 #### 4. 정기적인 마이그레이션 상태 확인
 ```bash
 # 현재 상태와 최신 상태 비교
-alembic current
-alembic show head
+- alembic current
+- alembic show head
+
+- alembic current로 현재 상태 확인
+- alembic check로 모델과 DB 스키마 차이점 발견
+- alembic revision --autogenerate로 새 마이그레이션 생성
+- alembic upgrade head로 마이그레이션 적용
+
+
 ```
 
 ---

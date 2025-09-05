@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/taskApi';
-import type { TaskHistoryRequest, TaskInfoResponse } from '../types';
+import type { PipelineStatusResponse, TaskHistoryRequest } from '../types';
 
 // 예제 태스크 생성
 // export const useCreateExampleTask = () => {
@@ -93,10 +93,10 @@ export const useActiveTasks = (enabled = true) => {
   });
 };
 
-// 활성 태스크 이력 조회
+// 파이프라인 이력 조회
 export const useHistoryTasks = (params: TaskHistoryRequest) => {
-  return useQuery<TaskInfoResponse[]>({
-    queryKey: ['total-tasks', params],
+  return useQuery<PipelineStatusResponse[]>({
+    queryKey: ['pipeline-history', params],
     queryFn: () => taskApi.getHistoryTasks(params),
     refetchInterval: 10000, // 10초마다 자동 새로고침 (이력은 덜 자주 업데이트)
     staleTime: 5000, // 5초
@@ -129,7 +129,11 @@ export const useStartPipeline = () => {
 };
 
 // 파이프라인 상태 확인
-export const usePipelineStatus = (pipelineId: string, enabled = false, refetchInterval?: number) => {
+export const usePipelineStatus = (
+  pipelineId: string,
+  enabled = false,
+  refetchInterval?: number
+) => {
   return useQuery({
     queryKey: ['pipeline-status', pipelineId],
     queryFn: () => taskApi.getPipelineStatus(pipelineId),
@@ -142,13 +146,15 @@ export const usePipelineStatus = (pipelineId: string, enabled = false, refetchIn
 // 파이프라인 취소
 export const useCancelPipeline = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: taskApi.cancelPipeline,
     onSuccess: (_, pipelineId) => {
       console.log('파이프라인 취소 성공');
       // 관련된 쿼리들을 무효화
-      queryClient.invalidateQueries({ queryKey: ['pipeline-status', pipelineId] });
+      queryClient.invalidateQueries({
+        queryKey: ['pipeline-status', pipelineId],
+      });
     },
     onError: (error) => {
       console.error('파이프라인 취소 실패:', error);

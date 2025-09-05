@@ -71,9 +71,31 @@ export interface ActiveTask {
   kwargs: Record<string, any>;
 }
 
+// 파이프라인 태스크 정보
+export interface PipelineTask {
+  task_id: string;
+  status: string;
+  task_name: string;
+  result: string;
+  traceback: string | null;
+  step: number;
+  ready: boolean;
+  progress: number;
+}
+
+// 파이프라인 히스토리 정보
+export interface PipelineHistoryInfo {
+  pipeline_id: string;
+  overall_state: string;
+  total_steps: number;
+  current_stage: number;
+  start_time: string;
+  tasks: PipelineTask[];
+}
+
 // 태스크 히스토리 응답 타입들
 export interface TaskHistoryResponse {
-  tasks: TaskInfoResponse[];
+  data: PipelineHistoryInfo[];
 }
 
 // 모델 테스트 관련 타입들
@@ -102,11 +124,15 @@ export interface TaskStatusResponse {
   traceback: string;
   step: number;
   ready: boolean;
+  progress: number;
 }
 
 export interface PipelineStatusResponse {
   pipeline_id: string;
   overall_state: string;
   total_steps: number;
+  current_stage: number;
+  start_time: string;
+
   tasks: TaskStatusResponse[];
 }

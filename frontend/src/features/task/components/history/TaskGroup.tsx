@@ -1,92 +1,104 @@
-import React from 'react';
-import type { TaskInfoResponse } from '../../types';
+import React, { useState } from 'react';
+import type { PipelineStatusResponse } from '../../types';
 import { TaskCard } from './TaskCard';
 
 interface TaskGroupProps {
-  rootId: string;
-  taskGroup: TaskInfoResponse[];
-  isCollapsed: boolean;
-  onToggleCollapse: (groupId: string) => void;
-  getStatusBadge: (status: string) => string;
-  formatDate: (dateString: string) => string;
+  pipeline: PipelineStatusResponse;
 }
 
 export const TaskGroup: React.FC<TaskGroupProps> = ({
-  rootId,
-  taskGroup,
-  isCollapsed,
-  onToggleCollapse,
-  getStatusBadge,
-  formatDate
+  pipeline,
 }) => {
+
+  const [collapsedPipelines, setCollapsedPipelines] = useState<Set<string>>(new Set());
+
+  const getStatusBadge = (status: string) => {
+    const statusColors = {
+      SUCCESS: 'bg-green-100 text-green-800',
+      FAILURE: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      REVOKED: 'bg-gray-100 text-gray-800'
+    };
+    return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const togglePipelineCollapse = (pipelineId: string) => {
+    setCollapsedPipelines(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(pipelineId)) {
+        newSet.delete(pipelineId);
+      } else {
+        newSet.add(pipelineId);
+      }
+      return newSet;
+    });
+  };
+
   return (
-    <div className="p-6">
-      {/* 그룹 헤더 */}
-      <div
-        className="mb-4 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-        onClick={() => onToggleCollapse(rootId)}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <button className="flex items-center justify-center w-6 h-6 text-gray-500 hover:text-gray-700">
-              {isCollapsed ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              )}
+    <>
+
+      <div key={pipeline.pipeline_id} className="p-6">
+        {/* 파이프라인 헤더 */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => togglePipelineCollapse(pipeline.pipeline_id)}
+              className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg
+                className={`w-5 h-5 transition-transform ${collapsedPipelines.has(pipeline.pipeline_id) ? 'rotate-0' : 'rotate-90'}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
-            <h3 className="font-semibold text-gray-900">
-              {taskGroup.length > 1 ? '태스크 체인' : '단일 태스크'}
-            </h3>
-            <span className="text-sm text-gray-500">
-              Root ID: <span className="font-mono">{rootId}</span>
+            <h4 className="text-lg font-semibold">파이프라인: {pipeline.pipeline_id}</h4>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(pipeline.overall_state)}`}>
+              {pipeline.overall_state}
             </span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-              {taskGroup.length}개 태스크
-            </span>
-            {isCollapsed && (
-              <div className="flex items-center space-x-2 text-xs">
-                {taskGroup.filter(t => t.status === 'SUCCESS').length > 0 && (
-                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded">
-                    성공 {taskGroup.filter(t => t.status === 'SUCCESS').length}
-                  </span>
-                )}
-                {taskGroup.filter(t => t.status === 'FAILURE').length > 0 && (
-                  <span className="px-2 py-1 bg-red-100 text-red-700 rounded">
-                    실패 {taskGroup.filter(t => t.status === 'FAILURE').length}
-                  </span>
-                )}
-                {taskGroup.filter(t => t.status === 'PENDING').length > 0 && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">
-                    대기 {taskGroup.filter(t => t.status === 'PENDING').length}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           <div className="text-sm text-gray-500">
-            {formatDate(taskGroup[0]?.task_time)}
+            {formatDate(pipeline.start_time)}
           </div>
         </div>
-      </div>
 
-      {/* 태스크 목록 */}
-      {!isCollapsed && (
-        <div className="space-y-4 ml-4">
-          {taskGroup.map((task) => (
-            <TaskCard
-              key={task.task_id}
-              task={task}
-              getStatusBadge={getStatusBadge}
-              formatDate={formatDate}
+        {/* 파이프라인 진행률 - 항상 표시 */}
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>진행률: {pipeline.current_stage}/{pipeline.total_steps} 단계</span>
+            <span>{Math.round((pipeline.current_stage / pipeline.total_steps) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(pipeline.current_stage / pipeline.total_steps) * 100}%` }}
             />
-          ))}
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* 태스크 목록 - 접혀있지 않을 때만 표시 */}
+        {collapsedPipelines.has(pipeline.pipeline_id) && (
+          <div className="space-y-2">
+            {pipeline.tasks.map((task) => (
+              <TaskCard task={task} getStatusBadge={getStatusBadge} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 };

@@ -25,11 +25,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"🌐 CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
     
     # 데이터베이스 초기화 (선택사항)
-    try:
-        await init_db()
-        logger.info("✅ 데이터베이스 연결 초기화 완료")
-    except Exception as e:
-        logger.error(f"❌ 데이터베이스 연결 실패: {e}")
+    # try:
+    #     await init_db()
+    #     logger.info("✅ 데이터베이스 연결 초기화 완료")
+    # except Exception as e:
+    #     logger.error(f"❌ 데이터베이스 연결 실패: {e}")
 
     yield  # 애플리케이션 실행
 
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
         await close_db()
         logger.info("✅ 데이터베이스 연결 종료 완료")
     except Exception as e:
-        logger.error(f"❌ 데이터베이스 연결 종료 실패: {e}")
+        logger.error(f"❌ 데이터베이스 지우연결 종료 실패: {e}")
 
 
 # 로그 설정 함수

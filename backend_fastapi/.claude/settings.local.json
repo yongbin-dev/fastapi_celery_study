@@ -20,7 +20,10 @@
       "Bash(alembic stamp:*)",
       "Bash(grep:*)",
       "Bash(docker exec:*)",
-      "Bash(poetry run python:*)"
+      "Bash(poetry run python:*)",
+      "Bash(alembic history:*)",
+      "Bash(docker-compose exec:*)",
+      "Bash(alembic check:*)"
     ],
     "deny": [],
     "ask": []

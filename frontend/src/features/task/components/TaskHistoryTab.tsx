@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHistoryTasks } from '../hooks';
-import type { TaskHistoryRequest } from '../types';
+import type { PipelineStatusResponse, TaskHistoryRequest } from '../types';
 import { TaskGroup } from './history';
 
 export const TaskHistoryTab: React.FC = () => {
@@ -10,64 +10,10 @@ export const TaskHistoryTab: React.FC = () => {
     task_name: '',
     limit: 10
   });
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const { data: tasks = [], isLoading, refetch } = useHistoryTasks(searchParams);
+  const { data: pipelines = [], isLoading, refetch } = useHistoryTasks(searchParams);
 
-  // root_task_id를 기준으로 그룹핑
-  const groupedTasks = tasks.reduce((groups: Record<string, any[]>, task: any) => {
-    const rootId = task.root_task_id || task.task_id;
-    if (!groups[rootId]) {
-      groups[rootId] = [];
-    }
-    groups[rootId].push(task);
-    return groups;
-  }, {});
 
-  // 각 그룹 내에서 chain_position으로 정렬
-  Object.keys(groupedTasks).forEach(rootId => {
-    groupedTasks[rootId].sort((a, b) => {
-      // chain_position이 있으면 그것으로 정렬, 없으면 task_time으로 정렬
-      if (a.chain_position && b.chain_position) {
-        return a.chain_position - b.chain_position;
-      }
-      return new Date(a.task_time).getTime() - new Date(b.task_time).getTime();
-    });
-  });
-
-  const getStatusBadge = (status: string) => {
-    const statusColors = {
-      SUCCESS: 'bg-green-100 text-green-800',
-      FAILURE: 'bg-red-100 text-red-800',
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      REVOKED: 'bg-gray-100 text-gray-800'
-    };
-    return statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
-  const toggleGroupCollapse = (groupId: string) => {
-    setCollapsedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupId)) {
-        newSet.delete(groupId);
-      } else {
-        newSet.add(groupId);
-      }
-      return newSet;
-    });
-  };
 
   const handleSearchChange = (field: string, value: string | number) => {
     setSearchParams(prev => ({
@@ -206,22 +152,14 @@ export const TaskHistoryTab: React.FC = () => {
             <div className="text-lg text-gray-600">태스크 이력을 불러오는 중...</div>
             <div className="text-sm text-gray-400 mt-2">잠시만 기다려 주세요</div>
           </div>
-        ) : Object.keys(groupedTasks).length === 0 ? (
+        ) : pipelines.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">표시할 태스크 이력이 없습니다.</p>
+            <p className="text-gray-500">표시할 파이프라인 이력이 없습니다.</p>
           </div>
         ) : (
           <div className="divide-y">
-            {Object.entries(groupedTasks).map(([rootId, taskGroup]: [string, any[]]) => (
-              <TaskGroup
-                key={rootId}
-                rootId={rootId}
-                taskGroup={taskGroup}
-                isCollapsed={!collapsedGroups.has(rootId)}
-                onToggleCollapse={toggleGroupCollapse}
-                getStatusBadge={getStatusBadge}
-                formatDate={formatDate}
-              />
+            {pipelines.map((pipeline: PipelineStatusResponse) => (
+              <TaskGroup pipeline={pipeline} />
             ))}
           </div>
         )}
