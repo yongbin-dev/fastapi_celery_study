@@ -5,6 +5,15 @@ import os
 from celery import Celery
 from .config import settings
 
+# Celery signals 등록
+# 이 파일을 임포트하는 시점에 시그널 핸들러가 등록되도록 최상단으로 이동
+try:
+    from . import celery_signals
+    logging.info("✅ Celery signals 모듈 import 성공!")
+except ImportError as e:
+    logging.error(f"❌ Celery signals import 실패: {e}")
+
+
 # Celery 로그 설정
 def setup_celery_logging():
     """Celery 로그를 날짜별 파일로 저장하도록 설정"""
@@ -39,43 +48,23 @@ def setup_celery_logging():
     celery_handler.suffix = "%Y-%m-%d"
     
     # 기존 핸들러 제거 후 새 핸들러 추가
-    celery_logger.handlers.clear()
-    celery_logger.addHandler(celery_handler)
+    if not any(isinstance(h, TimedRotatingFileHandler) for h in celery_logger.handlers):
+        celery_logger.handlers.clear()
+        celery_logger.addHandler(celery_handler)
     
     # 워커 로거 설정
     worker_logger = logging.getLogger('celery.worker')
-    worker_handler = TimedRotatingFileHandler(
-        os.path.join(logs_dir, f'celery_worker_{current_date}.log'),
-        when='midnight',
-        interval=1,
-        backupCount=30,
-        encoding='utf-8'
-    )
-    worker_handler.setLevel(logging.INFO)
-    worker_handler.setFormatter(formatter)
-    worker_handler.suffix = "%Y-%m-%d"
-    worker_logger.handlers.clear()
-    worker_logger.addHandler(worker_handler)
+    if not any(isinstance(h, TimedRotatingFileHandler) for h in worker_logger.handlers):
+        worker_logger.handlers.clear()
+        worker_logger.addHandler(celery_handler) # 동일 핸들러 사용 가능
     
     # 태스크 로거 설정
     task_logger = logging.getLogger('celery.task')
-    task_handler = TimedRotatingFileHandler(
-        os.path.join(logs_dir, f'celery_tasks_{current_date}.log'),
-        when='midnight',
-        interval=1,
-        backupCount=30,
-        encoding='utf-8'
-    )
-    task_handler.setLevel(logging.INFO)
-    task_handler.setFormatter(formatter)
-    task_handler.suffix = "%Y-%m-%d"
-    task_logger.handlers.clear()
-    task_logger.addHandler(task_handler)
+    if not any(isinstance(h, TimedRotatingFileHandler) for h in task_logger.handlers):
+        task_logger.handlers.clear()
+        task_logger.addHandler(celery_handler) # 동일 핸들러 사용 가능
     
-    print(f"✅ Celery 날짜별 로그 파일 설정 완료: {logs_dir}")
-    print(f"   - celery_{current_date}.log")
-    print(f"   - celery_worker_{current_date}.log")
-    print(f"   - celery_tasks_{current_date}.log")
+    logging.info(f"✅ Celery 날짜별 로그 파일 설정 완료: {logs_dir}")
 
 # 로그 설정 실행
 setup_celery_logging()
@@ -118,10 +107,3 @@ celery_app.conf.update(
 
 # 태스크 자동 발견 (선택사항)
 celery_app.autodiscover_tasks()
-
-# Celery signals 등록 - 반드시 celery_app 생성 후에!
-try:
-    from . import celery_signals
-    print("✅ Celery signals 모듈 import 성공!")
-except Exception as e:
-    print(f"❌ Celery signals import 실패: {e}")
