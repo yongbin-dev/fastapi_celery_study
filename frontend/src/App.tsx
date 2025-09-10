@@ -5,6 +5,7 @@ import HomePage from '@/pages/HomePage';
 import AboutPage from '@/pages/AboutPage';
 import { ChatBotPage } from '@/features/chatbot';
 import { TaskPage } from '@/features/task';
+import TableEditor from './pages/TableEditor';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/chatbot" element={<ChatBotPage />} />
               <Route path="/tasks" element={<TaskPage />} />
+              <Route path="/sample" element={<TableEditor />} />
             </Routes>
           </main>
         </div>
