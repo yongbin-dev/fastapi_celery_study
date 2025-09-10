@@ -23,7 +23,11 @@
       "Bash(poetry run python:*)",
       "Bash(alembic history:*)",
       "Bash(docker-compose exec:*)",
-      "Bash(alembic check:*)"
+      "Bash(alembic check:*)",
+      "Bash(poetry:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(rm:*)",
+      "Bash(alembic init:*)"
     ],
     "deny": [],
     "ask": []

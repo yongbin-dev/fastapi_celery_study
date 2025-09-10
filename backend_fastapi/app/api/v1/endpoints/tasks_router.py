@@ -5,11 +5,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from ....schemas.common import ApiResponse
-from ....schemas.tasks import (
+from ....schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse
 )
 from ....core.database import get_db
-from ....services.task_service import TaskService, get_task_service
+from ....services.pipeline_service import PipelineService, get_pipeline_service
 from ....utils.response_builder import ResponseBuilder
 
 router = APIRouter()
@@ -26,8 +26,8 @@ async def image_test_task():
 
 
 @router.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
-async def get_tasks_history(
-        service: TaskService = Depends(get_task_service),
+async def get_pipeline_history(
+        service: PipelineService = Depends(get_pipeline_service),
         db: AsyncSession = Depends(get_db),
         hours: Optional[int] = Query(1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168),
         status: Optional[str] = Query(None, description="필터링할 상태"),
@@ -40,12 +40,12 @@ async def get_tasks_history(
     - 1시간 초과: DB에서 영구 데이터 조회
     """
     try:
-        result = await service.get_tasks_history(db, hours, status, task_name, limit)
+        result = await service.get_pipeline_history(db, hours, status, task_name, limit)
 
         data_source = "Redis" if hours <= 1 else "DB"
         return ResponseBuilder.success(
             data=result,
-            message=f"지난 {hours}시간 내 태스크 히스토리 조회 완료 ({data_source} 기반)"
+            message=f"지난 {hours}시간 내 파이프라인 히스토리 조회 완료 ({data_source} 기반)"
         )
 
     except Exception as e:
@@ -56,7 +56,7 @@ async def get_tasks_history(
 @router.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
 async def create_ai_pipeline(
         request: AIPipelineRequest,
-        service: TaskService = Depends(get_task_service)
+        service: PipelineService = Depends(get_pipeline_service)
 ) -> ApiResponse[AIPipelineResponse]:
     """AI 처리 파이프라인 시작"""
     try:
@@ -76,7 +76,7 @@ async def create_ai_pipeline(
 @router.get("/ai-pipeline/{pipeline_id}/status", response_model=ApiResponse[PipelineStatusResponse])
 async def get_pipeline_status(
         pipeline_id: str,
-        service: TaskService = Depends(get_task_service)
+        service: PipelineService = Depends(get_pipeline_service)
 ) -> ApiResponse[PipelineStatusResponse]:
     """AI 파이프라인 진행 상태 조회"""
     try:
@@ -104,7 +104,7 @@ async def get_pipeline_status(
 @router.delete("/ai-pipeline/{pipeline_id}/cancel")
 async def cancel_ai_pipeline(
         pipeline_id: str,
-        service: TaskService = Depends(get_task_service)
+        service: PipelineService = Depends(get_pipeline_service)
 ):
     """AI 파이프라인 취소"""
     try:
