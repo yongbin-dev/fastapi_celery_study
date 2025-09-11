@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.v1.router import api_router
 from .core.config import settings
-from .core.database import init_db, close_db
+from .core.database import close_db
 from .handlers.exception_handlers import setup_exception_handlers
 from .middleware.response_middleware import ResponseLogMiddleware
 from .utils.response_builder import ResponseBuilder
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 FastAPI 애플리케이션 시작")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
     logger.info(f"🌐 CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
-    
+
     # 데이터베이스 초기화 (선택사항)
     # try:
     #     await init_db()

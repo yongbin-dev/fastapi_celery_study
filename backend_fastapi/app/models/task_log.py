@@ -1,8 +1,7 @@
 # models/task_log.py
 from sqlalchemy import Column, String, Integer, Text, DateTime, Index
 from sqlalchemy.orm import relationship
-from datetime import datetime
-from .base import Base
+from .base import Base, seoul_now
 
 class TaskLog(Base):
     """
@@ -48,22 +47,9 @@ class TaskLog(Base):
     # 재시도 정보
     retries = Column(Integer, default=0, comment="재시도 횟수")
     
-    # 메타데이터
-    created_at = Column(
-        DateTime, 
-        default=datetime.utcnow, 
-        index=True,
-        comment="레코드 생성 시간"
-    )
-    updated_at = Column(
-        DateTime, 
-        default=datetime.utcnow, 
-        onupdate=datetime.utcnow,
-        comment="레코드 수정 시간"
-    )
     
     # 관계 설정
-    metadata = relationship(
+    task_metadata = relationship(
         "TaskMetadata", 
         back_populates="task", 
         uselist=False, 

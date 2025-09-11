@@ -27,7 +27,9 @@
       "Bash(poetry:*)",
       "Bash(.venv/bin/python:*)",
       "Bash(rm:*)",
-      "Bash(alembic init:*)"
+      "Bash(alembic init:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(PYTHONPATH=. python3:*)"
     ],
     "deny": [],
     "ask": []

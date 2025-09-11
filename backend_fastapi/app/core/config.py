@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Database 설정
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
+    
+    # Pipeline 설정
+    PIPELINE_TTL: int = 3600  # Redis에서 파이프라인 데이터 TTL (초)
 
     class Config:
         env_file = get_env_file()

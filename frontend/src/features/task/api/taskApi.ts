@@ -82,7 +82,7 @@ export const taskApi = {
     pipelineId: string
   ): Promise<PipelineStatusResponse> => {
     const response = await api.get<PipelineStatusResponse>(
-      `/api/v1/tasks/ai-pipeline/${pipelineId}/status`
+      `/api/v1/tasks/ai-pipeline/${pipelineId}/tasks`
     );
     return response.data;
   },

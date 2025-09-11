@@ -1,345 +1,359 @@
-# app/core/celery_signals.py
-
-import asyncio
+# celery_signals.py
+import json
 import logging
-import threading
-from contextlib import asynccontextmanager
-from typing import Any, Generator, Optional
+from datetime import datetime, timedelta
 
-from celery import signals, Task
-from celery.result import EagerResult
-from sqlalchemy.orm import sessionmaker, selectinload
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from celery.signals import (
+    task_prerun,
+    task_success,
+    task_failure,
+    task_retry,
+    task_revoked,
+    worker_ready,
+    worker_shutdown,
+    heartbeat_sent,
+    before_task_publish
+)
+from sqlalchemy.exc import SQLAlchemyError
 
-from app.models.pipeline_execution import PipelineExecution
-from app.models.pipeline_stage import PipelineStage
+from app.core.database import SyncSessionLocal
+from app.models.base import seoul_now
+from ..models import (
+    TaskLog, TaskMetadata, TaskExecutionHistory,
+    TaskResult, WorkerStatus, QueueStats
+)
+from ..models.chain_execution import ChainExecution
 
+# 로거 설정
 logger = logging.getLogger(__name__)
 
-# --- 스레드-안전 DB 초기화 로직 ---
-
-# 각 스레드가 자신만의 엔진과 세션메이커를 갖도록 스레드-로컬 저장소 사용
-thread_local = threading.local()
-
-def get_thread_safe_session_maker() -> sessionmaker:
-    """현재 스레드에 대한 세션 메이커를 반환하거나 새로 생성합니다."""
-    if not hasattr(thread_local, "session_maker"):
-        logger.info(f"[DB INIT] Creating new engine and session maker for thread {threading.get_ident()}.")
-        from app.core.config import settings
-        try:
-            engine = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True, echo=False)
-            thread_local.session_maker = sessionmaker(
-                bind=engine, class_=AsyncSession, expire_on_commit=False
-            )
-        except Exception as e:
-            logger.error(f"[DB INIT] ❌ Failed to create engine/session for thread {threading.get_ident()}: {e}", exc_info=True)
-            raise
-    return thread_local.session_maker
-
-
-@asynccontextmanager
-async def get_async_db_session() -> Generator[AsyncSession, None, None]:
-    """스레드에 안전한 비동기 데이터베이스 세션을 제공하는 컨텍스트 관리자."""
-    session_maker = get_thread_safe_session_maker()
-    db: Optional[AsyncSession] = None
+# 데이터베이스 세션 헬퍼
+def get_db_session():
+    """DB 세션 생성 헬퍼"""
     try:
-        db = session_maker()
-        yield db
+        return SyncSessionLocal()
     except Exception as e:
-        logger.error(f"[DB SESSION] Error during database session in thread {threading.get_ident()}: {e}", exc_info=True)
-        if db:
-            await db.rollback()
-        raise
-    finally:
-        if db:
-            await db.close()
+        logger.error(f"DB 세션 생성 실패: {e}")
+        return None
 
-
-def run_async_in_sync(coro):
-    """동기 컨텍스트에서 비동기 코루틴을 실행하고 결과를 반환합니다."""
+def safe_json_dumps(data):
+    """안전한 JSON 직렬화"""
     try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coro)
+        return json.dumps(data, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return json.dumps(str(data))
 
+def get_worker_name(sender=None):
+    """안전하게 워커 이름 가져오기"""
+    try:
+        # 다양한 경로로 hostname 시도
+        if hasattr(sender, 'hostname'):
+            return sender.hostname
+        elif hasattr(sender, 'consumer') and hasattr(sender.consumer, 'hostname'):
+            return sender.consumer.hostname
+        elif hasattr(sender, 'request') and hasattr(sender.request, 'hostname'):
+            return sender.request.hostname
+        else:
+            # 마지막 대안: 시스템 hostname 사용
+            import socket
+            return f"celery@{socket.gethostname()}"
+    except Exception:
+        return "unknown_worker"
 
-# --- 비동기 헬퍼 함수 ---
+def get_chain_id_from_args(args):
+    """task args에서 chain_id 추출"""
+    try:
+        if args and len(args) > 0:
+            # args[0]이 chain_id인 경우 (UUID 문자열)
+            chain_id_str = str(args[0])
+            if len(chain_id_str) == 36 and chain_id_str.count('-') == 4:  # UUID 형태 확인
+                return chain_id_str
+        return None
+    except Exception:
+        return None
 
-async def _handle_prerun(task: Task):
-    """prerun 핸들러의 모든 비동기 로직을 포함하는 단일 진입점"""
-    # 첫 태스크인 경우, 초기 레코드 생성
-    if task.request.id == task.request.root_id:
-        await _create_initial_pipeline_records(task)
-    
-    # 현재 스테이지 상태를 STARTED로 업데이트
-    await _update_stage_status(task, "STARTED")
-
-
-async def _create_initial_pipeline_records(task: Task):
-    """체인의 첫 태스크일 때 PipelineExecution과 모든 Stage 레코드를 생성"""
-    root_id = task.request.root_id
-    logger.info(f"[_create_initial_pipeline_records] Triggered for task {task.request.id} with root_id {root_id}.")
-
-    if not task.request.chain:
-        logger.info(f"[_create_initial_pipeline_records] Task {task.request.id} has no chain. Skipping.")
-        return
-
-    logger.info(f"[_create_initial_pipeline_records] Chain detected. Proceeding to create records for root_id {root_id}.")
-    async with get_async_db_session() as db:
-        try:
-            existing = await db.execute(select(PipelineExecution).filter_by(execution_id=root_id))
-            if existing.scalars().first():
-                logger.warning(f"[_create_initial_pipeline_records] PipelineExecution for {root_id} already exists. Skipping creation.")
-                return
-
-            logger.info(f"[_create_initial_pipeline_records] Creating new PipelineExecution for {root_id}.")
-            execution = PipelineExecution(execution_id=root_id, status="STARTED", overall_progress=0)
-            db.add(execution)
-            await db.flush()
-
-            all_stage_names = [task.name] + [t['task'] for t in task.request.chain]
-            logger.info(f"[_create_initial_pipeline_records] Creating {len(all_stage_names)} PENDING stages.")
-            for i, stage_name in enumerate(all_stage_names, 1):
-                stage = PipelineStage(
-                    pipeline_execution_id=execution.id,
-                    stage_number=i,
-                    stage_name=stage_name,
-                    status="PENDING",
-                    progress=0
-                )
-                db.add(stage)
-            
-            await db.commit()
-            logger.info(f"[_create_initial_pipeline_records] ✅ Successfully committed PipelineExecution and Stages for {root_id}.")
-
-        except Exception as e:
-            logger.error(f"[_create_initial_pipeline_records] ❌ Error creating records for {root_id}: {e}", exc_info=True)
-            await db.rollback()
-
-
-async def _update_stage_status(task: Task, status: str, error_info: Optional[str] = None):
-    """특정 스테이지의 상태를 업데이트"""
-    root_id = task.request.root_id
-    task_name = task.name
-    logger.info(f"[_update_stage_status] Triggered for task {task.request.id} ({task_name}) with status {status}.")
-
-    if not root_id:
-        logger.warning(f"[_update_stage_status] Task {task.request.id} is not part of a chain (no root_id). Skipping update.")
-        return
-
-    async with get_async_db_session() as db:
-        try:
-            query = select(PipelineExecution).options(selectinload(PipelineExecution.stages)).filter(PipelineExecution.execution_id == root_id)
-            result = await db.execute(query)
-            execution = result.scalars().first()
-
-            if not execution:
-                logger.error(f"[_update_stage_status] ❌ PipelineExecution NOT FOUND for root_id {root_id}. Cannot update status.")
-                return
-
-            logger.info(f"[_update_stage_status] Found PipelineExecution {root_id}. Searching for stage {task_name}.")
-            target_stage = next((s for s in execution.stages if s.stage_name == task_name), None)
-
-            if not target_stage:
-                logger.error(f"[_update_stage_status] ❌ PipelineStage NOT FOUND for task {task_name} in execution {root_id}. Cannot update status.")
-                return
-
-            logger.info(f"[_update_stage_status] Found stage {target_stage.stage_number}. Updating status to {status}.")
-            target_stage.status = status
-            if status == "STARTED":
-                target_stage.started_at = datetime.utcnow()
-                execution.status = "PROGRESS"
-                execution.current_step = target_stage.stage_number
-            elif status in ["SUCCESS", "FAILURE"]:
-                target_stage.completed_at = datetime.utcnow()
-                if status == "SUCCESS":
-                    target_stage.progress = 100
-                else: # FAILURE
-                    execution.status = "FAILURE"
-                    execution.error_traceback = error_info
-                    target_stage.error_message = error_info
-
-            completed_stages = sum(1 for s in execution.stages if s.status == "SUCCESS")
-            total_stages = len(execution.stages)
-            if total_stages > 0:
-                execution.overall_progress = int((completed_stages / total_stages) * 100)
-                if completed_stages == total_stages:
-                    execution.status = "SUCCESS"
-            
-            await db.commit()
-            logger.info(f"[_update_stage_status] ✅ Successfully committed status {status} for stage {target_stage.stage_number} in {root_id}.")
-
-        except Exception as e:
-            logger.error(f"[_update_stage_status] ❌ Error updating stage status for {task_name} in {root_id}: {e}", exc_info=True)
-            await db.rollback()
-
-
-# --- 시그널 핸들러 ---
-
-@signals.task_prerun.connect(weak=False)
-def task_prerun_handler(task: Task, **kwargs: Any):
-    logger.debug(f"[task_prerun] Received for task: {task.name}[{task.request.id}]")
-    if not hasattr(task, 'request') or isinstance(task.request, EagerResult):
-        return
-    
-    run_async_in_sync(_handle_prerun(task))
-
-
-@signals.task_success.connect(weak=False)
-def task_success_handler(sender: Task, **kwargs: Any):
-    logger.info(f"[task_success] Received for task: {sender.name}[{sender.request.id}]")
-    if not hasattr(sender, 'request') or isinstance(sender.request, EagerResult):
-        return
-    run_async_in_sync(_update_stage_status(sender, "SUCCESS"))
-
-
-@signals.task_failure.connect(weak=False)
-def task_failure_handler(sender: Task, einfo: Any, **kwargs: Any):
-    logger.error(f"[task_failure] Received for task: {sender.name}[{sender.request.id}]")
-    if not hasattr(sender, 'request') or isinstance(sender.request, EagerResult):
-        return
-    run_async_in_sync(_update_stage_status(sender, "FAILURE", error_info=str(einfo)))
-
-
-async def _create_initial_pipeline_records(task: "Task"):
-    """체인의 첫 태스크일 때 PipelineExecution과 모든 Stage 레코드를 생성"""
-    root_id = task.request.root_id
-    logger.info(f"[_create_initial_pipeline_records] Triggered for task {task.request.id} with root_id {root_id}.")
-
-    if not task.request.chain:
-        logger.info(f"[_create_initial_pipeline_records] Task {task.request.id} has no chain. Skipping.")
-        return
-
-    logger.info(f"[_create_initial_pipeline_records] Chain detected. Proceeding to create records for root_id {root_id}.")
-    async with get_async_db_session() as db:
-        try:
-            existing = await db.execute(select(PipelineExecution).filter_by(execution_id=root_id))
-            if existing.scalars().first():
-                logger.warning(f"[_create_initial_pipeline_records] PipelineExecution for {root_id} already exists. Skipping creation.")
-                return
-
-            logger.info(f"[_create_initial_pipeline_records] Creating new PipelineExecution for {root_id}.")
-            execution = PipelineExecution(execution_id=root_id, status="STARTED", overall_progress=0)
-            db.add(execution)
-            await db.flush()
-
-            all_stage_names = [task.name] + [t['task'] for t in task.request.chain]
-            logger.info(f"[_create_initial_pipeline_records] Creating {len(all_stage_names)} PENDING stages.")
-            for i, stage_name in enumerate(all_stage_names, 1):
-                stage = PipelineStage(
-                    pipeline_execution_id=execution.id,
-                    stage_number=i,
-                    stage_name=stage_name,
-                    status="PENDING",
-                    progress=0
-                )
-                db.add(stage)
-            
-            await db.commit()
-            logger.info(f"[_create_initial_pipeline_records] ✅ Successfully committed PipelineExecution and Stages for {root_id}.")
-
-        except Exception as e:
-            logger.error(f"[_create_initial_pipeline_records] ❌ Error creating records for {root_id}: {e}", exc_info=True)
-            await db.rollback()
-
-
-async def _update_stage_status(task: "Task", status: str, error_info: Optional[str] = None):
-    """특정 스테이지의 상태를 업데이트"""
-    root_id = task.request.root_id
-    task_name = task.name
-    logger.info(f"[_update_stage_status] Triggered for task {task.request.id} ({task_name}) with status {status}.")
-
-    if not root_id:
-        logger.warning(f"[_update_stage_status] Task {task.request.id} is not part of a chain (no root_id). Skipping update.")
-        return
-
-    async with get_async_db_session() as db:
-        try:
-            query = select(PipelineExecution).options(selectinload(PipelineExecution.stages)).filter(PipelineExecution.execution_id == root_id)
-            result = await db.execute(query)
-            execution = result.scalars().first()
-
-            if not execution:
-                logger.error(f"[_update_stage_status] ❌ PipelineExecution NOT FOUND for root_id {root_id}. Cannot update status.")
-                return
-
-            logger.info(f"[_update_stage_status] Found PipelineExecution {root_id}. Searching for stage {task_name}.")
-            target_stage = next((s for s in execution.stages if s.stage_name == task_name), None)
-
-            if not target_stage:
-                logger.error(f"[_update_stage_status] ❌ PipelineStage NOT FOUND for task {task_name} in execution {root_id}. Cannot update status.")
-                return
-
-            logger.info(f"[_update_stage_status] Found stage {target_stage.stage_number}. Updating status to {status}.")
-            target_stage.status = status
-            if status == "STARTED":
-                target_stage.started_at = datetime.utcnow()
-                execution.status = "PROGRESS"
-                execution.current_step = target_stage.stage_number
-            elif status in ["SUCCESS", "FAILURE"]:
-                target_stage.completed_at = datetime.utcnow()
-                if status == "SUCCESS":
-                    target_stage.progress = 100
-                else: # FAILURE
-                    execution.status = "FAILURE"
-                    execution.error_traceback = error_info
-                    target_stage.error_message = error_info
-
-            completed_stages = sum(1 for s in execution.stages if s.status == "SUCCESS")
-            total_stages = len(execution.stages)
-            if total_stages > 0:
-                execution.overall_progress = int((completed_stages / total_stages) * 100)
-                if completed_stages == total_stages:
-                    execution.status = "SUCCESS"
-            
-            await db.commit()
-            logger.info(f"[_update_stage_status] ✅ Successfully committed status {status} for stage {target_stage.stage_number} in {root_id}.")
-
-        except Exception as e:
-            logger.error(f"[_update_stage_status] ❌ Error updating stage status for {task_name} in {root_id}: {e}", exc_info=True)
-            await db.rollback()
-
-
-# --- Signal Handlers ---
-
-@signals.task_prerun.connect(weak=False)
-def task_prerun_handler(task: "Task", **kwargs: Any) -> None:
-    logger.debug(f"[task_prerun] Received for task: {task.name}[{task.request.id}]")
-    if not hasattr(task, 'request') or isinstance(task.request, EagerResult):
-        return
+def update_chain_execution(session, chain_id_str, task_name, status, error_message=None):
+    """ChainExecution 테이블 업데이트"""
+    try:
+        if not chain_id_str:
+            return
         
-    if task.request.id == task.request.root_id:
-        logger.info(f"[task_prerun] First task in chain detected. Creating initial records for {task.request.root_id}.")
-        run_async_in_sync(_create_initial_pipeline_records(task))
+        # chain_id로 ChainExecution 찾기
+        chain_execution = session.query(ChainExecution).filter_by(
+            chain_id=chain_id_str
+        ).first()
+        
+        if not chain_execution:
+            logger.warning(f"ChainExecution을 찾을 수 없음: {chain_id_str}")
+            return
+        
+        # 작업 진행 상황 업데이트
+        if status == 'SUCCESS':
+            chain_execution.increment_completed_tasks()
+            logger.info(f"Chain {chain_id_str}: 완료된 작업 수 증가 ({chain_execution.completed_tasks}/{chain_execution.total_tasks})")
+        elif status == 'FAILURE':
+            chain_execution.increment_failed_tasks()
+            if error_message:
+                chain_execution.error_message = error_message
+            logger.info(f"Chain {chain_id_str}: 실패한 작업 수 증가 ({chain_execution.failed_tasks})")
+        
+        # 전체 체인 상태 확인 및 업데이트
+        if chain_execution.completed_tasks + chain_execution.failed_tasks >= chain_execution.total_tasks:
+            # 모든 작업이 완료된 경우
+            if chain_execution.failed_tasks > 0:
+                chain_execution.complete_execution(success=False, error_message=error_message)
+                logger.info(f"Chain {chain_id_str}: 전체 체인 실패로 완료")
+            else:
+                chain_execution.complete_execution(success=True)
+                logger.info(f"Chain {chain_id_str}: 전체 체인 성공적으로 완료")
+        
+        session.commit()
+        
+    except Exception as e:
+        logger.error(f"ChainExecution 업데이트 실패 (chain_id: {chain_id_str}): {e}")
+        session.rollback()
 
-    logger.info(f"[task_prerun] Updating stage status to STARTED for {task.name}.")
-    run_async_in_sync(_update_stage_status(task, "STARTED"))
+# 작업 관련 신호 처리
 
-
-@signals.task_success.connect(weak=False)
-def task_success_handler(sender: "Task", **kwargs: Any) -> None:
-    logger.info(f"[task_success] Received for task: {sender.name}[{sender.request.id}]")
-    if not hasattr(sender, 'request') or isinstance(sender.request, EagerResult):
+@before_task_publish.connect
+def task_publish_handler(sender=None, headers=None, body=None, properties=None, **kwargs):
+    """작업 발행 전 처리"""
+    logger.info(f"🚀 SIGNAL: before_task_publish 수신 - sender: {sender}")
+    session = get_db_session()
+    if not session:
+        logger.error("❌ DB 세션 생성 실패 - before_task_publish")
         return
-    run_async_in_sync(_update_stage_status(sender, "SUCCESS"))
+    
+    try:
+        pass
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"❌ 작업 발행 처리 실패 (SQLAlchemy): {e}")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"❌ 작업 발행 처리 실패 (기타): {e}")
+    finally:
+        session.close()
 
-
-@signals.task_failure.connect(weak=False)
-def task_failure_handler(sender: Task, einfo: Any, **kwargs: Any) -> None:
-    logger.error(f"[task_failure] Received for task: {sender.name}[{sender.request.id}]")
-    if not hasattr(sender, 'request') or isinstance(sender.request, EagerResult):
+@task_prerun.connect
+def task_prerun_handler(task_id=None, task=None, args=None, kwargs=None, **kwds):
+    """작업 실행 전 처리"""
+    logger.info(f"🏃 SIGNAL: task_prerun 수신 - task_id: {task_id}")
+    session = get_db_session()
+    if not session:
+        logger.error("❌ DB 세션 생성 실패 - task_prerun")
         return
-    run_async_in_sync(_update_stage_status(sender, "FAILURE", error_info=str(einfo)))
+    
+    try:
+        pass
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"❌ 작업 시작 처리 실패 (SQLAlchemy): {e}")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"❌ 작업 시작 처리 실패 (기타): {e}")
+    finally:
+        session.close()
 
+@task_success.connect
+def task_success_handler(sender=None, result=None, **kwargs):
+    """작업 성공 처리"""
+    logger.info(f"✅ SIGNAL: task_success 수신")
+    session = get_db_session()
+    if not session:
+        logger.error("❌ DB 세션 생성 실패 - task_success")
+        return
+    
+    try:
+        pass
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"❌ 작업 성공 처리 실패 (SQLAlchemy): {e}")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"❌ 작업 성공 처리 실패 (기타): {e}")
+    finally:
+        session.close()
 
-@signals.worker_ready.connect(weak=False)
-def worker_ready_handler(**kwargs: Any) -> None:
-    logger.info("Celery worker is ready.")
+@task_failure.connect
+def task_failure_handler(sender=None, task_id=None, exception=None, traceback=None, einfo=None, **kwargs):
+    """작업 실패 처리"""
+    logger.info(f"❌ SIGNAL: task_failure 수신 - task_id: {task_id}")
+    session = get_db_session()
+    if not session:
+        logger.error("❌ DB 세션 생성 실패 - task_failure")
+        return
+    
+    try:
+        pass
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"작업 실패 처리 실패: {e}")
+    finally:
+        session.close()
 
+@task_retry.connect
+def task_retry_handler(sender=None, task_id=None, reason=None, einfo=None, **kwargs):
+    """작업 재시도 처리"""
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        pass
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"작업 재시도 처리 실패: {e}")
+    finally:
+        session.close()
 
-@signals.worker_shutdown.connect(weak=False)
-def worker_shutdown_handler(**kwargs: Any) -> None:
-    logger.info("Celery worker is shutting down.")
+@task_revoked.connect
+def task_revoked_handler(sender=None, request=None, reason=None, **kwargs):
+    """작업 취소 처리"""
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        pass
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"작업 취소 처리 실패: {e}")
+    finally:
+        session.close()
+
+# 워커 관련 신호 처리
+
+@worker_ready.connect
+def worker_ready_handler(sender=None, **kwargs):
+    """워커 준비 완료 처리"""
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        pass
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"워커 준비 처리 실패: {e}")
+    finally:
+        session.close()
+
+@worker_shutdown.connect
+def worker_shutdown_handler(sender=None, **kwargs):
+    """워커 종료 처리"""
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        pass
+
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"워커 종료 처리 실패: {e}")
+    finally:
+        session.close()
+
+@heartbeat_sent.connect
+def heartbeat_handler(sender=None, **kwargs):
+    """하트비트 처리"""
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        pass
+        
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.error(f"하트비트 처리 실패: {e}")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"하트비트 처리 중 예상치 못한 오류: {e}")
+    finally:
+        session.close()
+
+# 유틸리티 함수 및 스케줄 작업
+
+def collect_queue_stats():
+    """큐 통계 수집 작업"""
+    from celery import current_app
+    session = get_db_session()
+    if not session:
+        return
+    
+    try:
+        inspect = current_app.control.inspect()
+        
+        # 활성 작업 조회
+        active_tasks = inspect.active()
+        reserved_tasks = inspect.reserved()
+        scheduled_tasks = inspect.scheduled()
+        
+        for worker_name, tasks in (active_tasks or {}).items():
+            # QueueStats 업데이트
+            queue_stat = session.query(QueueStats).filter_by(
+                queue_name='celery',
+                worker_name=worker_name
+            ).first()
+            
+            if not queue_stat:
+                queue_stat = QueueStats(
+                    queue_name='celery',
+                    worker_name=worker_name,
+                    active_tasks=len(tasks),
+                    reserved_tasks=len(reserved_tasks.get(worker_name, [])),
+                    scheduled_tasks=len(scheduled_tasks.get(worker_name, []))
+                )
+                session.add(queue_stat)
+            else:
+                queue_stat.active_tasks = len(tasks)
+                queue_stat.reserved_tasks = len(reserved_tasks.get(worker_name, []))
+                queue_stat.scheduled_tasks = len(scheduled_tasks.get(worker_name, []))
+                queue_stat.last_updated = seoul_now()
+        
+        session.commit()
+        logger.debug("큐 통계 수집 완료")
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"큐 통계 수집 실패: {e}")
+    finally:
+        session.close()
+
+def get_task_statistics(session):
+    """작업 통계 조회"""
+    try:
+        stats = session.query(TaskLog.status, session.query(TaskLog).filter_by(status=TaskLog.status).count())\
+            .group_by(TaskLog.status).all()
+        
+        return {status: count for status, count in stats}
+    except Exception as e:
+        logger.error(f"작업 통계 조회 실패: {e}")
+        return {}
+
+def cleanup_old_records(session, days=30):
+    """오래된 레코드 정리"""
+    try:
+        cutoff_date = seoul_now() - timedelta(days=days)
+        
+        # 완료된 작업의 오래된 레코드 삭제
+        deleted_count = session.query(TaskLog)\
+            .filter(TaskLog.completed_at < cutoff_date)\
+            .filter(TaskLog.status.in_(['SUCCESS', 'FAILURE', 'REVOKED']))\
+            .delete()
+        
+        session.commit()
+        logger.info(f"오래된 작업 레코드 {deleted_count}개 정리됨")
+        
+        return deleted_count
+    except Exception as e:
+        logger.error(f"레코드 정리 실패: {e}")
+        session.rollback()
+        return 0
+

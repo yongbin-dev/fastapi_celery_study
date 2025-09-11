@@ -116,6 +116,32 @@ export interface ModelTestResponse {
   };
 }
 
+// 체인 실행 스테이지 타입
+export interface ChainExecutionStage {
+  chain_id: string;
+  stage: number;
+  stage_name: string;
+  task_id: string | null;
+  status: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE';
+  progress: number;
+  created_at: number;
+  started_at: number;
+  updated_at: number;
+  error_message: string | null;
+  description: string;
+  expected_duration: string;
+}
+
+// 파이프라인 상태 응답 타입
+export interface PipelineStatusResponse {
+  chain_id: string;
+  total_stages: number;
+  current_stage: number | null;
+  overall_progress: number;
+  stages: ChainExecutionStage[];
+}
+
+// 기존 호환성을 위한 레거시 타입들 (필요시 제거 예정)
 export interface TaskStatusResponse {
   task_id: string;
   status: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE';
@@ -127,12 +153,11 @@ export interface TaskStatusResponse {
   progress: number;
 }
 
-export interface PipelineStatusResponse {
+export interface LegacyPipelineStatusResponse {
   pipeline_id: string;
   overall_state: string;
   total_steps: number;
   current_stage: number;
   start_time: string;
-
   tasks: TaskStatusResponse[];
 }

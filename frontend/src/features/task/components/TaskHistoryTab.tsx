@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useHistoryTasks } from '../hooks';
 import type { PipelineStatusResponse, TaskHistoryRequest } from '../types';
-import { TaskGroup } from './history';
 
 export const TaskHistoryTab: React.FC = () => {
   const [searchParams, setSearchParams] = useState<TaskHistoryRequest>({
@@ -12,9 +11,6 @@ export const TaskHistoryTab: React.FC = () => {
   });
 
   const { data: pipelines = [], isLoading, refetch } = useHistoryTasks(searchParams);
-
-
-
   const handleSearchChange = (field: string, value: string | number) => {
     setSearchParams(prev => ({
       ...prev,
@@ -158,8 +154,12 @@ export const TaskHistoryTab: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y">
-            {pipelines.map((pipeline: PipelineStatusResponse) => (
-              <TaskGroup pipeline={pipeline} />
+            {pipelines.map((pipeline: PipelineStatusResponse, index) => (
+              <></>
+              // <TaskGroup
+              //   key={pipeline.length > 0 ? pipeline[0].chain_id : `pipeline-${index}`}
+              //   pipeline={pipeline}
+              // />
             ))}
           </div>
         )}

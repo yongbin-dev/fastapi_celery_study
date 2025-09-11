@@ -1,8 +1,7 @@
 # models/task_metadata.py
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
-from datetime import datetime
-from .base import Base
+from .base import Base, seoul_now
 
 class TaskMetadata(Base):
     """
@@ -68,15 +67,9 @@ class TaskMetadata(Base):
         comment="루트 작업 ID (워크플로우)"
     )
     
-    # 메타데이터
-    created_at = Column(
-        DateTime, 
-        default=datetime.utcnow,
-        comment="레코드 생성 시간"
-    )
     
     # 관계 설정
-    task = relationship("TaskLog", back_populates="metadata")
+    task = relationship("TaskLog", back_populates="task_metadata")
     
     # 인덱스 정의
     __table_args__ = (
@@ -90,12 +83,12 @@ class TaskMetadata(Base):
     @property
     def is_scheduled(self):
         """예약된 작업 여부"""
-        return self.eta is not None and self.eta > datetime.utcnow()
+        return self.eta is not None and self.eta > seoul_now()
     
     @property
     def is_expired(self):
         """만료된 작업 여부"""
-        return self.expires is not None and self.expires < datetime.utcnow()
+        return self.expires is not None and self.expires < seoul_now()
     
     @property
     def is_child_task(self):

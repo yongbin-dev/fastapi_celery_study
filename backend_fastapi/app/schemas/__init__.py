@@ -1,13 +1,13 @@
 # schemas/__init__.py
 
 # Enums
-from .enums import TaskStatus, StageStatus, PipelineStage
+from .enums import  ProcessStatus
 
 # Stage models
 from .stage import StageInfo
 
 # Response models
-from .responses import TaskStatusResponse, PipelineStatusResponse
+from .responses import TaskStatusResponse, PipelineStatusResponse, PipelineStagesResponse, StageDetailResponse
 
 # Pipeline models
 from .pipeline import AIPipelineRequest, AIPipelineResponse
@@ -15,9 +15,7 @@ from .pipeline import AIPipelineRequest, AIPipelineResponse
 # Export all for backward compatibility
 __all__ = [
     # Enums
-    "TaskStatus",
-    "StageStatus", 
-    "PipelineStage",
+    "ProcessStatus",
     
     # Stage
     "StageInfo",
@@ -25,6 +23,8 @@ __all__ = [
     # Responses
     "TaskStatusResponse",
     "PipelineStatusResponse",
+    "PipelineStagesResponse",
+    "StageDetailResponse",
     
     # Pipeline
     "AIPipelineRequest",

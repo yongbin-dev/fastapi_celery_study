@@ -8,7 +8,7 @@ from starlette.responses import JSONResponse
 
 from ..exceptions.base import BaseBusinessException
 from ..utils.response_builder import ResponseBuilder
-
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,8 @@ def setup_exception_handlers(app: FastAPI):
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        logger.error(f"에러 발생: {traceback.format_exc()}")
+
         logger.error(
             f"🔴 HTTP Exception | "
             f"Path: {request.url.path} | "
@@ -102,13 +104,16 @@ def setup_exception_handlers(app: FastAPI):
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         """예상치 못한 모든 에러 처리"""
-        logger.error(
-            f"🔴 Unexpected Error | "
-            f"Path: {request.url.path} | "
-            f"Type: {type(exc).__name__} | "
-            f"Message: {str(exc)}",
-            exc_info=True  # 스택 트레이스 포함
-        )
+
+        logger.error(f"에러 발생: {traceback.format_exc()}")
+
+        # logger.error(
+        #     f"🔴 Unexpected Error | "
+        #     f"Path: {request.url.path} | "
+        #     f"Type: {type(exc).__name__} | "
+        #     f"Message: {str(exc)}",
+        #     exc_info=True  # 스택 트레이스 포함
+        # )
 
         error_response = ResponseBuilder.error(
             message="서버 내부 오류가 발생했습니다",

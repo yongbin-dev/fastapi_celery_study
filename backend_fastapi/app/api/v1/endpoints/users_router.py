@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ....models.user import User
 from ....schemas.user import UserCreateRequest, UserUpdateRequest, UserResponse
-from ....dependencies import get_database
+from ....core.database import get_db
 from ....services.user_service import UserService, get_user_service
 from ....utils.response_builder import ResponseBuilder
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 async def create_user(
     user_data: UserCreateRequest,
     service: UserService = Depends(get_user_service),
-    db: AsyncSession = Depends(get_database)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     새로운 사용자 생성
@@ -32,7 +32,7 @@ async def get_users(
         skip: int = 0,
         limit: int = 100,
         service: UserService = Depends(get_user_service),
-        db: AsyncSession = Depends(get_database)
+        db: AsyncSession = Depends(get_db)
 ):
     """
     사용자 목록 조회 (예시 엔드포인트)
@@ -48,7 +48,7 @@ async def get_users(
 async def get_user(
         user_id: int,
         service: UserService = Depends(get_user_service),
-        db: AsyncSession = Depends(get_database)
+        db: AsyncSession = Depends(get_db)
 ):
     """
     특정 사용자 조회 (예시 엔드포인트)
@@ -65,7 +65,7 @@ async def update_user(
         user_id: int,
         user_data: UserUpdateRequest,
         service: UserService = Depends(get_user_service),
-        db: AsyncSession = Depends(get_database)
+        db: AsyncSession = Depends(get_db)
 ):
     """
     사용자 정보 수정
@@ -81,7 +81,7 @@ async def update_user(
 async def delete_user(
         user_id: int,
         service: UserService = Depends(get_user_service),
-        db: AsyncSession = Depends(get_database)
+        db: AsyncSession = Depends(get_db)
 ):
     """
     사용자 삭제

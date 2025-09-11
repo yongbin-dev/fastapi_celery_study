@@ -1,7 +1,8 @@
 # app/core/database.py
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 from .config import settings
 
 # 비동기 엔진 생성 (서울 시간대 설정)
@@ -25,6 +26,22 @@ engine = create_async_engine(
 AsyncSessionLocal = sessionmaker(
     bind=engine,
     class_=AsyncSession,
+    expire_on_commit=False
+)
+
+# 동기 엔진 생성 (Celery signal용)
+sync_database_url = database_url.replace('postgresql+asyncpg://', 'postgresql://')
+sync_engine = create_engine(
+    sync_database_url,
+    echo=settings.DB_ECHO,
+    pool_size=20,
+    max_overflow=0
+)
+
+# 동기 세션 팩토리
+SyncSessionLocal = sessionmaker(
+    bind=sync_engine,
+    class_=Session,
     expire_on_commit=False
 )
 
