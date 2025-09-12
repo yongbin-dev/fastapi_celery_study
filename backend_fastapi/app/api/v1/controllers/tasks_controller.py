@@ -1,38 +1,34 @@
-# app/api/v1/endpoints/tasks_router.py
+# app/api/v1/controllers/tasks_controller.py
 from typing import Optional
 
 from fastapi import APIRouter, Depends
 from fastapi.params import Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from ....schemas import (
+from app.core.database import get_db
+from app.schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
     PipelineStagesResponse, StageDetailResponse
 )
-from ....schemas.common import ApiResponse
-from ....services.pipeline_service import PipelineService, get_pipeline_service
-from ....utils.response_builder import ResponseBuilder
+from app.schemas.common import ApiResponse
+from app.services.pipeline_service import get_pipeline_service
+from app.services.status_manager import RedisPipelineStatusManager
+from app.utils.response_builder import ResponseBuilder
 
-router = APIRouter()
+controller = APIRouter()
 
-
-@router.post("/model-test")
-async def image_test_task():
-    return ResponseBuilder.success(
-        data={
-        },
-        message=""
-    )
-
-
-@router.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
+@controller.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
 async def get_pipeline_history(
-        service: PipelineService = Depends(get_pipeline_service),
+        service = Depends(get_pipeline_service),
+        db: AsyncSession = Depends(get_db),
         hours: Optional[int] = Query(1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168),
         status: Optional[str] = Query(None, description="필터링할 상태"),
         task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
         limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000)
 ) -> ApiResponse[list[PipelineStatusResponse]]:
-    result = await service.get_pipeline_history(hours=hours, status=status, task_name=task_name, limit=limit)
+    result = await service.get_pipeline_history(
+        db=db,  hours=hours, status=status, task_name=task_name, limit=limit
+    )
 
     data_source = "Redis" if hours <= 1 else "DB"
     return ResponseBuilder.success(
@@ -42,13 +38,15 @@ async def get_pipeline_history(
 
 
 # AI 파이프라인 엔드포인트들
-@router.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
+@controller.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
 async def create_ai_pipeline(
         request: AIPipelineRequest,
-        service: PipelineService = Depends(get_pipeline_service),
+        service = Depends(get_pipeline_service),
+        status_manager = Depends(RedisPipelineStatusManager),
+        db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[AIPipelineResponse]:
     """AI 처리 파이프라인 시작"""
-    result = await service.create_ai_pipeline(request)
+    result = await service.create_ai_pipeline(db=db, status_manager=status_manager, request=request)
 
     return ResponseBuilder.success(
         data=result,
@@ -58,14 +56,15 @@ async def create_ai_pipeline(
 
 # 기존 엔드포인트는 하단의 새로운 배열 기반 엔드포인트로 대체됨
 
-@router.delete("/ai-pipeline/{chain_id}/cancel")
+@controller.delete("/ai-pipeline/{chain_id}/cancel")
 async def cancel_ai_pipeline(
         chain_id: str,
-        service: PipelineService = Depends(get_pipeline_service)
+        service = Depends(get_pipeline_service),
+        status_manager = Depends(RedisPipelineStatusManager),
 ):
     """파이프라인 취소 및 데이터 삭제"""
-    result = service.cancel_pipeline(chain_id)
-    
+    result = service.cancel_pipeline(status_manager=status_manager, chain_id=chain_id)
+
     return ResponseBuilder.success(
         data={
             "chain_id": result["chain_id"],
@@ -75,28 +74,29 @@ async def cancel_ai_pipeline(
     )
 
 
-@router.get("/ai-pipeline/{chain_id}/tasks", response_model=ApiResponse[PipelineStagesResponse])
+@controller.get("/ai-pipeline/{chain_id}/tasks", response_model=ApiResponse[PipelineStagesResponse])
 async def get_pipeline_tasks(
         chain_id: str,
-        service: PipelineService = Depends(get_pipeline_service)
+        service = Depends(get_pipeline_service),
+        status_manager = Depends(RedisPipelineStatusManager),
 ) -> ApiResponse[PipelineStagesResponse]:
-    """파이프라인 전체 태스크 목록 조회 (구조화된 스키마)"""
-    pipeline_stages = service.get_pipeline_tasks(chain_id)
-    
+    pipeline_stages = service.get_pipeline_tasks(status_manager=status_manager, chain_id=chain_id)
+
     return ResponseBuilder.success(
         data=pipeline_stages,
         message=f"체인 '{chain_id}'의 태스크 목록 조회 완료 (총 {pipeline_stages.total_stages}개 스테이지)"
     )
 
 
-@router.get("/ai-pipeline/{chain_id}/stage/{stage}", response_model=ApiResponse[StageDetailResponse])
+
+@controller.get("/ai-pipeline/{chain_id}/stage/{stage}", response_model=ApiResponse[StageDetailResponse])
 async def get_stage_task(
         chain_id: str,
         stage: int,
-        service: PipelineService = Depends(get_pipeline_service)
+        service = Depends(get_pipeline_service),
+        status_manager = Depends(RedisPipelineStatusManager),
 ) -> ApiResponse[StageDetailResponse]:
-    """특정 단계의 태스크 상태 조회 (구조화된 스키마)"""
-    stage_detail = service.get_stage_task(chain_id, stage)
+    stage_detail = service.get_stage_task(status_manager=status_manager, chain_id=chain_id, stage=stage)
 
     return ResponseBuilder.success(
         data=stage_detail,

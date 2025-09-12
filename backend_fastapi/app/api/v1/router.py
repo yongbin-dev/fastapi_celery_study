@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from .endpoints import tasks_router , users_router
+from app.api.v1.controllers import tasks_controller, users_controller
 
 api_router = APIRouter()
-api_router.include_router(users_router.router, prefix="/users", tags=["users"])
-api_router.include_router(tasks_router.router, prefix="/tasks", tags=["tasks"])
+api_router.include_router(users_controller.controller, prefix="/users", tags=["users"])
+api_router.include_router(tasks_controller.controller, prefix="/tasks", tags=["tasks"])
