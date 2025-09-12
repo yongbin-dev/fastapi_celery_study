@@ -1,7 +1,7 @@
 # celery_signals.py
 import json
 from datetime import timedelta
-
+from sqlalchemy.orm import  Session
 from celery.signals import (
     task_prerun,
     task_success,
@@ -237,9 +237,11 @@ def worker_ready_handler(sender=None, **kwargs):
 @worker_shutdown.connect
 def worker_shutdown_handler(sender=None, **kwargs):
     """워커 종료 처리"""
-    with get_db_manager().get_sync_session() as session:
+    with get_db_manager().get_sync_session()  as session :
         if not session:
             return
+
+        session: Session
 
         try:
             pass
@@ -257,9 +259,11 @@ def heartbeat_handler(sender=None, **kwargs):
         if not session:
             return
 
+        session: Session
+
         try:
             pass
-        
+
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"하트비트 처리 실패: {e}")
