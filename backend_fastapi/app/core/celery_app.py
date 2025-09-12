@@ -3,14 +3,14 @@
 
 import os
 from celery import Celery
-from .config import settings
+from app.core.config import settings
 import logging
 
 
 # Celery signals 등록
 # 이 파일을 임포트하는 시점에 시그널 핸들러가 등록되도록 최상단으로 이동
 try:
-    from . import celery_signals
+    from app.core import celery_signals
     logging.info("✅ Celery signals 모듈 import 성공!")
 except ImportError as e:
     logging.error(f"❌ Celery signals import 실패: {e}")
@@ -111,7 +111,7 @@ celery_app.conf.update(
 celery_app.autodiscover_tasks()
 
 # Queue stats를 위한 태스크 등록
-from .celery_signals import collect_queue_stats
+from app.core.celery_signals import collect_queue_stats
 celery_app.task(name='app.core.celery_signals.collect_queue_stats')(collect_queue_stats)
 
 # Celery Beat 스케줄 설정

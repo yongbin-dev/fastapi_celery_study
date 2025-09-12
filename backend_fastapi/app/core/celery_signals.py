@@ -1,6 +1,6 @@
 # celery_signals.py
 import json
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from celery.signals import (
     task_prerun,
@@ -15,26 +15,17 @@ from celery.signals import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.database import SyncSessionLocal
+from app.core.database import get_db_manager
 from app.models.base import seoul_now
+from .logging import get_logger
 from ..models import (
-    TaskLog, TaskMetadata, TaskExecutionHistory,
-    TaskResult, WorkerStatus, QueueStats
+    TaskLog, QueueStats
 )
 from ..models.chain_execution import ChainExecution
-from .logging import get_logger
 
 # 로거 설정
 logger = get_logger(__name__)
 
-# 데이터베이스 세션 헬퍼
-def get_db_session():
-    """DB 세션 생성 헬퍼"""
-    try:
-        return SyncSessionLocal()
-    except Exception as e:
-        logger.error(f"DB 세션 생성 실패: {e}")
-        return None
 
 def safe_json_dumps(data):
     """안전한 JSON 직렬화"""
@@ -119,212 +110,212 @@ def update_chain_execution(session, chain_id_str, task_name, status, error_messa
 def task_publish_handler(sender=None, headers=None, body=None, properties=None, **kwargs):
     """작업 발행 전 처리"""
     logger.info(f"🚀 SIGNAL: before_task_publish 수신 - sender: {sender}")
-    session = get_db_session()
-    if not session:
-        logger.error("❌ DB 세션 생성 실패 - before_task_publish")
-        return
-    
-    try:
-        pass
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"❌ 작업 발행 처리 실패 (SQLAlchemy): {e}")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"❌ 작업 발행 처리 실패 (기타): {e}")
-    finally:
-        session.close()
+    # 동기 세션 컨텍스트 매니저를 사용하여 세션 관리
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            logger.error("❌ DB 세션 생성 실패 - before_task_publish")
+            return
+        try:
+            pass
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"❌ 작업 발행 처리 실패 (SQLAlchemy): {e}")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"❌ 작업 발행 처리 실패 (기타): {e}")
+        finally:
+            session.close()
 
 @task_prerun.connect
 def task_prerun_handler(task_id=None, task=None, args=None, kwargs=None, **kwds):
     """작업 실행 전 처리"""
     logger.info(f"🏃 SIGNAL: task_prerun 수신 - task_id: {task_id}")
-    session = get_db_session()
-    if not session:
-        logger.error("❌ DB 세션 생성 실패 - task_prerun")
-        return
-    
-    try:
-        pass
-        
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"❌ 작업 시작 처리 실패 (SQLAlchemy): {e}")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"❌ 작업 시작 처리 실패 (기타): {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            logger.error("❌ DB 세션 생성 실패 - task_prerun")
+            return
+
+        try:
+            pass
+
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"❌ 작업 시작 처리 실패 (SQLAlchemy): {e}")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"❌ 작업 시작 처리 실패 (기타): {e}")
+        finally:
+            session.close()
 
 @task_success.connect
 def task_success_handler(sender=None, result=None, **kwargs):
     """작업 성공 처리"""
     logger.info(f"✅ SIGNAL: task_success 수신")
-    session = get_db_session()
-    if not session:
-        logger.error("❌ DB 세션 생성 실패 - task_success")
-        return
-    
-    try:
-        pass
-        
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"❌ 작업 성공 처리 실패 (SQLAlchemy): {e}")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"❌ 작업 성공 처리 실패 (기타): {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            logger.error("❌ DB 세션 생성 실패 - task_success")
+            return
+
+        try:
+            pass
+
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"❌ 작업 성공 처리 실패 (SQLAlchemy): {e}")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"❌ 작업 성공 처리 실패 (기타): {e}")
+        finally:
+            session.close()
 
 @task_failure.connect
 def task_failure_handler(sender=None, task_id=None, exception=None, traceback=None, einfo=None, **kwargs):
     """작업 실패 처리"""
     logger.info(f"❌ SIGNAL: task_failure 수신 - task_id: {task_id}")
-    session = get_db_session()
-    if not session:
-        logger.error("❌ DB 세션 생성 실패 - task_failure")
-        return
-    
-    try:
-        pass
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"작업 실패 처리 실패: {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            logger.error("❌ DB 세션 생성 실패 - task_failure")
+            return
+
+        try:
+            pass
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"작업 실패 처리 실패: {e}")
+        finally:
+            session.close()
 
 @task_retry.connect
 def task_retry_handler(sender=None, task_id=None, reason=None, einfo=None, **kwargs):
     """작업 재시도 처리"""
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        pass
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"작업 재시도 처리 실패: {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
+
+        try:
+            pass
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"작업 재시도 처리 실패: {e}")
+        finally:
+            session.close()
 
 @task_revoked.connect
 def task_revoked_handler(sender=None, request=None, reason=None, **kwargs):
     """작업 취소 처리"""
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        pass
-        
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"작업 취소 처리 실패: {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
+
+        try:
+            pass
+
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"작업 취소 처리 실패: {e}")
+        finally:
+            session.close()
 
 # 워커 관련 신호 처리
 
 @worker_ready.connect
 def worker_ready_handler(sender=None, **kwargs):
     """워커 준비 완료 처리"""
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        pass
-        
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"워커 준비 처리 실패: {e}")
-    finally:
-        session.close()
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
+
+        try:
+            pass
+
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"워커 준비 처리 실패: {e}")
+        finally:
+            session.close()
 
 @worker_shutdown.connect
 def worker_shutdown_handler(sender=None, **kwargs):
     """워커 종료 처리"""
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        pass
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
 
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"워커 종료 처리 실패: {e}")
-    finally:
-        session.close()
+        try:
+            pass
+
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"워커 종료 처리 실패: {e}")
+        finally:
+            session.close()
 
 @heartbeat_sent.connect
 def heartbeat_handler(sender=None, **kwargs):
     """하트비트 처리"""
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        pass
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
+
+        try:
+            pass
         
-    except SQLAlchemyError as e:
-        session.rollback()
-        logger.error(f"하트비트 처리 실패: {e}")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"하트비트 처리 중 예상치 못한 오류: {e}")
-    finally:
-        session.close()
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"하트비트 처리 실패: {e}")
+        except Exception as e:
+            session.rollback()
+            logger.error(f"하트비트 처리 중 예상치 못한 오류: {e}")
+        finally:
+            session.close()
 
 # 유틸리티 함수 및 스케줄 작업
 
 def collect_queue_stats():
     """큐 통계 수집 작업"""
     from celery import current_app
-    session = get_db_session()
-    if not session:
-        return
-    
-    try:
-        inspect = current_app.control.inspect()
-        
-        # 활성 작업 조회
-        active_tasks = inspect.active()
-        reserved_tasks = inspect.reserved()
-        scheduled_tasks = inspect.scheduled()
-        
-        for worker_name, tasks in (active_tasks or {}).items():
-            # QueueStats 업데이트
-            queue_stat = session.query(QueueStats).filter_by(
-                queue_name='celery',
-                worker_name=worker_name
-            ).first()
-            
-            if not queue_stat:
-                queue_stat = QueueStats(
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            return
+
+        try:
+            inspect = current_app.control.inspect()
+
+            # 활성 작업 조회
+            active_tasks = inspect.active()
+            reserved_tasks = inspect.reserved()
+            scheduled_tasks = inspect.scheduled()
+
+            for worker_name, tasks in (active_tasks or {}).items():
+                # QueueStats 업데이트
+                queue_stat = session.query(QueueStats).filter_by(
                     queue_name='celery',
-                    worker_name=worker_name,
-                    active_tasks=len(tasks),
-                    reserved_tasks=len(reserved_tasks.get(worker_name, [])),
-                    scheduled_tasks=len(scheduled_tasks.get(worker_name, []))
-                )
-                session.add(queue_stat)
-            else:
-                queue_stat.active_tasks = len(tasks)
-                queue_stat.reserved_tasks = len(reserved_tasks.get(worker_name, []))
-                queue_stat.scheduled_tasks = len(scheduled_tasks.get(worker_name, []))
-                queue_stat.last_updated = seoul_now()
-        
-        session.commit()
-        logger.debug("큐 통계 수집 완료")
-        
-    except Exception as e:
-        session.rollback()
-        logger.error(f"큐 통계 수집 실패: {e}")
-    finally:
-        session.close()
+                    worker_name=worker_name
+                ).first()
+
+                if not queue_stat:
+                    queue_stat = QueueStats(
+                        queue_name='celery',
+                        worker_name=worker_name,
+                        active_tasks=len(tasks),
+                        reserved_tasks=len(reserved_tasks.get(worker_name, [])),
+                        scheduled_tasks=len(scheduled_tasks.get(worker_name, []))
+                    )
+                    session.add(queue_stat)
+                else:
+                    queue_stat.active_tasks = len(tasks)
+                    queue_stat.reserved_tasks = len(reserved_tasks.get(worker_name, []))
+                    queue_stat.scheduled_tasks = len(scheduled_tasks.get(worker_name, []))
+                    queue_stat.last_updated = seoul_now()
+
+            session.commit()
+            logger.debug("큐 통계 수집 완료")
+
+        except Exception as e:
+            session.rollback()
+            logger.error(f"큐 통계 수집 실패: {e}")
+        finally:
+            session.close()
 
 def get_task_statistics(session):
     """작업 통계 조회"""

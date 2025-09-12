@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     # Database 설정
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
+    DB_POOL_SIZE: int = 20  # 데이터베이스 연결 풀 크기
+    DB_MAX_OVERFLOW: int = 0  # 추가 연결 허용 개수
+    DB_TIMEZONE: str = "Asia/Seoul"  # 데이터베이스 시간대
+    DB_POOL_PRE_PING: bool = True  # 연결 유효성 검사
+    DB_POOL_RECYCLE: int = 3600  # 연결 재활용 시간(초)
+    DB_CONNECT_TIMEOUT: int = 30  # 연결 타임아웃(초)
+    DB_HEALTH_CHECK_POOL_SIZE: int = 5  # 헬스체크용 별도 풀 크기
     
     # Pipeline 설정
     PIPELINE_TTL: int = 3600  # Redis에서 파이프라인 데이터 TTL (초)

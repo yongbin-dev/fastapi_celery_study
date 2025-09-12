@@ -5,11 +5,11 @@ import time
 
 from typing import Dict, Any, Callable, Optional
 
-from ..schemas.enums import ProcessStatus
-from ..schemas.pipeline import StageResult, PipelineMetadata
-from ..services.status_manager import get_status_manager
+from app.schemas.enums import ProcessStatus
+from app.schemas.pipeline import StageResult, PipelineMetadata
+from app.services.status_manager import RedisPipelineStatusManager
 
-from ..core.logging import get_logger
+from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
@@ -48,7 +48,7 @@ def pipeline_stage(stage_name: str, stage_num: int):
                 raise ValueError(f"chain_id를 찾을 수 없습니다. Stage {stage_num} ({stage_name})")
 
             start_time = time.time()
-            status_manager = get_status_manager()
+            status_manager = RedisPipelineStatusManager()
             task_id = self.request.id
             
             # 입력 데이터 크기 계산

@@ -5,7 +5,7 @@ from typing import Dict, Any, TypedDict
 
 from .core.logging import get_logger
 from .core.celery_app import celery_app
-from .services.status_manager import get_status_manager
+from .services.status_manager import RedisPipelineStatusManager
 from .utils.task_decorators import (
     pipeline_stage, 
     validate_chain_id, 
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 # 4단계 AI 처리 작업들
 
 # 전역 상태 관리자 인스턴스 (의존성 주입을 위한 팩토리 함수 사용)
-status_manager = get_status_manager()
+status_manager = RedisPipelineStatusManager()
 
 """PipelineStatusManager 인스턴스를 반환 (의존성 주입용)"""
 def get_status_manager_instance():
