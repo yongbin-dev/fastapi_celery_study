@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.v1.router import api_router
 from .core.config import settings
 from .core.database import close_db
-from .handlers.exception_handlers import setup_exception_handlers
+from .api.deps import setup_exception_handlers
 from .middleware.response_middleware import ResponseLogMiddleware
 from .utils.response_builder import ResponseBuilder
 
@@ -22,6 +22,8 @@ async def lifespan(app: FastAPI):
     # 시작 시 실행
     logger.info("🚀 FastAPI 애플리케이션 시작")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
+    logger.info(f"🌐 서버: http://{settings.HOST}:{settings.PORT}")
+    logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs")
     logger.info(f"🌐 CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
     # 데이터베이스 초기화 (선택사항)
@@ -44,34 +46,9 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ 데이터베이스 지우연결 종료 실패: {e}")
 
 
-# 로그 설정 함수
-def setup_logging():
-    """로깅 설정 초기화"""
-    # logs 디렉토리 생성
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-
-    # 로거 설정
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(
-                os.path.join(log_dir, "app.log"),
-                encoding='utf-8'
-            )
-        ]
-    )
-
-    # uvicorn 로그 레벨 조정 (너무 많은 로그 방지)
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-
-    return logging.getLogger(__name__)
-
-
 # 로깅 초기화
-logger = setup_logging()
+from .core.logging import get_logger
+logger = get_logger(__name__)
 
 # FastAPI 앱 생성
 app = FastAPI(

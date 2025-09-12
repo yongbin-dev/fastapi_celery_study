@@ -1,9 +1,11 @@
 # app/core/celery_app.py
 
-import logging
+
 import os
 from celery import Celery
 from .config import settings
+import logging
+
 
 # Celery signals 등록
 # 이 파일을 임포트하는 시점에 시그널 핸들러가 등록되도록 최상단으로 이동

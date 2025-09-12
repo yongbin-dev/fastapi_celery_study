@@ -1,12 +1,13 @@
 import json
-import logging
 import time
 
 from fastapi import Request
 from fastapi.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger(__name__)
+from ..core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class ResponseLogMiddleware(BaseHTTPMiddleware):

@@ -29,7 +29,11 @@
       "Bash(rm:*)",
       "Bash(alembic init:*)",
       "Bash(docker-compose logs:*)",
-      "Bash(PYTHONPATH=. python3:*)"
+      "Bash(PYTHONPATH=. python3:*)",
+      "Bash(tree:*)",
+      "Bash(source:*)",
+      "Bash(chmod:*)",
+      "Bash(echo $PATH)"
     ],
     "deny": [],
     "ask": []

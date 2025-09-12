@@ -1,0 +1,5 @@
+#!/bin/bash
+# flower - Flower 모니터링 시작
+
+echo "🌸 Flower 모니터링 시작..."
+exec poetry run celery -A app.core.celery_app flower --port=5555

@@ -1,16 +1,17 @@
-# app/handlers/exception_handlers.py
+# app/api/deps.py
 
-import logging
+import traceback
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse
 
-from ..exceptions.base import BaseBusinessException
+from ..core.exceptions import BaseBusinessException
+from ..core.logging import get_logger
 from ..utils.response_builder import ResponseBuilder
-import traceback
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def setup_exception_handlers(app: FastAPI):
@@ -107,14 +108,6 @@ def setup_exception_handlers(app: FastAPI):
 
         logger.error(f"에러 발생: {traceback.format_exc()}")
 
-        # logger.error(
-        #     f"🔴 Unexpected Error | "
-        #     f"Path: {request.url.path} | "
-        #     f"Type: {type(exc).__name__} | "
-        #     f"Message: {str(exc)}",
-        #     exc_info=True  # 스택 트레이스 포함
-        # )
-
         error_response = ResponseBuilder.error(
             message="서버 내부 오류가 발생했습니다",
             error_code="INTERNAL_SERVER_ERROR"
@@ -126,3 +119,16 @@ def setup_exception_handlers(app: FastAPI):
         )
 
     logger.info("✅ 예외 핸들러 설정 완료")
+
+
+# 공통 의존성들
+async def get_current_user():
+    """현재 사용자 정보 조회 (인증 구현 후 사용)"""
+    # TODO: JWT 토큰 검증 로직 구현
+    pass
+
+
+async def get_db():
+    """데이터베이스 세션 의존성"""
+    # TODO: 데이터베이스 세션 생성 로직 구현
+    pass

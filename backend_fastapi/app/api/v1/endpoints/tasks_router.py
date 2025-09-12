@@ -1,15 +1,14 @@
 # app/api/v1/endpoints/tasks_router.py
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends
 from fastapi.params import Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from ....schemas.common import ApiResponse
+
 from ....schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
     PipelineStagesResponse, StageDetailResponse
 )
-from ....core.database import get_db
+from ....schemas.common import ApiResponse
 from ....services.pipeline_service import PipelineService, get_pipeline_service
 from ....utils.response_builder import ResponseBuilder
 

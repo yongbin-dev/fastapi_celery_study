@@ -1,0 +1,10 @@
+#!/bin/bash
+# dev - FastAPI 개발 서버 시작
+
+# .env 파일에서 환경 변수 로드
+set -a
+source .env.development
+set +a
+
+echo "🚀 FastAPI 개발 서버 시작..."
+exec poetry run uvicorn app.main:app --reload --host ${HOST:-0.0.0.0} --port ${PORT:-5050}

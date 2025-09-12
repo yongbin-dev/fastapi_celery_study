@@ -1,6 +1,5 @@
 # celery_signals.py
 import json
-import logging
 from datetime import datetime, timedelta
 
 from celery.signals import (
@@ -23,9 +22,10 @@ from ..models import (
     TaskResult, WorkerStatus, QueueStats
 )
 from ..models.chain_execution import ChainExecution
+from .logging import get_logger
 
 # 로거 설정
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 데이터베이스 세션 헬퍼
 def get_db_session():
@@ -57,8 +57,8 @@ def get_worker_name(sender=None):
             # 마지막 대안: 시스템 hostname 사용
             import socket
             return f"celery@{socket.gethostname()}"
-    except Exception:
-        return "unknown_worker"
+    except Exception as e:
+        raise Exception from e
 
 def get_chain_id_from_args(args):
     """task args에서 chain_id 추출"""

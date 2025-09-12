@@ -1,16 +1,19 @@
 # services/pipeline_service.py
 
-import logging
 import uuid
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict
 
 import redis
+
+from ..core.logging import get_logger
+
+logger = get_logger(__name__)
 from celery import chain
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, Depends
 
-from ..core.config import settings
 from ..core.database import get_db
+from ..core.redis_client import get_redis_client
 from ..models.chain_execution import ChainExecution
 from ..schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
@@ -22,20 +25,47 @@ from ..tasks import (
     stage2_feature_extraction,
     stage3_model_inference,
     stage4_post_processing,
-    get_status_manager, PipelineStatusManager
+    get_status_manager
 )
+from ..services.status_manager import RedisPipelineStatusManager
+from ..core.celery_app import celery_app
+
 
 
 class PipelineService:
-    def __init__(self, status_manager: PipelineStatusManager, db: AsyncSession):
+    def __init__(
+        self, 
+        status_manager: RedisPipelineStatusManager,
+        db: AsyncSession,
+        redis_client: Optional[redis.Redis] = None
+    ):
+        """
+        PipelineService 초기화
+        
+        Args:
+            status_manager: 파이프라인 상태 관리자
+            db: 데이터베이스 세션
+            redis_client: Redis 클라이언트 (None이면 싱글톤에서 가져옴)
+        """
         self.status_manager = status_manager
         self.db = db
-        self.redis_client = redis.Redis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            db=0,
-            decode_responses=True
-        )
+        self.redis_client = redis_client or get_redis_client()
+    
+    def _validate_chain_id(self, chain_id: str) -> None:
+        """체인 ID 유효성 검증"""
+        if not chain_id or len(chain_id) < 5:
+            raise HTTPException(
+                status_code=400,
+                detail="유효하지 않은 체인 ID 형식입니다"
+            )
+    
+    def _validate_stage(self, stage: int) -> None:
+        """스테이지 번호 유효성 검증"""
+        if stage < 1 or stage > 4:
+            raise HTTPException(
+                status_code=400,
+                detail="단계는 1~4 사이의 값이어야 합니다"
+            )
 
     async def get_pipelines_from_db(
             self,
@@ -80,7 +110,7 @@ class PipelineService:
             await self.db.commit()
             await self.db.refresh(chain_execution)
 
-            logging.info(f"ChainExecution created with ID: {chain_execution.id}, chain_id: {chain_execution.chain_id}")
+            logger.info(f"ChainExecution created with ID: {chain_execution.id}, chain_id: {chain_execution.chain_id}")
 
             # 2. 전체 스테이지 정보를 Redis에 미리 저장
             chain_id_str = str(chain_execution.chain_id)
@@ -88,7 +118,7 @@ class PipelineService:
             
             if not stages_initialized:
                 await self.db.rollback()
-                logging.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
+                logger.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
                 raise HTTPException(status_code=500, detail="파이프라인 스테이지 초기화에 실패했습니다")
 
             # 3. Celery Chain 생성 및 실행
@@ -106,7 +136,7 @@ class PipelineService:
             chain_execution.start_execution()
             await self.db.commit()
 
-            logging.info(f"Pipeline started successfully. Chain ID: {chain_execution.chain_id}")
+            logger.info(f"Pipeline started successfully. Chain ID: {chain_execution.chain_id}")
 
             return AIPipelineResponse(
                 pipeline_id=str(chain_execution.chain_id),  # Celery task ID
@@ -115,18 +145,23 @@ class PipelineService:
                 estimated_duration=20  # 예상 20초
             )
 
-        except Exception as e:
+        except HTTPException:
+            # HTTPException은 그대로 전파
             await self.db.rollback()
-            raise Exception from e  # 원본 유지
+            raise
+        except Exception as e:
+            # 데이터베이스 에러, Redis 연결 에러 등 예상치 못한 에러
+            await self.db.rollback()
+            logger.error(f"파이프라인 생성 중 예상치 못한 에러 발생: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail="AI 파이프라인 시작 중 내부 서버 오류가 발생했습니다"
+            )
     
     def get_pipeline_tasks(self, chain_id: str) -> PipelineStagesResponse:
         """파이프라인 전체 태스크 목록 조회 (구조화된 응답)"""
         # 체인 ID 검증
-        if not chain_id or len(chain_id) < 5:
-            raise HTTPException(
-                status_code=400,
-                detail="유효하지 않은 체인 ID 형식입니다"
-            )
+        self._validate_chain_id(chain_id)
 
         # Redis에서 파이프라인 태스크 목록 조회
         pipeline_tasks_data = self.status_manager.get_pipeline_status(chain_id)
@@ -178,17 +213,8 @@ class PipelineService:
     def get_stage_task(self, chain_id: str, stage: int) -> StageDetailResponse:
         """특정 단계의 태스크 상태 조회 (구조화된 응답)"""
         # 체인 ID 및 단계 검증
-        if not chain_id or len(chain_id) < 5:
-            raise HTTPException(
-                status_code=400,
-                detail="유효하지 않은 체인 ID 형식입니다"
-            )
-        
-        if stage < 1 or stage > 4:
-            raise HTTPException(
-                status_code=400,
-                detail="단계는 1~4 사이의 값이어야 합니다"
-            )
+        self._validate_chain_id(chain_id)
+        self._validate_stage(stage)
 
         # Redis에서 단계 상태 조회
         stage_task_data = self.status_manager.get_stage_status(chain_id, stage)
@@ -218,7 +244,6 @@ class PipelineService:
     def cancel_pipeline(self, chain_id: str) -> Dict[str, str]:
         """파이프라인 취소 및 데이터 삭제"""
         # Celery 태스크 취소
-        from ..core.celery_app import celery_app
         celery_app.control.revoke(chain_id, terminate=True)
 
         # Redis에서 파이프라인 데이터 삭제
@@ -240,7 +265,18 @@ class PipelineService:
 
 # 의존성 주입 함수
 def get_pipeline_service(
-    status_manager: PipelineStatusManager = Depends(get_status_manager),
+    status_manager: RedisPipelineStatusManager = Depends(get_status_manager),
     db: AsyncSession = Depends(get_db),
-) -> "PipelineService":
-    return PipelineService(status_manager=status_manager, db=db)
+    redis_client: redis.Redis = Depends(get_redis_client)
+) -> PipelineService:
+    """
+    PipelineService 의존성 주입 함수
+    
+    모든 의존성을 주입하여 PipelineService 인스턴스를 생성합니다.
+    Redis 클라이언트는 싱글톤으로 관리되어 성능상 효율적입니다.
+    """
+    return PipelineService(
+        status_manager=status_manager, 
+        db=db,
+        redis_client=redis_client
+    )

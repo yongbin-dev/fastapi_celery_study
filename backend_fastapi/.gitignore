@@ -2,6 +2,23 @@
 # Created by https://www.gitignore.io/api/linux,macos,python,pycharm,windows,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=linux,macos,python,pycharm,windows,visualstudiocode
 
+### 프로젝트 특성 ###
+# 환경별 설정 파일 (샘플은 포함, 실제 사용 파일은 제외)
+.env
+.env.local
+
+# 로그 파일
+logs/
+*.log
+
+# 캐시 디렉토리
+cache/
+.cache/
+
+# 임시 파일
+temp/
+tmp/
+
 ### Linux ###
 *~
 
@@ -275,4 +292,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.gitignore.io/api/linux,macos,python,pycharm,windows,visualstudiocode
+# End of https://www.gitignore.io/api/linux,macos,python,pycharm,windows,visualstudiocode.venv/

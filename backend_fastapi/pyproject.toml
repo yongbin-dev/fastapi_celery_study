@@ -12,7 +12,7 @@ url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.12"
 fastapi = "0.104.1"
 uvicorn = {extras = ["standard"], version = "0.24.0"}
 # torch = "^2.1.0"  # pip로 별도 설치
@@ -32,6 +32,7 @@ alembic = "^1.16.5"
 greenlet = "^3.2.4"
 psycopg2-binary = "^2.9.10"
 sqlacodegen = ">=3.0,<3.1"
+psycopg = "^3.2.10"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
@@ -47,7 +48,7 @@ target-version = ['py311']
 include = '\.pyi?$'
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 

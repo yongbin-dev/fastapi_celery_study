@@ -23,11 +23,26 @@
 - **의존성 관리**: Poetry
 - **컨테이너**: Docker
 
-## 🚀 시작하기
+## 🚀 빠른 시작하기
 
-### 1. 환경 변수 설정
+### 🔥 **자동 설정 (추천)**
 
-프로젝트 루트의 `.env.development` 파일을 복사하여 `.env` 파일을 생성합니다. 이 파일은 개발 환경의 기본 설정값들을 담고 있습니다.
+```bash
+# 1단계: 프로젝트 클론
+git clone <repository-url>
+cd backend_fastapi
+
+# 2단계: 자동 환경 설정 실행
+./scripts/setup-dev.sh
+```
+
+위 스크립트가 자동으로 다음을 수행합니다:
+- ✅ direnv 설치 및 설정
+- ✅ Poetry 설치 및 의존성 설치  
+- ✅ 가상환경 자동 활성화 설정
+- ✅ 개발 도구 통합
+
+### 🛠️ **수동 설정**
 
 ```bash
 cp .env.development .env
@@ -61,17 +76,48 @@ poetry run alembic upgrade head
 
 Uvicorn 서버와 Celery 워커를 각각 실행합니다.
 
-**FastAPI 서버 실행:**
+## 💻 **개발 서버 실행**
+
+가상환경이 자동 활성화된 상태에서 다음 명령어들을 사용하세요:
+
+### 🚀 **빠른 명령어 (direnv 설정 완료 후)**
 ```bash
-poetry run uvicorn run:app --reload --host 0.0.0.0 --port 8000
+# FastAPI 개발 서버 시작
+dev
+
+# Celery Worker 시작  
+worker
+
+# Flower 모니터링 시작
+flower
+
+# 테스트 실행
+test
+
+# 코드 포맷팅
+format
+
+# 도움말 확인
+help
 ```
 
-**Celery 워커 실행:**
+### 🛠️ **일반 명령어**
 ```bash
-poetry run celery -A celery_worker.worker worker --loglevel=info
+# FastAPI 서버
+uvicorn app.main:app --reload --host 0.0.0.0 --port 5050
+
+# Celery Worker
+celery -A app.core.celery_app worker --loglevel=info
+
+# Flower (Celery 모니터링)
+celery -A app.core.celery_app flower --port=5555
 ```
 
-이제 `http://localhost:8000`에서 API 서버에 접근할 수 있습니다.
+### 📱 **서비스 접속**
+- **FastAPI API**: http://localhost:5050
+- **API 문서**: http://localhost:5050/docs  
+- **ReDoc**: http://localhost:5050/redoc
+- **Flower 모니터링**: http://localhost:5555
 
 ## ✅ 테스트
 
@@ -84,17 +130,49 @@ poetry run pytest
 ## 📁 프로젝트 구조
 
 ```
-.
-├── alembic/              # 데이터베이스 마이그레이션 스크립트
-├── app/                  # 애플리케이션 소스 코드
-│   ├── api/              # API 엔드포인트 라우터
-│   ├── core/             # 핵심 설정 (FastAPI 앱, Celery, DB 등)
-│   ├── models/           # SQLAlchemy 모델
-│   ├── schemas/          # Pydantic 스키마
-│   ├── services/         # 비즈니스 로직
-│   └── ...
-├── celery_worker.py      # Celery 워커 진입점
-├── docker-compose.yml    # Docker 서비스 정의
-├── pyproject.toml        # Poetry 의존성 및 프로젝트 설정
-└── run.py                # 애플리케이션 실행 스크립트
+backend_fastapi/
+├── app/                           # 📱 애플리케이션 소스 코드
+│   ├── api/                       # 🚀 API 라우터
+│   │   ├── deps.py                # 의존성 및 예외 핸들러
+│   │   └── v1/                    # API v1 버전
+│   ├── core/                      # ⚙️ 핵심 설정
+│   │   ├── config.py              # 환경 설정
+│   │   ├── database.py            # 데이터베이스 연결
+│   │   ├── celery_app.py          # Celery 설정
+│   │   ├── logging.py             # 로깅 시스템
+│   │   └── exceptions.py          # 예외 처리
+│   ├── crud/                      # 🗄️ CRUD 연산
+│   ├── models/                    # 🏗️ SQLAlchemy 모델
+│   ├── schemas/                   # 📋 Pydantic 스키마
+│   ├── services/                  # 💼 비즈니스 로직
+│   ├── security/                  # 🔐 보안 (JWT, 인증, Rate Limit)
+│   ├── middleware/                # 🔄 미들웨어
+│   └── utils/                     # 🛠️ 유틸리티
+├── tests/                         # 🧪 테스트
+│   ├── conftest.py                # 테스트 설정
+│   ├── test_api/                  # API 테스트
+│   ├── test_core/                 # 코어 모듈 테스트
+│   └── test_utils/                # 유틸리티 테스트
+├── scripts/                       # 📜 개발 스크립트
+│   └── setup-dev.sh               # 개발환경 자동 설정
+├── .vscode/                       # 🎨 VS Code 설정
+├── migrations/                    # 📊 데이터베이스 마이그레이션
+├── .envrc                         # 🔧 direnv 자동 환경 설정
+├── .env.development               # 🌱 개발환경 변수
+├── .env.production                # 🚀 운영환경 변수
+├── .env.staging                   # 🧪 스테이징환경 변수
+├── pyproject.toml                 # 📦 Poetry 의존성 관리
+├── docker-compose.yml             # 🐳 Docker 서비스 정의
+├── README.md                      # 📖 프로젝트 문서
+└── DEVELOPMENT_SETUP.md           # 🛠️ 개발환경 설정 가이드
 ```
+
+### 🏗️ **아키텍처 특징**
+
+- ✅ **계층화 아키텍처**: API → Service → CRUD → Model
+- ✅ **의존성 주입**: FastAPI의 DI 시스템 활용  
+- ✅ **환경별 설정**: development/staging/production 분리
+- ✅ **자동 환경 관리**: direnv로 가상환경 자동 활성화
+- ✅ **통합 로깅**: 구조화된 로깅 시스템
+- ✅ **보안 내장**: JWT, Rate Limiting, 인증/권한
+- ✅ **테스트 완비**: 단위/통합 테스트 구조
