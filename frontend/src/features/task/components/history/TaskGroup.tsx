@@ -166,21 +166,3 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
   );
 };
 
-refactor(fullstack): CRUD 계층 리팩토링 및 파이프라인 UI 개선
-백엔드와 프론트엔드 전반에 걸친 대규모 아키텍처 리팩토링을 적용합니다.
-  Backend:
-- CRUD 계층을 `sync_crud`와 `async_crud` 모듈로 분리하여 동기 및 비동기 데이터베이스 연산을
-  모두 지원하도록 재구성했습니다.
-- Celery 시그널 핸들러와 파이프라인 서비스가 새로운 `async_crud` 모듈을 사용하도록 업데이트하여
-  성능과 일관성을 개선했습니다.
-- 더 이상 사용되지 않는 레거시 인증(`security` 디렉토리) 및 의존성 파일들을 제거했습니다.
-- `pipeline_service`를 개선하여 개별 스테이지 상태를 포함한 상세한 파이프라인 히스토리를 DB
-  기반으로 제공하도록 변경했습니다.
-
-  Frontend:
-- `chatbot` 기능과 관련된 모든 컴포넌트, 훅, API 정의를 제거했습니다.
-- 기능 제거에 따라 메인 애플리케이션 레이아웃과 네비게이션을 업데이트했습니다.
-- Task 히스토리 및 관리 탭을 새로운 백엔드 API(`PipelineStagesResponse`) 응답 형식에 맞춰
-리팩토링했습니다.
-- `TaskGroup` 컴포넌트를 개선하여 전체 파이프라인 진행률, 개별 스테이지 상태 및 오류 메시지를
-  시각화하도록 구현했습니다.
