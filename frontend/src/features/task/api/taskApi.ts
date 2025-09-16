@@ -1,30 +1,12 @@
 import { api } from '@/shared/utils/api';
 import type {
-  ActiveTasksResponse,
-  AITaskRequest,
   ModelTestRequest,
   ModelTestResponse,
   PipelineStatusResponse,
   TaskHistoryRequest,
-  TaskInfoResponse,
 } from '../types';
 
 export const taskApi = {
-  // AI 처리 태스크 생성
-  createAITask: async (data: AITaskRequest): Promise<TaskInfoResponse> => {
-    const response = await api.post<TaskInfoResponse>(
-      '/api/v1/tasks/ai-processing',
-      data
-    );
-    return response.data;
-  },
-
-  // 활성 태스크 목록 조회
-  getActiveTasks: async (): Promise<ActiveTasksResponse> => {
-    const response = await api.get<ActiveTasksResponse>('/api/v1/tasks/list');
-    return response.data;
-  },
-
   getHistoryTasks: async (
     params: TaskHistoryRequest
   ): Promise<PipelineStatusResponse[]> => {
