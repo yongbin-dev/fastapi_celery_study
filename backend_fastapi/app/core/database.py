@@ -181,6 +181,7 @@ async def init_db() -> None:
         async with db_manager.async_engine.begin() as conn:
             if settings.environment == "development":
                 logger.info("개발 환경: 데이터베이스 테이블 생성 중...")
+                # await conn.run_sync(Base.metadata.drop_all)
                 await conn.run_sync(Base.metadata.create_all)
                 logger.info("데이터베이스 테이블 생성 완료")
             else:

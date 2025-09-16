@@ -8,42 +8,51 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from uuid import uuid4
 
+from app.core.config import settings
 from app.models.base import Base
 from app.services.pipeline_service import PipelineService
 from app.services.status_manager import RedisPipelineStatusManager
 from app.schemas.pipeline import AIPipelineRequest
 from app.crud.async_crud.chain_execution import chain_execution as chain_execution_crud
 
-# 테스트용 비동기 in-memory SQLite 데이터베이스 설정
-ASYNC_SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# .env 파일의 DATABASE_URL을 사용하도록 설정
+ASYNC_SQLALCHEMY_DATABASE_URL = settings.TEST_DATABASE_URL
 
-@pytest_asyncio.fixture(scope="module")
+# 테스트용 비동기 in-memory SQLite 데이터베이스 설정                                                                                                                                                                                                      │
+# --- 3. 데이터 삭제 함수 ---
+
+@pytest_asyncio.fixture(scope="function")
 async def async_engine():
-    """테스트용 비동기 엔진 생성 (모듈 스코프)"""
+    """테스트용 비동기 엔진 생성 (함수 스코프)"""
     engine = create_async_engine(ASYNC_SQLALCHEMY_DATABASE_URL, echo=False)
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # print("--- 모든 테이블의 데이터 삭제 시작 ---")
     yield engine
+
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        print("--- 모든 테이블의 데이터 삭제 시작 ---")
+        for table in reversed(Base.metadata.sorted_tables):
+            print(f"Deleting data from table: {table.name}")
+            await conn.execute(table.delete())
+        print("--- 모든 테이블의 데이터 삭제 완료 ---")
+
     await engine.dispose()
 
 @pytest_asyncio.fixture
-async def db_session(async_engine):
-    """비동기 데이터베이스 세션 fixture"""
-    AsyncTestingSessionLocal = sessionmaker(
+async def session_maker(async_engine):
+    """비동기 데이터베이스 세션 메이커 fixture"""
+    return sessionmaker(
         bind=async_engine, class_=AsyncSession, expire_on_commit=False
     )
-    async with AsyncTestingSessionLocal() as session:
-        yield session
+
 
 @pytest.mark.asyncio
-async def test_run_1000_chains_concurrently(db_session: AsyncSession):
+async def test_run_1000_chains_concurrently(session_maker):
     """1000개의 체인을 동시에 실행하는 스트레스 테스트"""
     # given
     num_chains = 1000
-    pipeline_service = PipelineService()
-    # 실제 Redis를 사용한다고 가정합니다. 테스트 환경에 따라 mock으로 대체할 수 있습니다.
     redis_manager = RedisPipelineStatusManager()
 
     # when
@@ -57,10 +66,15 @@ async def test_run_1000_chains_concurrently(db_session: AsyncSession):
         for i in range(num_chains)
     ]
 
-    tasks = [
-        pipeline_service.create_ai_pipeline(db=db_session, status_manager=redis_manager, request=req)
-        for req in requests
-    ]
+    async def run_single_pipeline(request: AIPipelineRequest):
+        """각 파이프라인을 독립적인 세션에서 실행하는 헬퍼 함수"""
+        async with session_maker() as session:
+            pipeline_service = PipelineService()
+            return await pipeline_service.create_ai_pipeline(
+                db=session, status_manager=redis_manager, request=request
+            )
+
+    tasks = [run_single_pipeline(req) for req in requests]
 
     # asyncio.gather를 사용하여 모든 파이프라인 생성 작업을 동시에 실행
     results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -81,5 +95,6 @@ async def test_run_1000_chains_concurrently(db_session: AsyncSession):
     assert success_count == num_chains, f"{failure_count} chains failed to create."
 
     # 데이터베이스에 실제로 레코드가 생성되었는지 확인
-    all_chains = await chain_execution_crud.get_all(db=db_session)
-    assert len(all_chains) == num_chains
+    async with session_maker() as session:
+        all_chains = await chain_execution_crud.get_all(db=session)
+        assert len(all_chains) == num_chains

@@ -13,6 +13,11 @@ from ...schemas.enums import ProcessStatus
 class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
     """ChainExecution 모델용 비동기 CRUD 클래스"""
 
+    async def get_all (self , db : AsyncSession )-> Optional[list[ChainExecution]] :
+        stmt = select(ChainExecution)
+        result = await db.execute(stmt)
+        return list(result.scalars().all());
+
     async def get_by_chain_id(self, db: AsyncSession, *, chain_id: str) -> Optional[ChainExecution]:
         """chain_id로 체인 실행 조회"""
         try:

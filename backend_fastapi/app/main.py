@@ -13,7 +13,7 @@ from .core.database import close_db
 from .api.deps import setup_exception_handlers
 from .middleware.response_middleware import ResponseLogMiddleware
 from .utils.response_builder import ResponseBuilder
-
+from app.core.database import init_db
 
 # 애플리케이션 시작/종료 이벤트 처리
 @asynccontextmanager
@@ -27,11 +27,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"🌐 CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
     # 데이터베이스 초기화 (선택사항)
-    # try:
-    #     await init_db()
-    #     logger.info("✅ 데이터베이스 연결 초기화 완료")
-    # except Exception as e:
-    #     logger.error(f"❌ 데이터베이스 연결 실패: {e}")
+    try:
+        await init_db()
+        logger.info("✅ 데이터베이스 연결 초기화 완료")
+    except Exception as e:
+        logger.error(f"❌ 데이터베이스 연결 실패: {e}")
 
     yield  # 애플리케이션 실행
 
