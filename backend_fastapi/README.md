@@ -1,4 +1,4 @@
-# FastAPI & Celery 프로젝트
+# FastAPI & Celery 백엔드 프로젝트
 
 이 프로젝트는 FastAPI를 웹 프레임워크로, Celery를 비동기 작업 처리용으로 사용하는 백엔드 서비스입니다. SQLAlchemy를 통해 데이터베이스와 상호작용하며, Docker를 통해 개발 환경을 쉽게 구성할 수 있습니다.
 
@@ -8,8 +8,8 @@
 - **Celery 비동기 작업**: Redis를 메시지 브로커로 사용하여 오래 걸리는 작업을 백그라운드에서 처리
 - **SQLAlchemy ORM**: PostgreSQL 데이터베이스와의 효율적인 통신
 - **Alembic 데이터베이스 마이그레이션**: 데이터베이스 스키마 변경 관리
-- **Docker Compose**: 개발에 필요한 서비스(앱, DB, Redis)를 컨테이너화하여 원클릭으로 실행
-- **다중 환경 설정**: `.env` 파일을 통해 개발, 스테이징, 운영 환경 분리
+- **Docker Compose**: 개발에 필요한 서비스(PostgreSQL, Redis)를 컨테이너화하여 실행
+- **환경 변수 기반 설정**: `.env` 파일을 통해 주요 설정 관리
 
 ## 🛠️ 기술 스택
 
@@ -17,32 +17,17 @@
 - **웹 프레임워크**: FastAPI
 - **비동기 작업**: Celery
 - **데이터베이스**: PostgreSQL
-- **ORM**: SQLAlchemy
+- **ORM**: SQLAlchemy, Alembic
 - **메시지 브로커**: Redis
 - **서버**: Uvicorn
 - **의존성 관리**: Poetry
 - **컨테이너**: Docker
 
-## 🚀 빠른 시작하기
+## 🚀 시작하기
 
-### 🔥 **자동 설정 (추천)**
+### 1. 환경 변수 설정
 
-```bash
-# 1단계: 프로젝트 클론
-git clone <repository-url>
-cd backend_fastapi
-
-# 2단계: 자동 환경 설정 실행
-./scripts/setup-dev.sh
-```
-
-위 스크립트가 자동으로 다음을 수행합니다:
-- ✅ direnv 설치 및 설정
-- ✅ Poetry 설치 및 의존성 설치  
-- ✅ 가상환경 자동 활성화 설정
-- ✅ 개발 도구 통합
-
-### 🛠️ **수동 설정**
+`.env.development` 파일을 복사하여 `.env` 파일을 생성합니다. 이 파일에는 데이터베이스 연결 정보 등 주요 환경 변수가 포함되어 있습니다.
 
 ```bash
 cp .env.development .env
@@ -74,50 +59,21 @@ poetry run alembic upgrade head
 
 ### 5. 애플리케이션 실행
 
-Uvicorn 서버와 Celery 워커를 각각 실행합니다.
+Uvicorn을 사용하여 FastAPI 개발 서버를 실행하고, 별도의 터미널에서 Celery 워커를 실행합니다.
 
-## 💻 **개발 서버 실행**
+- **FastAPI 서버 실행:**
+  ```bash
+  poetry run uvicorn run:app --reload --host 0.0.0.0 --port 8000
+  ```
 
-가상환경이 자동 활성화된 상태에서 다음 명령어들을 사용하세요:
+- **Celery 워커 실행:**
+  ```bash
+  poetry run celery -A celery_worker.worker worker --loglevel=info
+  ```
 
-### 🚀 **빠른 명령어 (direnv 설정 완료 후)**
-```bash
-# FastAPI 개발 서버 시작
-dev
-
-# Celery Worker 시작  
-worker
-
-# Flower 모니터링 시작
-flower
-
-# 테스트 실행
-test
-
-# 코드 포맷팅
-format
-
-# 도움말 확인
-help
-```
-
-### 🛠️ **일반 명령어**
-```bash
-# FastAPI 서버
-uvicorn app.main:app --reload --host 0.0.0.0 --port 5050
-
-# Celery Worker
-celery -A app.core.celery_app worker --loglevel=info
-
-# Flower (Celery 모니터링)
-celery -A app.core.celery_app flower --port=5555
-```
-
-### 📱 **서비스 접속**
-- **FastAPI API**: http://localhost:5050
-- **API 문서**: http://localhost:5050/docs  
-- **ReDoc**: http://localhost:5050/redoc
-- **Flower 모니터링**: http://localhost:5555
+이제 다음 주소에서 API 서버에 접속할 수 있습니다:
+- **API 문서 (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **대체 API 문서 (ReDoc)**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ## ✅ 테스트
 
@@ -131,48 +87,24 @@ poetry run pytest
 
 ```
 backend_fastapi/
-├── app/                           # 📱 애플리케이션 소스 코드
-│   ├── api/                       # 🚀 API 라우터
-│   │   ├── deps.py                # 의존성 및 예외 핸들러
-│   │   └── v1/                    # API v1 버전
-│   ├── core/                      # ⚙️ 핵심 설정
-│   │   ├── config.py              # 환경 설정
-│   │   ├── database.py            # 데이터베이스 연결
-│   │   ├── celery_app.py          # Celery 설정
-│   │   ├── logging.py             # 로깅 시스템
-│   │   └── exceptions.py          # 예외 처리
-│   ├── crud/                      # 🗄️ CRUD 연산
-│   ├── models/                    # 🏗️ SQLAlchemy 모델
-│   ├── schemas/                   # 📋 Pydantic 스키마
-│   ├── services/                  # 💼 비즈니스 로직
-│   ├── security/                  # 🔐 보안 (JWT, 인증, Rate Limit)
-│   ├── middleware/                # 🔄 미들웨어
-│   └── utils/                     # 🛠️ 유틸리티
-├── tests/                         # 🧪 테스트
-│   ├── conftest.py                # 테스트 설정
-│   ├── test_api/                  # API 테스트
-│   ├── test_core/                 # 코어 모듈 테스트
-│   └── test_utils/                # 유틸리티 테스트
-├── scripts/                       # 📜 개발 스크립트
-│   └── setup-dev.sh               # 개발환경 자동 설정
-├── .vscode/                       # 🎨 VS Code 설정
-├── migrations/                    # 📊 데이터베이스 마이그레이션
-├── .envrc                         # 🔧 direnv 자동 환경 설정
-├── .env.development               # 🌱 개발환경 변수
-├── .env.production                # 🚀 운영환경 변수
-├── .env.staging                   # 🧪 스테이징환경 변수
-├── pyproject.toml                 # 📦 Poetry 의존성 관리
-├── docker-compose.yml             # 🐳 Docker 서비스 정의
-├── README.md                      # 📖 프로젝트 문서
-└── DEVELOPMENT_SETUP.md           # 🛠️ 개발환경 설정 가이드
+├── app/                      # 📱 애플리케이션 소스 코드
+│   ├── api/                  # 🚀 API 엔드포인트 라우터
+│   ├── core/                 # ⚙️ 핵심 설정 (FastAPI, Celery, DB 등)
+│   ├── crud/                 # 🗄️ 데이터베이스 CRUD 연산
+│   ├── exceptions/           # 🚨 사용자 정의 예외
+│   ├── handlers/             # ✋ 예외 핸들러
+│   ├── middleware/           # 🔄 미들웨어
+│   ├── models/               # 🏗️ SQLAlchemy 모델
+│   ├── schemas/              # 📋 Pydantic 스키마
+│   ├── security/             # 🔐 보안 관련 로직
+│   ├── services/             # 💼 비즈니스 로직
+│   └── utils/                # 🛠️ 유틸리티 함수
+├── tests/                    # 🧪 테스트 코드
+├── migrations/               # 📊 데이터베이스 마이그레이션 (Alembic)
+├── .env.development          # 🌱 개발 환경 변수 예시
+├── celery_worker.py          # 👷 Celery 워커 엔트리포인트
+├── docker-compose.yml        # 🐳 Docker 서비스 정의
+├── poetry.lock               # 🔒 의존성 잠금 파일
+├── pyproject.toml            # 📦 Poetry 의존성 및 프로젝트 설정
+└── README.md                 # 📖 이 파일
 ```
-
-### 🏗️ **아키텍처 특징**
-
-- ✅ **계층화 아키텍처**: API → Service → CRUD → Model
-- ✅ **의존성 주입**: FastAPI의 DI 시스템 활용  
-- ✅ **환경별 설정**: development/staging/production 분리
-- ✅ **자동 환경 관리**: direnv로 가상환경 자동 활성화
-- ✅ **통합 로깅**: 구조화된 로깅 시스템
-- ✅ **보안 내장**: JWT, Rate Limiting, 인증/권한
-- ✅ **테스트 완비**: 단위/통합 테스트 구조

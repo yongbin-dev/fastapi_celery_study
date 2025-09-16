@@ -30,15 +30,18 @@
 ## 🛠️ 기술 스택
 
 ### Backend
-- Python, FastAPI
-- Celery, Redis
-- PostgreSQL, SQLAlchemy, Alembic
-- Poetry
-- Docker
+- **Language**: Python 3.12+
+- **Framework**: FastAPI
+- **Async Tasks**: Celery, Redis
+- **Database**: PostgreSQL, SQLAlchemy, Alembic
+- **Dependency Management**: Poetry
+- **Containerization**: Docker
 
 ### Frontend
-- React, TypeScript
-- Vite
-- Tailwind CSS
-- Zustand, React Query
-- Yarn
+- **Core**: React, TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand (Global), React Query (Server)
+- **Routing**: React Router
+- **HTTP Client**: Axios
+- **Package Manager**: Yarn
