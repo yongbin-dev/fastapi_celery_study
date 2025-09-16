@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useCancelPipeline, usePipelineStatus, useStartPipeline } from '../hooks';
+import { TaskStatus } from '../types';
 
 interface TaskManagementTabProps {
 }
@@ -69,18 +70,18 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
   };
 
   // 파이프라인 상태에서 전체 상태를 계산하는 헬퍼 함수
-  const getOverallStatus = (pipelineData: typeof pipelineStatus) => {
-    if (!pipelineData?.stages || pipelineData.stages.length === 0) return 'PENDING';
+  const getOverallStatus = (pipelineData: typeof pipelineStatus): TaskStatus => {
+    if (!pipelineData?.stages || pipelineData.stages.length === 0) return TaskStatus.PENDING;
 
     const stages = pipelineData.stages;
-    const allSuccess = stages.every(stage => stage.status === 'SUCCESS');
-    const anyFailed = stages.some(stage => stage.status === 'FAILURE');
-    const anyInProgress = stages.some(stage => stage.status === 'PROGRESS');
+    const allSuccess = stages.every(stage => stage.status === TaskStatus.SUCCESS);
+    const anyFailed = stages.some(stage => stage.status === TaskStatus.FAILURE);
+    const anyInProgress = stages.some(stage => stage.status === TaskStatus.PROGRESS);
 
-    if (allSuccess) return 'SUCCESS';
-    if (anyFailed) return 'FAILED';
-    if (anyInProgress) return 'PROGRESS';
-    return 'PENDING';
+    if (allSuccess) return TaskStatus.SUCCESS;
+    if (anyFailed) return TaskStatus.FAILURE;
+    if (anyInProgress) return TaskStatus.PROGRESS;
+    return TaskStatus.PENDING;
   };
 
   // 전체 진행률 계산
@@ -92,8 +93,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
   // 파이프라인 완료/실패 시 자동 새로고침 중단
   useEffect(() => {
     const overallStatus = getOverallStatus(pipelineStatus);
-    console.log(pipelineStatus, overallStatus);
-    if (overallStatus === 'SUCCESS' || overallStatus === 'FAILED') {
+    if (overallStatus === TaskStatus.SUCCESS || overallStatus === TaskStatus.FAILURE) {
       setIsAutoRefresh(false);
     }
   }, [pipelineStatus]);
@@ -122,9 +122,9 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
           <div className="mb-6 p-4 bg-white rounded-lg border">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-lg font-semibold text-gray-800">파이프라인 진행 상황</h4>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOverallStatus(pipelineStatus) === 'SUCCESS' ? 'bg-green-100 text-green-700' :
-                getOverallStatus(pipelineStatus) === 'FAILED' ? 'bg-red-100 text-red-700' :
-                  getOverallStatus(pipelineStatus) === 'PROGRESS' ? 'bg-blue-100 text-blue-700' :
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOverallStatus(pipelineStatus) === TaskStatus.SUCCESS ? 'bg-green-100 text-green-700' :
+                getOverallStatus(pipelineStatus) === TaskStatus.FAILURE ? 'bg-red-100 text-red-700' :
+                  getOverallStatus(pipelineStatus) === TaskStatus.PROGRESS ? 'bg-blue-100 text-blue-700' :
                     'bg-gray-100 text-gray-700'
                 }`}>
                 {getOverallStatus(pipelineStatus)}
@@ -135,7 +135,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-gray-700">전체 스테이지</span>
-                <span className="text-sm text-gray-500">{pipelineStatus.stages.filter(stage => stage.status === 'SUCCESS').length} / {pipelineStatus.total_stages}</span>
+                <span className="text-sm text-gray-500">{pipelineStatus.stages.filter(stage => stage.status === TaskStatus.SUCCESS).length} / {pipelineStatus.total_stages}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -167,9 +167,9 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
                 <div key={`${stage.chain_id}-${stage.stage}`} className="p-3 bg-gray-50 rounded">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${stage.status === 'SUCCESS' ? 'bg-green-500' :
-                        stage.status === 'PROGRESS' ? 'bg-blue-500' :
-                          stage.status === 'FAILURE' ? 'bg-red-500' :
+                      <div className={`w-3 h-3 rounded-full ${stage.status === TaskStatus.SUCCESS ? 'bg-green-500' :
+                        stage.status === TaskStatus.PROGRESS ? 'bg-blue-500' :
+                          stage.status === TaskStatus.FAILURE ? 'bg-red-500' :
                             'bg-gray-300'
                         }`}></div>
                       <span className="text-sm font-medium">
@@ -177,9 +177,9 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${stage.status === 'SUCCESS' ? 'bg-green-100 text-green-700' :
-                        stage.status === 'PROGRESS' ? 'bg-blue-100 text-blue-700' :
-                          stage.status === 'FAILURE' ? 'bg-red-100 text-red-700' :
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${stage.status === TaskStatus.SUCCESS ? 'bg-green-100 text-green-700' :
+                        stage.status === TaskStatus.PROGRESS ? 'bg-blue-100 text-blue-700' :
+                          stage.status === TaskStatus.FAILURE ? 'bg-red-100 text-red-700' :
                             'bg-gray-100 text-gray-700'
                         }`}>
                         {stage.status}

@@ -16,7 +16,7 @@ class TaskResult(Base):
     
     # 기본 필드
     id = Column(Integer, primary_key=True, comment="고유 식별자")
-    task_id = Column(
+    task_id: Column[str] = Column(
         String(255), 
         ForeignKey("task_logs.task_id", ondelete="CASCADE"), 
         unique=True,
@@ -26,7 +26,7 @@ class TaskResult(Base):
     )
     
     # 결과 타입 및 데이터
-    result_type = Column(
+    result_type : Column[str]= Column(
         String(50),
         default='json',
         comment="결과 타입 (json/binary/text/pickle)"
@@ -39,7 +39,7 @@ class TaskResult(Base):
         LargeBinary,
         comment="바이너리 형식 결과"
     )
-    result_size = Column(
+    result_size : Column[Integer] = Column(
         Integer,
         comment="결과 크기 (바이트)"
     )

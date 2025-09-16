@@ -33,7 +33,8 @@
       "Bash(tree:*)",
       "Bash(source:*)",
       "Bash(chmod:*)",
-      "Bash(echo $PATH)"
+      "Bash(echo $PATH)",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "ask": []

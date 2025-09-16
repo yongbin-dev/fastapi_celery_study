@@ -1,7 +1,8 @@
 # services/pipeline_service.py
 
 import uuid
-from typing import Optional, Dict
+from typing import Optional, Dict, List
+from datetime import datetime, timedelta
 
 from app.core.logging import get_logger
 
@@ -14,6 +15,10 @@ from app.schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
     PipelineStagesResponse, StageDetailResponse, StageInfo, ProcessStatus
 )
+from app.crud import (
+    async_chain_execution as chain_execution_crud,
+)
+from app.pipeline_config import STAGES
 # 파이프라인 단계별 태스크 임포트
 from app.tasks import (
     stage1_preprocessing,
@@ -22,6 +27,7 @@ from app.tasks import (
     stage4_post_processing
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from app.services.status_manager import RedisPipelineStatusManager
 
@@ -52,10 +58,163 @@ class PipelineService:
             status: Optional[str] = None,
             task_name: Optional[str] = None,
             limit: int = 100,
-    ) -> list[PipelineStatusResponse]:
-        # TODO: DB 조회 로직 구현
-        return []
+    ) -> List[PipelineStagesResponse]:
 
+        # ChainExecution 조회 (최근 생성된 순으로)
+        chain_executions = await chain_execution_crud.get_recent_chains(
+            db, days=hours//24 + 1, limit=limit
+        )
+
+        # 필터링
+        if status:
+            chain_executions = [
+                chain_exec for chain_exec in chain_executions
+                if chain_exec.status == status
+            ]
+
+        pipeline_responses = []
+
+        for chain_exec in chain_executions:
+            # 해당 체인의 TaskLog들 조회 (pipeline stage만) - AsyncSession 사용
+            task_logs = await self._get_pipeline_tasks_by_chain_async(
+                db, chain_id=chain_exec.chain_id
+            )
+
+            # StageInfo 리스트 생성
+            stages = []
+            for i, stage_config in enumerate(STAGES, 1):
+                # 해당 stage의 TaskLog 찾기
+                stage_task = next(
+                    (task for task in task_logs if f"stage{i}" in task.task_name),
+                    None
+                )
+
+                if stage_task:
+                    # TaskLog에서 StageInfo 생성
+                    stage_info = StageInfo(
+                        chain_id=chain_exec.chain_id,
+                        stage=i,
+                        stage_name=stage_config["name"],
+                        task_id=stage_task.task_id,
+                        status=ProcessStatus(stage_task.status),
+                        progress=self._calculate_stage_progress(stage_task.status),
+                        created_at=stage_task.created_at.timestamp() if stage_task.created_at else 0,
+                        started_at=stage_task.started_at.timestamp() if stage_task.started_at else None,
+                        updated_at=stage_task.updated_at.timestamp() if stage_task.updated_at else 0,
+                        error_message=stage_task.error,
+                        description=stage_config.get("description"),
+                        expected_duration=stage_config.get("expected_duration")
+                    )
+                else:
+                    stage_info = StageInfo.create_pending_stage(
+                        chain_id=chain_exec.chain_id,
+                        stage=i,
+                        stage_name=stage_config["name"],
+                        description=stage_config.get("description", ""),
+                        expected_duration=stage_config.get("expected_duration", "")
+                    )
+
+                stages.append(stage_info)
+
+            # PipelineStagesResponse 생성
+            pipeline_response = self._create_pipeline_stages_response(
+                chain_exec.chain_id, stages
+            )
+            pipeline_responses.append(pipeline_response)
+
+        return pipeline_responses
+
+
+    async def _get_pipeline_tasks_by_chain_async(
+            self,
+            db: AsyncSession,
+            *,
+            chain_id: str
+    ) -> List:
+        """파이프라인 작업들을 단계순으로 조회 (AsyncSession용)"""
+        from sqlalchemy import select, desc, and_
+        from ..models.task_log import TaskLog
+
+        stage_tasks = []
+        for stage_num in range(1, 5):  # stage1~4
+            # 각 stage별 TaskLog 조회 - chain_id로 필터링
+            stmt = select(TaskLog).where(
+                and_(
+                    TaskLog.task_name.like(f"app.tasks.stage{stage_num}_%"),
+                    TaskLog.kwargs.like(f'%"{chain_id}"%')
+                )
+            ).order_by(desc(TaskLog.created_at)).limit(1)
+
+            result = await db.execute(stmt)
+            task = result.scalar_one_or_none()
+
+            if task:
+                stage_tasks.append(task)
+            else:
+                # 더 넓은 검색 - args에서도 찾아보기
+                stmt_alt = select(TaskLog).where(
+                    and_(
+                        TaskLog.task_name.like(f"app.tasks.stage{stage_num}_%"),
+                        TaskLog.args.like(f'%{chain_id}%')
+                    )
+                ).order_by(desc(TaskLog.created_at)).limit(1)
+
+                result_alt = await db.execute(stmt_alt)
+                task_alt = result_alt.scalar_one_or_none()
+                if task_alt:
+                    stage_tasks.append(task_alt)
+
+        return stage_tasks
+
+
+
+    def _calculate_stage_progress(self, status: str) -> int:
+        """작업 상태에 따른 진행률 계산"""
+        if status == ProcessStatus.SUCCESS.value:
+            return 100
+        elif status == ProcessStatus.STARTED.value:
+            return 50
+        elif status in [ProcessStatus.FAILURE.value, ProcessStatus.REVOKED.value]:
+            return 0
+        else:  # PENDING, RETRY
+            return 0
+
+    def _create_pipeline_stages_response(self, chain_id: str, stages: List[StageInfo]) -> PipelineStagesResponse:
+        """StageInfo 리스트로부터 PipelineStagesResponse 생성"""
+        # 현재 진행 중인 스테이지 및 전체 진행률 계산
+        current_stage = None
+        overall_progress = 0
+        last_completed_stage = 0
+
+        for stage in stages:
+            # status가 Enum이면 .value 접근, 아니면 직접 사용
+            status_value = stage.status.value if hasattr(stage.status, 'value') else stage.status
+
+            if status_value == ProcessStatus.SUCCESS.value:
+                # 완료된 스테이지
+                overall_progress += 25  # 각 스테이지당 25%
+                last_completed_stage = stage.stage
+            elif status_value == ProcessStatus.STARTED.value:
+                # 현재 진행 중인 스테이지
+                current_stage = stage.stage
+                # 현재 스테이지의 부분 진행률 추가
+                overall_progress += int(stage.progress * 0.25)
+            elif status_value == ProcessStatus.FAILURE.value:
+                # 실패한 스테이지는 현재 스테이지로 설정 (재시도 가능)
+                current_stage = stage.stage
+
+        # 현재 진행 중인 스테이지가 없고 파이프라인이 완전히 끝난 경우
+        if current_stage is None and last_completed_stage == 4:
+            current_stage = 4  # 마지막 스테이지를 현재로 표시
+            overall_progress = 100
+
+        return PipelineStagesResponse(
+            chain_id=chain_id,
+            total_stages=len(stages),
+            current_stage=current_stage,
+            overall_progress=overall_progress,
+            stages=stages
+        )
 
     async def get_pipeline_history(
             self,
@@ -64,9 +223,15 @@ class PipelineService:
             status: Optional[str] = None,
             task_name: Optional[str] = None,
             limit: int = 100,
-    ) -> list[PipelineStatusResponse]:
-        # TODO: hours > 1 이면 DB, 아니면 Redis 조회 로직 분기 구현
-        return await self.get_pipelines_from_db(db=db, hours=hours, status=status, task_name=task_name, limit=limit)
+    ) -> List[PipelineStagesResponse]:
+        """파이프라인 히스토리 조회 - DB 기반"""
+        return await self.get_pipelines_from_db(
+            db=db,
+            hours=hours,
+            status=status,
+            task_name=task_name,
+            limit=limit
+        )
 
     async def create_ai_pipeline(self, db : AsyncSession , status_manager : RedisPipelineStatusManager ,  request: AIPipelineRequest) -> AIPipelineResponse:
         """AI 처리 파이프라인 시작"""

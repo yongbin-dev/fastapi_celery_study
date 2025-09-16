@@ -26,14 +26,13 @@ async def get_pipeline_history(
         task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
         limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000)
 ) -> ApiResponse[list[PipelineStatusResponse]]:
+
     result = await service.get_pipeline_history(
         db=db,  hours=hours, status=status, task_name=task_name, limit=limit
     )
-
-    data_source = "Redis" if hours <= 1 else "DB"
     return ResponseBuilder.success(
         data=result,
-        message=f"지난 {hours}시간 내 파이프라인 히스토리 조회 완료 ({data_source} 기반)"
+        message=f"지난 {hours}시간 내 파이프라인 히스토리 조회 완료"
     )
 
 

@@ -1,4 +1,3 @@
-import { ChatBotPage } from '@/features/chatbot';
 import { TaskPage } from '@/features/task';
 import AboutPage from '@/pages/AboutPage';
 import HomePage from '@/pages/HomePage';
@@ -25,7 +24,6 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/chatbot" element={<ChatBotPage />} />
               <Route path="/tasks" element={<TaskPage />} />
             </Routes>
           </main>

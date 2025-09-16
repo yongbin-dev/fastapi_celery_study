@@ -16,7 +16,7 @@ class ChainExecution(Base):
 
     # 기본 필드
     id = Column(Integer, primary_key=True, comment="고유 식별자")
-    chain_id = Column(
+    chain_id : Column[str] = Column(
         String(255),
         nullable=True,
         index=True,

@@ -19,20 +19,13 @@ export const TaskPage: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'management':
-        return (
-          <TaskManagementTab />
-        );
-
+        return <TaskManagementTab />
       case 'history':
         return <TaskHistoryTab />;
-
       case 'model':
         return <TaskModelsTab />;
-
-
       case 'etc':
         return <TaskApiTab />;
-
       default:
         return null;
     }

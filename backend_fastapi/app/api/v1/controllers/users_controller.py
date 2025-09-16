@@ -13,7 +13,7 @@
 #
 #
 # @controller.post("/", response_model=User, status_code=201)
-# async def create_user(
+# async_crud def create_user(
 #     *,
 #     db: AsyncSession = Depends(get_db),
 #     user_in: UserCreate,
@@ -34,7 +34,7 @@
 #
 #
 # @controller.get("/", response_model=List[User])
-# async def read_users(
+# async_crud def read_users(
 #     db: AsyncSession = Depends(get_db),
 #     skip: int = 0,
 #     limit: int = 100,
@@ -48,7 +48,7 @@
 #
 #
 # @controller.get("/{user_id}", response_model=User)
-# async def read_user(
+# async_crud def read_user(
 #     *,
 #     db: AsyncSession = Depends(get_db),
 #     user_id: int,
@@ -65,7 +65,7 @@
 #
 #
 # @controller.put("/{user_id}", response_model=User)
-# async def update_user(
+# async_crud def update_user(
 #     *,
 #     db: AsyncSession = Depends(get_db),
 #     user_id: int,
@@ -83,7 +83,7 @@
 #
 #
 # @controller.delete("/{user_id}", response_model=User , status_code=200)
-# async def delete_user(
+# async_crud def delete_user(
 #     *,
 #     db: AsyncSession = Depends(get_db),
 #     user_id: int,

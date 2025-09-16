@@ -6,7 +6,6 @@ from enum import Enum
 
 
 class ProcessStatus(str, Enum):
-    """프로세스 실행 상태"""
     PENDING = "PENDING"      # 대기 중
     STARTED = "STARTED"      # 시작됨
     SUCCESS = "SUCCESS"      # 성공

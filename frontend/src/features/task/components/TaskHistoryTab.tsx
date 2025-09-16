@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useHistoryTasks } from '../hooks';
 import type { PipelineStatusResponse, TaskHistoryRequest } from '../types';
+import { TaskGroup } from './history/TaskGroup';
+import { TaskStatus } from '../types';
 
 export const TaskHistoryTab: React.FC = () => {
   const [searchParams, setSearchParams] = useState<TaskHistoryRequest>({
@@ -68,11 +70,11 @@ export const TaskHistoryTab: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">전체</option>
-              <option value="SUCCESS">성공</option>
-              <option value="FAILURE">실패</option>
-              <option value="PENDING">대기</option>
-              <option value="PROGRESS">진행중</option>
-              <option value="REVOKED">취소됨</option>
+              <option value={TaskStatus.SUCCESS}>성공</option>
+              <option value={TaskStatus.FAILURE}>실패</option>
+              <option value={TaskStatus.PENDING}>대기</option>
+              <option value={TaskStatus.PROGRESS}>진행중</option>
+              <option value={TaskStatus.REVOKED}>취소됨</option>
             </select>
           </div>
 
@@ -155,11 +157,10 @@ export const TaskHistoryTab: React.FC = () => {
         ) : (
           <div className="divide-y">
             {pipelines.map((pipeline: PipelineStatusResponse, index) => (
-              <></>
-              // <TaskGroup
-              //   key={pipeline.length > 0 ? pipeline[0].chain_id : `pipeline-${index}`}
-              //   pipeline={pipeline}
-              // />
+              <TaskGroup
+                key={pipeline.chain_id || `pipeline-${index}`}
+                pipeline={pipeline}
+              />
             ))}
           </div>
         )}

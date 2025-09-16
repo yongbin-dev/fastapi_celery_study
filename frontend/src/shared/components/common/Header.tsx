@@ -19,8 +19,8 @@ const Header: React.FC = () => {
             <Link
               to="/"
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Home
@@ -28,26 +28,17 @@ const Header: React.FC = () => {
             <Link
               to="/about"
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/about')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               About
             </Link>
             <Link
-              to="/chatbot"
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/chatbot')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-            >
-              ChatBot
-            </Link>
-            <Link
               to="/tasks"
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/tasks')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Tasks
@@ -55,8 +46,8 @@ const Header: React.FC = () => {
             <Link
               to="/contact"
               className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/contact')
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
               Contact
