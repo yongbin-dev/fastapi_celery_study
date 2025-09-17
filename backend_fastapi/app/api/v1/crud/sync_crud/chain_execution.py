@@ -8,18 +8,16 @@ from .base import CRUDBase
 from ...models.chain_execution import ChainExecution
 from ...schemas.enums import ProcessStatus
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_  # 이거 없으면 쿼리 못 만듦
 
 
 class CRUDChainExecution(CRUDBase[ChainExecution, dict, dict]):
     """ChainExecution 모델용 CRUD 클래스"""
 
-    async def get_by_chain_id(self, session: Session, *, chain_id: str) -> Optional[ChainExecution]:
+    def get_by_chain_id(self, session: Session, *, chain_id: str) -> Optional[ChainExecution]:
         """chain_id로 체인 실행 조회"""
-        # select() 없으면 이 코드 작동 안 함
-        stmt = select(ChainExecution).where(ChainExecution.chain_id == chain_id)
-        result = session.execute(stmt)
-        return result.scalar_one_or_none()
+        return session.query(ChainExecution).filter(
+            ChainExecution.chain_id == chain_id
+        ).first()
 
     def get_by_chain_name(
         self,
@@ -193,9 +191,9 @@ class CRUDChainExecution(CRUDBase[ChainExecution, dict, dict]):
     ) -> List[ChainExecution]:
         """최근 N일간 체인 실행 목록 조회"""
         from datetime import datetime, timedelta
-        from ...models.base import seoul_now
+        
 
-        since_date = seoul_now() - timedelta(days=days)
+        since_date = datetime.now() - timedelta(days=days)
 
         stmt = select(ChainExecution)
         result = session.execute(stmt)
@@ -211,9 +209,9 @@ class CRUDChainExecution(CRUDBase[ChainExecution, dict, dict]):
     ) -> int:
         """오래된 완료 체인 정리"""
         from datetime import timedelta
-        from ...models.base import seoul_now
+        
 
-        cleanup_date = seoul_now() - timedelta(days=days)
+        cleanup_date = datetime.now() - timedelta(days=days)
         deleted_count = db.query(ChainExecution).filter(
             and_(
                 ChainExecution.finished_at < cleanup_date,

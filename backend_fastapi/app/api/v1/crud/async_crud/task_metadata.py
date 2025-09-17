@@ -93,12 +93,12 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     ) -> List[TaskMetadata]:
         """예약된 작업들 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
             stmt = select(TaskMetadata).where(
                 and_(
                     TaskMetadata.eta.isnot(None),
-                    TaskMetadata.eta > seoul_now()
+                    TaskMetadata.eta > datetime.now()
                 )
             ).order_by(TaskMetadata.eta).offset(skip).limit(limit)
             result = await db.execute(stmt)
@@ -116,12 +116,12 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     ) -> List[TaskMetadata]:
         """만료된 작업들 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
             stmt = select(TaskMetadata).where(
                 and_(
                     TaskMetadata.expires.isnot(None),
-                    TaskMetadata.expires < seoul_now()
+                    TaskMetadata.expires < datetime.now()
                 )
             ).order_by(desc(TaskMetadata.expires)).offset(skip).limit(limit)
             result = await db.execute(stmt)
@@ -319,12 +319,12 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     async def get_scheduled_count(self, db: AsyncSession) -> int:
         """예약된 작업 수 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
             stmt = select(func.count(TaskMetadata.id)).where(
                 and_(
                     TaskMetadata.eta.isnot(None),
-                    TaskMetadata.eta > seoul_now()
+                    TaskMetadata.eta > datetime.now()
                 )
             )
             result = await db.execute(stmt)
@@ -336,12 +336,12 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     async def get_expired_count(self, db: AsyncSession) -> int:
         """만료된 작업 수 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
             stmt = select(func.count(TaskMetadata.id)).where(
                 and_(
                     TaskMetadata.expires.isnot(None),
-                    TaskMetadata.expires < seoul_now()
+                    TaskMetadata.expires < datetime.now()
                 )
             )
             result = await db.execute(stmt)
@@ -399,13 +399,13 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     async def cleanup_expired_metadata(self, db: AsyncSession) -> int:
         """만료된 메타데이터 정리"""
         try:
-            from ...models.base import seoul_now
+            
             from sqlalchemy import delete
 
             stmt = delete(TaskMetadata).where(
                 and_(
                     TaskMetadata.expires.isnot(None),
-                    TaskMetadata.expires < seoul_now()
+                    TaskMetadata.expires < datetime.now()
                 )
             )
             result = await db.execute(stmt)
@@ -425,9 +425,9 @@ class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):
     ) -> List[TaskMetadata]:
         """최근 N일간 특정 워커의 작업들 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
-            since_date = seoul_now() - timedelta(days=days)
+            since_date = datetime.now() - timedelta(days=days)
             stmt = select(TaskMetadata).where(
                 and_(
                     TaskMetadata.worker_name == worker_name,

@@ -4,7 +4,8 @@ from typing import List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, and_, func
 from sqlalchemy.orm import joinedload
-from datetime import timedelta
+from datetime import timedelta , datetime
+
 
 from .base import AsyncCRUDBase
 from ...models.task_result import TaskResult
@@ -51,15 +52,13 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         limit: int = 100
     ) -> List[TaskResult]:
         """대용량 결과 목록 조회"""
-        try:
-            stmt = select(TaskResult).where(
-                TaskResult.result_size >= min_size
-            ).order_by(desc(TaskResult.result_size)).offset(skip).limit(limit)
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
+
+        stmt = select(TaskResult).where(
+            TaskResult.result_size >= min_size
+        ).order_by(desc(TaskResult.result_size)).offset(skip).limit(limit)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
 
     async def get_with_task(
         self,
@@ -68,15 +67,13 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         task_id: str
     ) -> Optional[TaskResult]:
         """작업 로그와 함께 결과 조회"""
-        try:
-            stmt = select(TaskResult).options(
-                joinedload(TaskResult.task)
-            ).where(TaskResult.task_id == task_id)
-            result = await db.execute(stmt)
-            return result.scalar_one_or_none()
-        except Exception as e:
-            await db.rollback()
-            raise e
+
+        stmt = select(TaskResult).options(
+            joinedload(TaskResult.task)
+        ).where(TaskResult.task_id == task_id)
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
+
 
     async def create_task_result(
         self,
@@ -87,17 +84,15 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         result_type: str = 'auto'
     ) -> TaskResult:
         """새 작업 결과 생성"""
-        try:
-            task_result = TaskResult(task_id=task_id)
-            task_result.set_result(data, result_type)
 
-            db.add(task_result)
-            await db.commit()
-            await db.refresh(task_result)
-            return task_result
-        except Exception as e:
-            await db.rollback()
-            raise e
+        task_result = TaskResult(task_id=task_id)
+        task_result.set_result(data, result_type)
+
+        db.add(task_result)
+        await db.commit()
+        await db.refresh(task_result)
+        return task_result
+
 
     async def update_result(
         self,
@@ -108,16 +103,13 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         result_type: str = 'auto'
     ) -> TaskResult:
         """작업 결과 업데이트"""
-        try:
-            task_result.set_result(data, result_type)
 
-            db.add(task_result)
-            await db.commit()
-            await db.refresh(task_result)
-            return task_result
-        except Exception as e:
-            await db.rollback()
-            raise e
+        task_result.set_result(data, result_type)
+
+        db.add(task_result)
+        await db.commit()
+        await db.refresh(task_result)
+        return task_result
 
     async def get_result_data(
         self,
@@ -152,18 +144,12 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         limit: int = 100
     ) -> List[TaskResult]:
         """최근 N일간 작업 결과 목록 조회"""
-        try:
-            from ...models.base import seoul_now
-
-            since_date = seoul_now() - timedelta(days=days)
-            stmt = select(TaskResult).where(
-                TaskResult.created_at >= since_date
-            ).order_by(desc(TaskResult.created_at)).limit(limit)
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
+        since_date = datetime.now() - timedelta(days=days)
+        stmt = select(TaskResult).where(
+            TaskResult.created_at >= since_date
+        ).order_by(desc(TaskResult.created_at)).limit(limit)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_stats_by_type(self, db: AsyncSession) -> dict:
         """결과 타입별 통계 조회"""
@@ -198,10 +184,10 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
     ) -> int:
         """오래된 결과 정리"""
         try:
-            from ...models.base import seoul_now
+            
             from sqlalchemy import delete
 
-            cleanup_date = seoul_now() - timedelta(days=days)
+            cleanup_date = datetime.now() - timedelta(days=days)
             stmt = delete(TaskResult).where(
                 TaskResult.created_at < cleanup_date
             )
@@ -220,46 +206,38 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         days: int = 30
     ) -> int:
         """대용량 오래된 결과 정리"""
-        try:
-            from ...models.base import seoul_now
-            from sqlalchemy import delete
 
-            cleanup_date = seoul_now() - timedelta(days=days)
-            stmt = delete(TaskResult).where(
-                and_(
-                    TaskResult.result_size >= max_size,
-                    TaskResult.created_at < cleanup_date
-                )
+        from sqlalchemy import delete
+
+        cleanup_date = datetime.now() - timedelta(days=days)
+        stmt = delete(TaskResult).where(
+            and_(
+                TaskResult.result_size >= max_size,
+                TaskResult.created_at < cleanup_date
             )
-            result = await db.execute(stmt)
-            await db.commit()
-            return result.rowcount
-        except Exception as e:
-            await db.rollback()
-            raise e
+        )
+        result = await db.execute(stmt)
+
 
     async def get_total_storage_usage(self, db: AsyncSession) -> dict:
         """전체 저장소 사용량 조회"""
-        try:
-            stmt = select(
-                func.count(TaskResult.id).label('total_count'),
-                func.sum(TaskResult.result_size).label('total_size'),
-                func.avg(TaskResult.result_size).label('avg_size'),
-                func.max(TaskResult.result_size).label('max_size')
-            )
 
-            result = await db.execute(stmt)
-            row = result.first()
+        stmt = select(
+            func.count(TaskResult.id).label('total_count'),
+            func.sum(TaskResult.result_size).label('total_size'),
+            func.avg(TaskResult.result_size).label('avg_size'),
+            func.max(TaskResult.result_size).label('max_size')
+        )
 
-            return {
-                'total_count': row.total_count or 0,
-                'total_size': int(row.total_size or 0),
-                'avg_size': float(row.avg_size or 0),
-                'max_size': int(row.max_size or 0)
-            }
-        except Exception as e:
-            await db.rollback()
-            raise e
+        result = await db.execute(stmt)
+        row = result.first()
+
+        return {
+            'total_count': row.total_count or 0,
+            'total_size': int(row.total_size or 0),
+            'avg_size': float(row.avg_size or 0),
+            'max_size': int(row.max_size or 0)
+        }
 
     async def get_results_by_task_name(
         self,
@@ -270,17 +248,15 @@ class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):
         limit: int = 100
     ) -> List[TaskResult]:
         """작업명별 결과 목록 조회 (작업 로그와 조인)"""
-        try:
-            from ...models.task_log import TaskLog
 
-            stmt = select(TaskResult).join(TaskLog).where(
-                TaskLog.task_name == task_name
-            ).order_by(desc(TaskResult.created_at)).offset(skip).limit(limit)
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
+        from ...models.task_log import TaskLog
+
+        stmt = select(TaskResult).join(TaskLog).where(
+            TaskLog.task_name == task_name
+        ).order_by(desc(TaskResult.created_at)).offset(skip).limit(limit)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
 
 
 # 인스턴스 생성

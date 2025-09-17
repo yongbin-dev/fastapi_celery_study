@@ -1,5 +1,6 @@
 # crud/task_log.py
 
+from datetime import datetime, timedelta
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
@@ -141,13 +142,13 @@ class CRUDTaskLog(CRUDBase[TaskLog, dict, dict]):
 
         # 시작 시간 설정
         if status == 'STARTED' and not task_log.started_at:
-            from ...models.base import seoul_now
-            task_log.started_at = seoul_now()
+            
+            task_log.started_at = datetime.now()
 
         # 완료 시간 설정
         if status in ['SUCCESS', 'FAILURE', 'REVOKED'] and not task_log.completed_at:
-            from ...models.base import seoul_now
-            task_log.completed_at = seoul_now()
+            
+            task_log.completed_at = datetime.now()
 
         db.add(task_log)
         db.commit()
@@ -205,9 +206,9 @@ class CRUDTaskLog(CRUDBase[TaskLog, dict, dict]):
     ) -> List[TaskLog]:
         """최근 N일간 작업 로그 목록 조회"""
         from datetime import timedelta
-        from ..models.base import seoul_now
+        
 
-        since_date = seoul_now() - timedelta(days=days)
+        since_date = datetime.now() - timedelta(days=days)
         return db.query(TaskLog).filter(
             TaskLog.created_at >= since_date
         ).order_by(desc(TaskLog.created_at)).limit(limit).all()
@@ -263,9 +264,9 @@ class CRUDTaskLog(CRUDBase[TaskLog, dict, dict]):
     ) -> int:
         """오래된 완료 로그 정리"""
         from datetime import timedelta
-        from ..models.base import seoul_now
+        
 
-        cleanup_date = seoul_now() - timedelta(days=days)
+        cleanup_date = datetime.now() - timedelta(days=days)
         deleted_count = db.query(TaskLog).filter(
             and_(
                 TaskLog.completed_at < cleanup_date,

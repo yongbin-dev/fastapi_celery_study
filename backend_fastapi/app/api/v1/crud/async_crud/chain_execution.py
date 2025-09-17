@@ -262,9 +262,9 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
     ) -> List[ChainExecution]:
         """최근 N일간 체인 실행 목록 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
-            since_date = seoul_now() - timedelta(days=days)
+            since_date = datetime.now() - timedelta(days=days)
             stmt = select(ChainExecution).where(
                 ChainExecution.created_at >= since_date
             ).order_by(desc(ChainExecution.created_at)).limit(limit)
@@ -283,10 +283,10 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
     ) -> int:
         """오래된 완료 체인 정리"""
         try:
-            from ...models.base import seoul_now
+            
             from sqlalchemy import delete
 
-            cleanup_date = seoul_now() - timedelta(days=days)
+            cleanup_date = datetime.now() - timedelta(days=days)
             stmt = delete(ChainExecution).where(
                 and_(
                     ChainExecution.finished_at < cleanup_date,

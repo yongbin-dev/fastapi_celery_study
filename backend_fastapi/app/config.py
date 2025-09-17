@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     # Celery 설정
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
+    CELERY_TASK_MODULES: List[str] = ["app.core.celery.celery_tasks"]  # 동적 태스크 모듈 설정
     
     # JWT 인증 설정
     SECRET_KEY: str = "dev-secret-key-change-in-production"

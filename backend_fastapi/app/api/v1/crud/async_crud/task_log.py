@@ -154,13 +154,13 @@ class AsyncCRUDTaskLog(AsyncCRUDBase[TaskLog, dict, dict]):
 
             # 시작 시간 설정
             if status == 'STARTED' and not task_log.started_at:
-                from ...models.base import seoul_now
-                task_log.started_at = seoul_now()
+                
+                task_log.started_at = datetime.now()
 
             # 완료 시간 설정
             if status in ['SUCCESS', 'FAILURE', 'REVOKED'] and not task_log.completed_at:
-                from ...models.base import seoul_now
-                task_log.completed_at = seoul_now()
+                
+                task_log.completed_at = datetime.now()
 
             db.add(task_log)
             await db.commit()
@@ -239,9 +239,9 @@ class AsyncCRUDTaskLog(AsyncCRUDBase[TaskLog, dict, dict]):
     ) -> List[TaskLog]:
         """최근 N일간 작업 로그 목록 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
-            since_date = seoul_now() - timedelta(days=days)
+            since_date = datetime.now() - timedelta(days=days)
             stmt = select(TaskLog).where(
                 TaskLog.created_at >= since_date
             ).order_by(desc(TaskLog.created_at)).limit(limit)
@@ -311,10 +311,10 @@ class AsyncCRUDTaskLog(AsyncCRUDBase[TaskLog, dict, dict]):
     ) -> int:
         """오래된 완료 로그 정리"""
         try:
-            from ...models.base import seoul_now
+            
             from sqlalchemy import delete
 
-            cleanup_date = seoul_now() - timedelta(days=days)
+            cleanup_date = datetime.now() - timedelta(days=days)
             stmt = delete(TaskLog).where(
                 and_(
                     TaskLog.completed_at < cleanup_date,

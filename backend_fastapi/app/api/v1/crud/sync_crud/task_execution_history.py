@@ -3,6 +3,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
+from datetime import datetime, timedelta
 
 from .base import CRUDBase
 from ...models.task_execution_history import TaskExecutionHistory
@@ -97,13 +98,12 @@ class CRUDTaskExecutionHistory(CRUDBase[TaskExecutionHistory, dict, dict]):
         status: str = 'STARTED'
     ) -> TaskExecutionHistory:
         """새 시도 기록 생성"""
-        from datetime import datetime
 
         execution_history = TaskExecutionHistory(
             task_id=task_id,
             attempt_number=attempt_number,
             status=status,
-            started_at=datetime.utcnow()
+            started_at=datetime.now()
         )
         db.add(execution_history)
         db.commit()
@@ -120,10 +120,9 @@ class CRUDTaskExecutionHistory(CRUDBase[TaskExecutionHistory, dict, dict]):
         traceback: Optional[str] = None
     ) -> TaskExecutionHistory:
         """시도 완료 처리"""
-        from datetime import datetime
 
         execution_history.status = status
-        execution_history.completed_at = datetime.utcnow()
+        execution_history.completed_at = datetime.now()
 
         if error_message:
             execution_history.error_message = error_message
@@ -237,7 +236,7 @@ class CRUDTaskExecutionHistory(CRUDBase[TaskExecutionHistory, dict, dict]):
         """최근 N일간 실패한 시도들 조회"""
         from datetime import datetime, timedelta
 
-        since_date = datetime.utcnow() - timedelta(days=days)
+        since_date = datetime.now() - timedelta(days=days)
         return db.query(TaskExecutionHistory).filter(
             and_(
                 TaskExecutionHistory.status.in_(['FAILURE', 'TIMEOUT']),
@@ -272,7 +271,7 @@ class CRUDTaskExecutionHistory(CRUDBase[TaskExecutionHistory, dict, dict]):
         """오래된 실행 이력 정리"""
         from datetime import datetime, timedelta
 
-        cleanup_date = datetime.utcnow() - timedelta(days=days)
+        cleanup_date = datetime.now() - timedelta(days=days)
         deleted_count = db.query(TaskExecutionHistory).filter(
             TaskExecutionHistory.created_at < cleanup_date
         ).delete()

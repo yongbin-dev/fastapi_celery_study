@@ -2,15 +2,14 @@
 
 import json
 import time
-from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
 import redis
 
-from ..core.config import settings
-from ..core.logging import get_logger
-from ..schemas.enums import ProcessStatus
-from ..schemas.stage import StageInfo
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.schemas.enums import ProcessStatus
+from app.schemas.stage import StageInfo
 
 logger = get_logger(__name__)
 
@@ -142,7 +141,7 @@ class RedisPipelineStatusManager:
         try:
             redis_client = self.get_redis_client()
             
-            from ..pipeline_config import STAGES
+            from app.pipeline_config import STAGES
             stages = []
             for stage_config in STAGES:
                 stages.append(StageInfo.create_pending_stage(

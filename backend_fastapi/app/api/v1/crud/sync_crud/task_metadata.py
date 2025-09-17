@@ -69,12 +69,12 @@ class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):
         limit: int = 100
     ) -> List[TaskMetadata]:
         """예약된 작업들 조회"""
-        from ...models.base import seoul_now
+        
 
         return db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.eta.isnot(None),
-                TaskMetadata.eta > seoul_now()
+                TaskMetadata.eta > datetime.now()
             )
         ).order_by(TaskMetadata.eta).offset(skip).limit(limit).all()
 
@@ -86,12 +86,12 @@ class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):
         limit: int = 100
     ) -> List[TaskMetadata]:
         """만료된 작업들 조회"""
-        from ...models.base import seoul_now
+        
 
         return db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.expires.isnot(None),
-                TaskMetadata.expires < seoul_now()
+                TaskMetadata.expires < datetime.now()
             )
         ).order_by(desc(TaskMetadata.expires)).offset(skip).limit(limit).all()
 
@@ -242,23 +242,23 @@ class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):
 
     def get_scheduled_count(self, db: Session) -> int:
         """예약된 작업 수 조회"""
-        from ...models.base import seoul_now
+        
 
         return db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.eta.isnot(None),
-                TaskMetadata.eta > seoul_now()
+                TaskMetadata.eta > datetime.now()
             )
         ).count()
 
     def get_expired_count(self, db: Session) -> int:
         """만료된 작업 수 조회"""
-        from ...models.base import seoul_now
+        
 
         return db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.expires.isnot(None),
-                TaskMetadata.expires < seoul_now()
+                TaskMetadata.expires < datetime.now()
             )
         ).count()
 
@@ -304,12 +304,12 @@ class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):
 
     def cleanup_expired_metadata(self, db: Session) -> int:
         """만료된 메타데이터 정리"""
-        from ...models.base import seoul_now
+        
 
         deleted_count = db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.expires.isnot(None),
-                TaskMetadata.expires < seoul_now()
+                TaskMetadata.expires < datetime.now()
             )
         ).delete()
         db.commit()
@@ -325,9 +325,9 @@ class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):
     ) -> List[TaskMetadata]:
         """최근 N일간 특정 워커의 작업들 조회"""
         from datetime import timedelta
-        from ...models.base import seoul_now
+        
 
-        since_date = seoul_now() - timedelta(days=days)
+        since_date = datetime.now() - timedelta(days=days)
         return db.query(TaskMetadata).filter(
             and_(
                 TaskMetadata.worker_name == worker_name,

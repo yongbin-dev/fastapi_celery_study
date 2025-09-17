@@ -3,6 +3,7 @@
 from typing import List, Optional, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
+from datetime import datetime, timedelta
 
 from .base import CRUDBase
 from ...models.task_result import TaskResult
@@ -120,9 +121,8 @@ class CRUDTaskResult(CRUDBase[TaskResult, dict, dict]):
         limit: int = 100
     ) -> List[TaskResult]:
         """최근 N일간 작업 결과 목록 조회"""
-        from datetime import datetime, timedelta
 
-        since_date = datetime.utcnow() - timedelta(days=days)
+        since_date = datetime.now() - timedelta(days=days)
         return db.query(TaskResult).filter(
             TaskResult.created_at >= since_date
         ).order_by(desc(TaskResult.created_at)).limit(limit).all()
@@ -154,9 +154,8 @@ class CRUDTaskResult(CRUDBase[TaskResult, dict, dict]):
         days: int = 90
     ) -> int:
         """오래된 결과 정리"""
-        from datetime import datetime, timedelta
 
-        cleanup_date = datetime.utcnow() - timedelta(days=days)
+        cleanup_date = datetime.now() - timedelta(days=days)
         deleted_count = db.query(TaskResult).filter(
             TaskResult.created_at < cleanup_date
         ).delete()
@@ -171,9 +170,8 @@ class CRUDTaskResult(CRUDBase[TaskResult, dict, dict]):
         days: int = 30
     ) -> int:
         """대용량 오래된 결과 정리"""
-        from datetime import datetime, timedelta
 
-        cleanup_date = datetime.utcnow() - timedelta(days=days)
+        cleanup_date = datetime.now() - timedelta(days=days)
         deleted_count = db.query(TaskResult).filter(
             and_(
                 TaskResult.result_size >= max_size,

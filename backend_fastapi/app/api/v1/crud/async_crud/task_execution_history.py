@@ -136,13 +136,13 @@ class AsyncCRUDTaskExecutionHistory(AsyncCRUDBase[TaskExecutionHistory, dict, di
     ) -> TaskExecutionHistory:
         """새 시도 기록 생성"""
         try:
-            from ...models.base import seoul_now
+            
 
             execution_history = TaskExecutionHistory(
                 task_id=task_id,
                 attempt_number=attempt_number,
                 status=status,
-                started_at=seoul_now()
+                started_at=datetime.now()
             )
             db.add(execution_history)
             await db.commit()
@@ -163,10 +163,10 @@ class AsyncCRUDTaskExecutionHistory(AsyncCRUDBase[TaskExecutionHistory, dict, di
     ) -> TaskExecutionHistory:
         """시도 완료 처리"""
         try:
-            from ...models.base import seoul_now
+            
 
             execution_history.status = status
-            execution_history.completed_at = seoul_now()
+            execution_history.completed_at = datetime.now()
 
             if error_message:
                 execution_history.error_message = error_message
@@ -296,9 +296,9 @@ class AsyncCRUDTaskExecutionHistory(AsyncCRUDBase[TaskExecutionHistory, dict, di
     ) -> List[TaskExecutionHistory]:
         """최근 N일간 실패한 시도들 조회"""
         try:
-            from ...models.base import seoul_now
+            
 
-            since_date = seoul_now() - timedelta(days=days)
+            since_date = datetime.now() - timedelta(days=days)
             stmt = select(TaskExecutionHistory).where(
                 and_(
                     TaskExecutionHistory.status.in_(['FAILURE', 'TIMEOUT']),
@@ -343,10 +343,10 @@ class AsyncCRUDTaskExecutionHistory(AsyncCRUDBase[TaskExecutionHistory, dict, di
     ) -> int:
         """오래된 실행 이력 정리"""
         try:
-            from ...models.base import seoul_now
+            
             from sqlalchemy import delete
 
-            cleanup_date = seoul_now() - timedelta(days=days)
+            cleanup_date = datetime.now() - timedelta(days=days)
             stmt = delete(TaskExecutionHistory).where(
                 TaskExecutionHistory.created_at < cleanup_date
             )
