@@ -92,9 +92,10 @@ class Settings(BaseSettings):
     ENABLE_DOCS: bool = True
 
 
-    class Config:
-        env_file = get_env_file()
-        env_file_encoding = "utf-8"
+    model_config = {
+        "env_file": get_env_file(),
+        "env_file_encoding": "utf-8"
+    }
 
 # 전역 설정 객체
 settings = Settings()

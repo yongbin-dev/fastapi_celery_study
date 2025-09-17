@@ -2,6 +2,7 @@
 # tests/test_stress_chain.py
 
 import asyncio
+import os
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -10,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.models.base import Base
 from app.api.v1.services.pipeline_service import PipelineService
-from app.api.v1.services import RedisPipelineStatusManager
+from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from app.schemas.pipeline import AIPipelineRequest
 from app.api.v1.crud.async_crud.chain_execution import chain_execution as chain_execution_crud
 
@@ -47,11 +48,19 @@ async def session_maker(async_engine):
     )
 
 
+
+
 @pytest.mark.asyncio
-async def test_run_1000_chains_concurrently(session_maker):
-    """1000개의 체인을 동시에 실행하는 스트레스 테스트"""
+async def test_run_1000_chains_concurrently(session_maker, num_chains):
+    """지정된 개수의 체인을 동시에 실행하는 스트레스 테스트
+
+    사용 방법:
+    1. 명령행 옵션: pytest --num-chains=1000 tests/test_stress_chain.py::test_run_1000_chains_concurrently
+    2. 환경변수: TEST_NUM_CHAINS=1000 pytest tests/test_stress_chain.py::test_run_1000_chains_concurrently
+    3. 기본값: pytest tests/test_stress_chain.py::test_run_1000_chains_concurrently (100개)
+    """
     # given
-    num_chains = 100
+    print(f"\n🚀 {num_chains}개의 체인으로 스트레스 테스트 시작")
     redis_manager = RedisPipelineStatusManager()
 
     # when
@@ -67,10 +76,10 @@ async def test_run_1000_chains_concurrently(session_maker):
 
     async def run_single_pipeline(request: AIPipelineRequest):
         """각 파이프라인을 독립적인 세션에서 실행하는 헬퍼 함수"""
-        async with session_maker() as session:
+        async with session_maker() as db_session:
             pipeline_service = PipelineService()
             return await pipeline_service.create_ai_pipeline(
-                db=session, status_manager=redis_manager, request=request
+                db=db_session, redis_service=redis_manager, request=request
             )
 
     tasks = [run_single_pipeline(req) for req in requests]

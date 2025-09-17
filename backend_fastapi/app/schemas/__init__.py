@@ -11,6 +11,7 @@ from .responses import TaskStatusResponse, PipelineStatusResponse, PipelineStage
 
 # Pipeline models
 from .pipeline import AIPipelineRequest, AIPipelineResponse
+from .predict import PredictResponse , PredictRequest
 
 # Export all for backward compatibility
 __all__ = [
@@ -25,7 +26,9 @@ __all__ = [
     "PipelineStatusResponse",
     "PipelineStagesResponse",
     "StageDetailResponse",
-    
+
+    "PredictResponse" ,
+    "PredictRequest",
     # Pipeline
     "AIPipelineRequest",
     "AIPipelineResponse",

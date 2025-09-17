@@ -8,13 +8,73 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
-    PipelineStagesResponse, StageDetailResponse
+    PipelineStagesResponse, StageDetailResponse ,PredictResponse , PredictRequest
 )
 from app.schemas.common import ApiResponse
 from app.api.v1.services import get_pipeline_service , get_redis_service
 from app.utils.response_builder import ResponseBuilder
+import httpx
 
 controller = APIRouter()
+
+# Ollama 서버 설정
+OLLAMA_SERVERS = {
+    "qwen2": "http://localhost:13434",
+    "qwen3": "http://localhost:12434"
+}
+
+
+@controller.get("/models")
+async def get_available_models():
+    """사용 가능한 모델 목록"""
+    models = []
+
+    for model_name, url in OLLAMA_SERVERS.items():
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{url}/api/tags")
+                if response.status_code == 200:
+                    models.append({
+                        "name": model_name,
+                        "status": "available",
+                        "url": url
+                    })
+        except Exception as e :
+            models.append({
+                "name": model_name,
+                "status": "unavailable",
+                "url": url
+            })
+
+    return {"models": models}
+
+@controller.post("/predict", response_model=ApiResponse[PredictResponse])
+async def predict(request: PredictRequest):
+    if request.model not in OLLAMA_SERVERS:
+        raise ValueError(f"지원하지 않는 모델: {request.model}")
+
+    ollama_url = OLLAMA_SERVERS[request.model]
+
+    # Ollama API 호출
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": request.model,
+                "prompt": request.prompt,
+                "stream": request.stream
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Ollama API 오류: {response.status_code}")
+
+        result = response.json()
+
+        return PredictResponse(
+            success=True,
+            response=result.get("response", "")
+        )
 
 @controller.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
 async def get_pipeline_history(

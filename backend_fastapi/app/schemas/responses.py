@@ -8,6 +8,8 @@ from .stage import StageInfo
 from .enums import ProcessStatus
 
 
+
+
 class TaskStatusResponse(BaseModel):
     """태스크 상태 응답 모델 (레거시 호환용)"""
     task_id: Optional[str] = None
@@ -69,3 +71,4 @@ class StageDetailResponse(BaseModel):
     is_current: bool = False
     is_completed: bool = False
     is_failed: bool = False
+
