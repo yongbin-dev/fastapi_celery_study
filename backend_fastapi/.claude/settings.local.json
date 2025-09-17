@@ -34,7 +34,10 @@
       "Bash(source:*)",
       "Bash(chmod:*)",
       "Bash(echo $PATH)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

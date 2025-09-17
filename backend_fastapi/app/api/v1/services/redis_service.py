@@ -1,4 +1,4 @@
-# app/services/status_manager.py
+# app/services/redis_service.py
 
 import json
 import time
@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 
 import redis
 
-from app.core.config import settings
+from app.config import settings
 from app.core.logging import get_logger
 from app.schemas.enums import ProcessStatus
 from app.schemas.stage import StageInfo
@@ -164,3 +164,6 @@ class RedisPipelineStatusManager:
             logger.error(f"Pipeline {chain_id}: 스테이지 초기화 실패 - {e}")
             return False
 
+
+def get_redis_service() -> RedisPipelineStatusManager:
+    return RedisPipelineStatusManager()

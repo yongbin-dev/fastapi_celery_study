@@ -6,7 +6,7 @@ from sqlalchemy import select, desc, and_, func
 from datetime import timedelta
 
 from .base import AsyncCRUDBase
-from ...models.task_log import TaskLog
+from app.models.task_log import TaskLog
 
 
 class AsyncCRUDTaskLog(AsyncCRUDBase[TaskLog, dict, dict]):

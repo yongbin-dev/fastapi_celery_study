@@ -1,6 +1,5 @@
 # app/main.py (개선 버전)
 
-import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -8,10 +7,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.v1.router import api_router
-from .core.config import settings
+from app.config import settings
 from .core.database import close_db
-from .api.deps import setup_exception_handlers
-from .middleware.response_middleware import ResponseLogMiddleware
+from app.core.handler.exceptions_handler import setup_exception_handlers
+from app.core.middleware import ResponseLogMiddleware
 from .utils.response_builder import ResponseBuilder
 from app.core.database import init_db
 
@@ -20,7 +19,14 @@ from app.core.database import init_db
 async def lifespan(app: FastAPI):
     """애플리케이션 생명주기 관리"""
     # 시작 시 실행
+
+    # 타임존을 서울로 설정
+    os.environ['TZ'] = 'Asia/Seoul'
+    import time
+    time.tzset()  # Unix/Linux에서 타임존 설정 적용
+
     logger.info("🚀 FastAPI 애플리케이션 시작")
+    logger.info("🕐 타임존 설정: Asia/Seoul")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
     logger.info(f"🌐 서버: http://{settings.HOST}:{settings.PORT}")
     logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs")
@@ -140,7 +146,6 @@ def create_application() -> FastAPI:
     setup_middleware()
     setup_exception_handlers(app)
     setup_routers()
-
     logger.info("🎉 FastAPI 애플리케이션 설정 완료")
     return app
 

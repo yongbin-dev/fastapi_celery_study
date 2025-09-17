@@ -3,7 +3,7 @@
 import os
 import time
 from celery import Celery
-from app.core.config import settings
+from app.config import settings
 from app.core.logging import get_logger
 
 # 공통 로깅 시스템 사용
@@ -22,7 +22,7 @@ except AttributeError:
 # Celery signals 등록
 # 이 파일을 임포트하는 시점에 시그널 핸들러가 등록되도록 최상단으로 이동
 try:
-    from app.core import celery_signals
+    from app.core.celery import celery_signals
     logger.info("✅ Celery signals 모듈 import 성공!")
 except ImportError as e:
     logger.error(f"❌ Celery signals import 실패: {e}")
@@ -57,13 +57,13 @@ def setup_celery_logging():
 setup_celery_logging()
 
 
+
 # Celery 인스턴스 생성
 celery_app = Celery(
-    "study",
+    "celery_study",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks"] , # 태스크 모듈들
-
+    include=settings.CELERY_TASK_MODULES  # 설정에서 태스크 모듈들을 동적으로 가져옴
 )
 
 # Celery 설정
@@ -97,17 +97,18 @@ celery_app.conf.update(
     worker_redirect_stdouts_level="INFO",
 )
 
-# 태스크 자동 발견 (선택사항)
-celery_app.autodiscover_tasks()
+# # 태스크 자동 발견 - 설정된 모듈들과 추가 패키지들에서 자동 발견
+# celery_app.autodiscover_tasks(settings.CELERY_TASK_MODULES + ['app'])
+
 
 # Queue stats를 위한 태스크 등록
-from app.core.celery_signals import collect_queue_stats
-celery_app.task(name='app.core.celery_signals.collect_queue_stats')(collect_queue_stats)
+from app.core.celery.celery_signals import collect_queue_stats
+celery_app.task(name='app.core.celery.celery_signals.collect_queue_stats')(collect_queue_stats)
 
 # Celery Beat 스케줄 설정
 celery_app.conf.beat_schedule = {
     'collect-queue-stats': {
-        'task': 'app.core.celery_signals.collect_queue_stats',
+        'task': 'app.core.celery.celery_signals.collect_queue_stats',
         'schedule': 60.0,  # 1분마다
     },
 }

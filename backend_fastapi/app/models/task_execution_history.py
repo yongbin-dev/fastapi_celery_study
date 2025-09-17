@@ -57,7 +57,7 @@ class TaskExecutionHistory(Base):
     # 메타데이터
     created_at = Column(
         DateTime, 
-        default=datetime.utcnow,
+        default=datetime.now,
         comment="레코드 생성 시간"
     )
     
@@ -128,5 +128,5 @@ class TaskExecutionHistory(Base):
             task_id=task_id,
             attempt_number=attempt_number,
             status=status,
-            started_at=datetime.utcnow()
+            started_at=datetime.now()
         )

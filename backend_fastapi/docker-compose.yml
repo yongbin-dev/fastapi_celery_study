@@ -6,7 +6,27 @@ services:
       - CELERY_BROKER_URL=redis://redis-server:6379/0
       - CELERY_RESULT_BACKEND=redis://redis-server:6379/0
       - TZ=Asia/Seoul
-    command: python -m celery -A app.core.celery_app worker --loglevel=info --pool=solo
+    command: python -m celery -A app.core.celery_app worker --loglevel=info --concurrency=4
+    networks:
+      - shared-app-network
+
+  worker2:
+    build: .
+    environment:
+      - CELERY_BROKER_URL=redis://redis-server:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis-server:6379/0
+      - TZ=Asia/Seoul
+    command: python -m celery -A app.core.celery_app worker --loglevel=info --concurrency=4
+    networks:
+      - shared-app-network
+
+  worker3:
+    build: .
+    environment:
+      - CELERY_BROKER_URL=redis://redis-server:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis-server:6379/0
+      - TZ=Asia/Seoul
+    command: python -m celery -A app.core.celery_app worker --loglevel=info --concurrency=4
     networks:
       - shared-app-network
 

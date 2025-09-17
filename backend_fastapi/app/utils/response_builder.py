@@ -73,6 +73,3 @@ class ResponseBuilder:
         )
 
         return response
-
-
-        # return response ResponseBuilder.success(data=data, message=message, meta=meta)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_, or_
 
 from .base import CRUDBase
-from ...models.task_metadata import TaskMetadata
+from app.models.task_metadata import TaskMetadata
 
 
 class CRUDTaskMetadata(CRUDBase[TaskMetadata, dict, dict]):

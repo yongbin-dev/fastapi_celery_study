@@ -1,9 +1,10 @@
 import uuid
 from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, DateTime, Index, Text, func
 from sqlalchemy.dialects.postgresql import UUID, JSON
-from .base import Base, seoul_now
+from .base import Base
 from ..schemas.enums import ProcessStatus
 
 
@@ -136,12 +137,12 @@ class ChainExecution(Base):
     def start_execution(self, initiated_by: Optional[str] = None):
         """체인 실행 시작"""
         self.status = ProcessStatus.STARTED
-        self.started_at = seoul_now()
+        self.started_at = datetime.now()
 
     def complete_execution(self, success: bool = True, final_result=None, error_message: Optional[str] = None):
         """체인 실행 완료"""
         self.status = ProcessStatus.SUCCESS if success else ProcessStatus.FAILURE
-        self.finished_at = seoul_now()
+        self.finished_at = datetime.now()
         if final_result is not None:
             self.final_result = final_result
         if error_message:

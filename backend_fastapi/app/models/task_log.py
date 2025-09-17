@@ -1,7 +1,7 @@
 # models/task_log.py
 from sqlalchemy import Column, String, Integer, Text, DateTime, Index
 from sqlalchemy.orm import relationship
-from .base import Base, seoul_now
+from .base import Base
 
 class TaskLog(Base):
     """

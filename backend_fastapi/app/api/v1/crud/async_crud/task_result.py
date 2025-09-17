@@ -8,7 +8,7 @@ from datetime import timedelta , datetime
 
 
 from .base import AsyncCRUDBase
-from ...models.task_result import TaskResult
+from app.models.task_result import TaskResult
 
 
 class AsyncCRUDTaskResult(AsyncCRUDBase[TaskResult, dict, dict]):

@@ -43,8 +43,8 @@ class TaskDependency(Base):
     
     # 메타데이터
     created_at = Column(
-        DateTime, 
-        default=datetime.utcnow,
+        DateTime,
+        default=datetime.now,
         comment="레코드 생성 시간"
     )
     
@@ -54,6 +54,7 @@ class TaskDependency(Base):
         foreign_keys=[task_id], 
         back_populates="dependencies"
     )
+
     depends_on = relationship(
         "TaskLog", 
         foreign_keys=[depends_on_task_id], 
@@ -71,29 +72,17 @@ class TaskDependency(Base):
     
     @property
     def is_sequential(self):
-        """순차적 의존성 여부"""
         return self.dependency_type == 'sequential'
     
     @property
     def is_parallel(self):
-        """병렬 의존성 여부"""
         return self.dependency_type == 'parallel'
     
     @property
     def is_conditional(self):
-        """조건부 의존성 여부"""
         return self.dependency_type == 'conditional'
     
     def can_proceed(self, depends_on_status):
-        """
-        진행 가능 여부 확인
-        
-        Args:
-            depends_on_status: 의존 작업의 상태
-            
-        Returns:
-            bool: 진행 가능 여부
-        """
         if not self.condition:
             # 조건이 없으면 완료만 확인
             return depends_on_status in ['SUCCESS', 'FAILURE', 'REVOKED']

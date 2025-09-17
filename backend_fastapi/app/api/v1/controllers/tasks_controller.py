@@ -11,8 +11,7 @@ from app.schemas import (
     PipelineStagesResponse, StageDetailResponse
 )
 from app.schemas.common import ApiResponse
-from app.services.pipeline_service import get_pipeline_service
-from app.services.status_manager import RedisPipelineStatusManager
+from app.api.v1.services import get_pipeline_service , get_redis_service
 from app.utils.response_builder import ResponseBuilder
 
 controller = APIRouter()
@@ -41,11 +40,11 @@ async def get_pipeline_history(
 async def create_ai_pipeline(
         request: AIPipelineRequest,
         service = Depends(get_pipeline_service),
-        status_manager = Depends(RedisPipelineStatusManager),
+        redis_service = Depends(get_redis_service),
         db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[AIPipelineResponse]:
     """AI 처리 파이프라인 시작"""
-    result = await service.create_ai_pipeline(db=db, status_manager=status_manager, request=request)
+    result = await service.create_ai_pipeline(db=db, redis_service=redis_service, request=request)
 
     return ResponseBuilder.success(
         data=result,
@@ -59,10 +58,10 @@ async def create_ai_pipeline(
 async def cancel_ai_pipeline(
         chain_id: str,
         service = Depends(get_pipeline_service),
-        status_manager = Depends(RedisPipelineStatusManager),
+        redis_service = Depends(get_redis_service),
 ):
     """파이프라인 취소 및 데이터 삭제"""
-    result = service.cancel_pipeline(status_manager=status_manager, chain_id=chain_id)
+    result = service.cancel_pipeline(redis_service=redis_service, chain_id=chain_id)
 
     return ResponseBuilder.success(
         data={
@@ -77,9 +76,9 @@ async def cancel_ai_pipeline(
 async def get_pipeline_tasks(
         chain_id: str,
         service = Depends(get_pipeline_service),
-        status_manager = Depends(RedisPipelineStatusManager),
+        redis_service = Depends(get_redis_service),
 ) -> ApiResponse[PipelineStagesResponse]:
-    pipeline_stages = service.get_pipeline_tasks(status_manager=status_manager, chain_id=chain_id)
+    pipeline_stages = service.get_pipeline_tasks(redis_service=redis_service, chain_id=chain_id)
 
     return ResponseBuilder.success(
         data=pipeline_stages,
@@ -93,9 +92,9 @@ async def get_stage_task(
         chain_id: str,
         stage: int,
         service = Depends(get_pipeline_service),
-        status_manager = Depends(RedisPipelineStatusManager),
+        redis_service = Depends(get_redis_service),
 ) -> ApiResponse[StageDetailResponse]:
-    stage_detail = service.get_stage_task(status_manager=status_manager, chain_id=chain_id, stage=stage)
+    stage_detail = service.get_stage_task(redis_service=redis_service, chain_id=chain_id, stage=stage)
 
     return ResponseBuilder.success(
         data=stage_detail,

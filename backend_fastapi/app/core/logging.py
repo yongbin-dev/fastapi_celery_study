@@ -124,7 +124,26 @@ class LoggingManager:
         daily_handler.setFormatter(file_formatter)
         root_logger.addHandler(daily_handler)
 
-        # 4. JSON 형식 로그 (구조화된 로그)
+        # 4. Celery 전용 로그 파일
+        celery_log_file = self.log_dir / f"celery_{today}.log"
+        celery_handler = logging.FileHandler(
+            celery_log_file,
+            encoding='utf-8'
+        )
+        celery_handler.setLevel(logging.INFO)
+        celery_handler.setFormatter(file_formatter)
+
+        # Celery 로거들에만 이 핸들러 추가
+        celery_logger_names = [
+            'celery', 'celery.worker', 'celery.task', 'celery.beat',
+            'celery.app', 'celery.redirected'
+        ]
+        for logger_name in celery_logger_names:
+            celery_logger = logging.getLogger(logger_name)
+            if not any(h.baseFilename == str(celery_log_file) for h in celery_logger.handlers if hasattr(h, 'baseFilename')):
+                celery_logger.addHandler(celery_handler)
+
+        # 5. JSON 형식 로그 (구조화된 로그)
         enable_json_logs = os.getenv('ENABLE_JSON_LOGS', 'false').lower() == 'true'
         if enable_json_logs:
             self._setup_json_handler(root_logger)
@@ -188,9 +207,22 @@ class LoggingManager:
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
         
-        # Celery 로그 설정
-        logging.getLogger("celery").setLevel(logging.INFO)
-        
+        # Celery 로그 설정 - 세밀한 제어
+        celery_loggers = {
+            "celery": logging.INFO,
+            "celery.worker": logging.INFO,
+            "celery.task": logging.INFO,
+            "celery.beat": logging.INFO,
+            "celery.app": logging.INFO,
+            "celery.redirected": logging.INFO,
+            "celery.worker.strategy": logging.WARNING,  # 너무 자세한 로그 제한
+            "celery.worker.consumer": logging.WARNING,
+            "celery.worker.heartbeat": logging.WARNING,
+        }
+
+        for logger_name, level in celery_loggers.items():
+            logging.getLogger(logger_name).setLevel(level)
+
         # Redis 로그 설정
         logging.getLogger("redis").setLevel(logging.WARNING)
 

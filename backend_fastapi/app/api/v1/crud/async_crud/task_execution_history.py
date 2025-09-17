@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from datetime import timedelta
 
 from .base import AsyncCRUDBase
-from ...models.task_execution_history import TaskExecutionHistory
+from app.models.task_execution_history import TaskExecutionHistory
 
 
 class AsyncCRUDTaskExecutionHistory(AsyncCRUDBase[TaskExecutionHistory, dict, dict]):

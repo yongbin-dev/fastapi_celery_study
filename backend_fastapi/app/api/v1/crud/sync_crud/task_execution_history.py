@@ -6,7 +6,7 @@ from sqlalchemy import desc, and_
 from datetime import datetime, timedelta
 
 from .base import CRUDBase
-from ...models.task_execution_history import TaskExecutionHistory
+from app.models.task_execution_history import TaskExecutionHistory
 
 
 class CRUDTaskExecutionHistory(CRUDBase[TaskExecutionHistory, dict, dict]):

@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, and_
 
 from .base import CRUDBase
-from ...models.task_log import TaskLog
-from ...schemas.enums import ProcessStatus
+from app.models.task_log import TaskLog
+from app.schemas.enums import ProcessStatus
 
 
 class CRUDTaskLog(CRUDBase[TaskLog, dict, dict]):

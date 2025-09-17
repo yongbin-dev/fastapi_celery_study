@@ -13,14 +13,12 @@ class AIPipelineRequest(BaseModel):
     priority: int = 5  # 1-10, 높을수록 우선순위
     callback_url: Optional[str] = None  # 완료 시 웹훅 URL
 
-
 class AIPipelineResponse(BaseModel):
     """AI 파이프라인 응답"""
     pipeline_id: str
     status: str
     message: str
     estimated_duration: Optional[int] = None  # 예상 소요 시간 (초)
-
 
 class PipelineData(BaseModel):
     """파이프라인 스테이지 간 데이터 전달을 위한 모델"""
@@ -43,7 +41,6 @@ class PipelineData(BaseModel):
             }
         }
 
-
 class StageResult(BaseModel):
     """스테이지 실행 결과를 위한 모델"""
     chain_id: str = Field(..., description="파이프라인 체인 식별자")
@@ -65,7 +62,6 @@ class StageResult(BaseModel):
                 "success": True
             }
         }
-
 
 class PipelineMetadata(BaseModel):
     """파이프라인 메타데이터를 위한 모델"""

@@ -49,21 +49,23 @@ python test_celery_signals.py
 ### 3. 작업 정의 예제
 
 ```python
-from app.core.celery_app import celery_app
+from app.celery_app import celery_app
+
 
 @celery_app.task(bind=True, name='my_custom_task')
 def my_custom_task(self, data):
     """사용자 정의 작업 - 자동으로 DB에 기록됩니다"""
     # 작업 로직
     result = process_data(data)
-    
+
     # 진행률 업데이트 (선택사항)
     self.update_state(
         state='PROGRESS',
         meta={'current': 50, 'total': 100}
     )
-    
+
     return result
+
 
 # 작업 실행
 task = my_custom_task.delay({"key": "value"})
@@ -152,7 +154,7 @@ task = task_with_metadata.apply_async(
 ### 2. 통계 정보 조회
 
 ```python
-from app.core.celery_signals import get_task_statistics
+from app.core.celery.celery_signals import get_task_statistics
 from app.core.database import SyncSessionLocal
 
 session = SyncSessionLocal()
@@ -164,7 +166,7 @@ session.close()
 ### 3. 오래된 레코드 정리
 
 ```python
-from app.core.celery_signals import cleanup_old_records
+from app.core.celery.celery_signals import cleanup_old_records
 from app.core.database import SyncSessionLocal
 
 session = SyncSessionLocal()
@@ -257,7 +259,7 @@ from . import celery_signals  # 이게 최상단에 있어야 함
 
 ```python
 # 주기적으로 오래된 레코드 정리
-from app.core.celery_signals import cleanup_old_records
+from app.core.celery.celery_signals import cleanup_old_records
 
 # crontab으로 주기적 실행 권장
 # 0 2 * * * cd /path/to/project && python -c "from app.core.celery_signals import cleanup_old_records; from app.core.database import SyncSessionLocal; session = SyncSessionLocal(); cleanup_old_records(session, 30); session.close()"

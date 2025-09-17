@@ -6,8 +6,8 @@ from sqlalchemy import select, desc, and_, func
 from datetime import datetime, timedelta
 
 from .base import AsyncCRUDBase
-from ...models.chain_execution import ChainExecution
-from ...schemas.enums import ProcessStatus
+from app.models.chain_execution import ChainExecution
+from app.schemas.enums import ProcessStatus
 
 
 class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):

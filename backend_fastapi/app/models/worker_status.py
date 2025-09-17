@@ -99,7 +99,7 @@ class WorkerStatus(Base):
         if not self.last_heartbeat:
             return True
         
-        threshold = datetime.utcnow() - timedelta(seconds=threshold_seconds)
+        threshold = datetime.now() - timedelta(seconds=threshold_seconds)
         return self.last_heartbeat < threshold
     
     @property
@@ -108,7 +108,7 @@ class WorkerStatus(Base):
         if not self.started_at:
             return None
             
-        end_time = self.stopped_at or datetime.utcnow()
+        end_time = self.stopped_at or datetime.now()
         return (end_time - self.started_at).total_seconds()
     
     @property
@@ -145,7 +145,7 @@ class WorkerStatus(Base):
     
     def heartbeat(self):
         """하트비트 업데이트"""
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now()
         if self.status == 'OFFLINE':
             self.status = 'IDLE' if self.active_tasks == 0 else 'BUSY'
     
@@ -181,13 +181,13 @@ class WorkerStatus(Base):
                 hostname=hostname or worker_name.split('@')[1] if '@' in worker_name else worker_name,
                 pid=pid,
                 status='ONLINE',
-                started_at=datetime.utcnow(),
-                last_heartbeat=datetime.utcnow()
+                started_at=datetime.now(),
+                last_heartbeat=datetime.now()
             )
             session.add(worker)
         else:
             worker.status = 'ONLINE'
-            worker.last_heartbeat = datetime.utcnow()
+            worker.last_heartbeat = datetime.now()
             if hostname:
                 worker.hostname = hostname
             if pid:

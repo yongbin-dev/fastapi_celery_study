@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # Celery 워커 시작
     cmd = [
         sys.executable, '-m', 'celery', 
-        '-A', 'app.core.celery_app', 
+        '-A', 'app.celery_app',
         'worker', '--loglevel=info'
     ]
     

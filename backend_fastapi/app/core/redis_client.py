@@ -1,10 +1,6 @@
 # app/core/redis_client.py
 
-from functools import lru_cache
-import redis
-from typing import Optional
-
-from app.core.config import settings
+from app.config import settings
 
 from redis.asyncio import Redis, ConnectionPool
 from typing import Optional

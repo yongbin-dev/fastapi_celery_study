@@ -8,11 +8,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngin
 
 from typing import cast
 
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError, DisconnectionError
 from functools import lru_cache
-from app.core.config import settings
+from app.config import settings
 from app.models.base import Base
 
 # 로깅 설정

@@ -47,7 +47,7 @@ class TaskResult(Base):
     # 메타데이터
     created_at = Column(
         DateTime, 
-        default=datetime.utcnow,
+        default=datetime.now,
         comment="레코드 생성 시간"
     )
     

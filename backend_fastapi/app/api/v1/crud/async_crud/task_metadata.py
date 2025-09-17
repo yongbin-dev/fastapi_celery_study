@@ -7,7 +7,7 @@ from sqlalchemy import select, desc, and_, or_, func
 from sqlalchemy.orm import joinedload
 
 from .base import AsyncCRUDBase
-from ...models.task_metadata import TaskMetadata
+from app.models.task_metadata import TaskMetadata
 
 
 class AsyncCRUDTaskMetadata(AsyncCRUDBase[TaskMetadata, dict, dict]):

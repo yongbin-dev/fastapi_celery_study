@@ -5,7 +5,7 @@ from fastapi import Request
 from fastapi.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from ..core.logging import get_logger
+from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 

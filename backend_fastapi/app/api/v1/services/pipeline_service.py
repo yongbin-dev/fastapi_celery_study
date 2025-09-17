@@ -2,34 +2,24 @@
 
 import uuid
 from typing import Optional, Dict, List
-from datetime import datetime, timedelta
 
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 from celery import chain
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 
 from app.models.chain_execution import ChainExecution
 from app.schemas import (
-    AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
-    PipelineStagesResponse, StageDetailResponse, StageInfo, ProcessStatus
+    AIPipelineRequest, AIPipelineResponse, PipelineStagesResponse, StageDetailResponse, StageInfo, ProcessStatus
 )
-from app.crud import (
+from app.api.v1.crud import (
     async_chain_execution as chain_execution_crud,
 )
 from app.pipeline_config import STAGES
-# 파이프라인 단계별 태스크 임포트
-from app.tasks import (
-    stage1_preprocessing,
-    stage2_feature_extraction,
-    stage3_model_inference,
-    stage4_post_processing
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
-from app.services.status_manager import RedisPipelineStatusManager
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 
 
@@ -133,7 +123,7 @@ class PipelineService:
     ) -> List:
         """파이프라인 작업들을 단계순으로 조회 (AsyncSession용)"""
         from sqlalchemy import select, desc, and_
-        from ..models.task_log import TaskLog
+        from app.models.task_log import TaskLog
 
         stage_tasks = []
         for stage_num in range(1, 5):  # stage1~4
@@ -233,7 +223,7 @@ class PipelineService:
             limit=limit
         )
 
-    async def create_ai_pipeline(self, db : AsyncSession , status_manager : RedisPipelineStatusManager ,  request: AIPipelineRequest) -> AIPipelineResponse:
+    async def create_ai_pipeline(self, db : AsyncSession , redis_service  ,  request: AIPipelineRequest) -> AIPipelineResponse:
         """AI 처리 파이프라인 시작"""
         input_data = {
             "text": request.text,
@@ -262,14 +252,21 @@ class PipelineService:
 
             # 2. 전체 스테이지 정보를 Redis에 미리 저장
             chain_id_str = str(chain_execution.chain_id)
-            stages_initialized = status_manager.initialize_pipeline_stages( chain_id_str, input_data)
+            stages_initialized = redis_service.initialize_pipeline_stages( chain_id_str, input_data)
 
             if not stages_initialized:
                 await db.rollback()
                 logger.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
                 raise HTTPException(status_code=500, detail="파이프라인 스테이지 초기화에 실패했습니다")
 
-            # 3. Celery Chain 생성 및 실행
+            # 3. Celery Chain 생성 및 실행 (동적 임포트 사용)
+            from app.core.celery.celery_tasks import (
+                stage1_preprocessing,
+                stage2_feature_extraction,
+                stage3_model_inference,
+                stage4_post_processing
+            )
+
             pipeline_chain = chain(
                 stage1_preprocessing.s(input_data, chain_id=chain_id_str),
                 stage2_feature_extraction.s(),
@@ -302,13 +299,13 @@ class PipelineService:
                 detail="AI 파이프라인 시작 중 내부 서버 오류가 발생했습니다"
             )
 
-    def get_pipeline_tasks(self, status_manager: RedisPipelineStatusManager, chain_id: str) -> PipelineStagesResponse:
+    def get_pipeline_tasks(self, redis_service  , chain_id: str) -> PipelineStagesResponse:
         """파이프라인 전체 태스크 목록 조회 (구조화된 응답)"""
         # 체인 ID 검증
         self._validate_chain_id(chain_id)
 
         # Redis에서 파이프라인 태스크 목록 조회
-        pipeline_tasks_data = status_manager.get_pipeline_status(chain_id)
+        pipeline_tasks_data = redis_service.get_pipeline_status(chain_id)
 
         if not pipeline_tasks_data:
             raise HTTPException(
@@ -354,14 +351,14 @@ class PipelineService:
             stages=stages
         )
 
-    def get_stage_task(self, status_manager: RedisPipelineStatusManager, chain_id: str, stage: int) -> StageDetailResponse:
+    def get_stage_task(self, redis_service, chain_id: str, stage: int) -> StageDetailResponse:
         """특정 단계의 태스크 상태 조회 (구조화된 응답)"""
         # 체인 ID 및 단계 검증
         self._validate_chain_id(chain_id)
         self._validate_stage(stage)
 
         # Redis에서 단계 상태 조회
-        stage_task_data = status_manager.get_stage_status(chain_id, stage)
+        stage_task_data = redis_service.get_stage_status(chain_id, stage)
 
         if not stage_task_data:
             raise HTTPException(
@@ -385,14 +382,14 @@ class PipelineService:
             is_failed=is_failed
         )
 
-    def cancel_pipeline(self, status_manager: RedisPipelineStatusManager, chain_id: str) -> Dict[str, str]:
+    def cancel_pipeline(self, redis_service, chain_id: str) -> Dict[str, str]:
         """파이프라인 취소 및 데이터 삭제"""
         # Celery 태스크 취소
         # TODO: chain_id를 기반으로 task_id를 조회하여 취소해야 함
         # celery_app.control.revoke(task_id, terminate=True)
 
         # Redis에서 파이프라인 데이터 삭제
-        deleted = status_manager.delete_pipeline(chain_id)
+        deleted = redis_service.delete_pipeline(chain_id)
 
         if deleted:
             return {

@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, and_
 
 from .base import CRUDBase
-from ...models.chain_execution import ChainExecution
-from ...schemas.enums import ProcessStatus
+from app.models.chain_execution import ChainExecution
+from app.schemas.enums import ProcessStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

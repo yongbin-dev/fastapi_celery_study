@@ -1,7 +1,8 @@
 # models/task_metadata.py
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
-from .base import Base, seoul_now
+from datetime import datetime
+from .base import Base
 
 class TaskMetadata(Base):
     """
@@ -83,12 +84,12 @@ class TaskMetadata(Base):
     @property
     def is_scheduled(self):
         """예약된 작업 여부"""
-        return self.eta is not None and self.eta > seoul_now()
+        return self.eta is not None and self.eta > datetime.now()
     
     @property
     def is_expired(self):
         """만료된 작업 여부"""
-        return self.expires is not None and self.expires < seoul_now()
+        return self.expires is not None and self.expires < datetime.now()
     
     @property
     def is_child_task(self):

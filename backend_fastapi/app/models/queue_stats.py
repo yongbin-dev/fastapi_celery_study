@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from .base import Base
 
 class QueueStats(Base):
+
     """
     큐 통계 테이블
     큐별 작업 처리 통계 및 성능 메트릭
@@ -68,7 +69,7 @@ class QueueStats(Base):
     # 메타데이터
     measured_at = Column(
         DateTime, 
-        default=datetime.utcnow,
+        default=datetime.now,
         index=True,
         comment="측정 시간"
     )
@@ -200,7 +201,7 @@ class QueueStats(Base):
             queue_name: 큐 이름
             hours: 조회 시간 범위
         """
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now() - timedelta(hours=hours)
         
         return session.query(cls).filter(
             cls.queue_name == queue_name,

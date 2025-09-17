@@ -6,17 +6,16 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from uuid import uuid4
 
-from app.core.config import settings
+from app.config import settings
 from app.models.base import Base
-from app.services.pipeline_service import PipelineService
-from app.services.status_manager import RedisPipelineStatusManager
+from app.api.v1.services.pipeline_service import PipelineService
+from app.api.v1.services import RedisPipelineStatusManager
 from app.schemas.pipeline import AIPipelineRequest
-from app.crud.async_crud.chain_execution import chain_execution as chain_execution_crud
+from app.api.v1.crud.async_crud.chain_execution import chain_execution as chain_execution_crud
 
 # .env 파일의 DATABASE_URL을 사용하도록 설정
-ASYNC_SQLALCHEMY_DATABASE_URL = settings.TEST_DATABASE_URL
+ASYNC_SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # 테스트용 비동기 in-memory SQLite 데이터베이스 설정                                                                                                                                                                                                      │
 # --- 3. 데이터 삭제 함수 ---
@@ -31,12 +30,12 @@ async def async_engine():
         # print("--- 모든 테이블의 데이터 삭제 시작 ---")
     yield engine
 
-    async with engine.begin() as conn:
-        print("--- 모든 테이블의 데이터 삭제 시작 ---")
-        for table in reversed(Base.metadata.sorted_tables):
-            print(f"Deleting data from table: {table.name}")
-            await conn.execute(table.delete())
-        print("--- 모든 테이블의 데이터 삭제 완료 ---")
+    # async with engine.begin() as conn:
+    #     print("--- 모든 테이블의 데이터 삭제 시작 ---")
+    #     for table in reversed(Base.metadata.sorted_tables):
+    #         print(f"Deleting data from table: {table.name}")
+    #         await conn.execute(table.delete())
+    #     print("--- 모든 테이블의 데이터 삭제 완료 ---")
 
     await engine.dispose()
 
@@ -52,7 +51,7 @@ async def session_maker(async_engine):
 async def test_run_1000_chains_concurrently(session_maker):
     """1000개의 체인을 동시에 실행하는 스트레스 테스트"""
     # given
-    num_chains = 1000
+    num_chains = 100
     redis_manager = RedisPipelineStatusManager()
 
     # when

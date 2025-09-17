@@ -7,7 +7,7 @@ from typing import Dict, Any, Callable, Optional
 
 from app.schemas.enums import ProcessStatus
 from app.schemas.pipeline import StageResult, PipelineMetadata
-from app.services.status_manager import RedisPipelineStatusManager
+from app.api.v1.services.redis_service import RedisPipelineStatusManager
 
 from app.core.logging import get_logger
 logger = get_logger(__name__)
@@ -72,7 +72,7 @@ def pipeline_stage(stage_name: str, stage_num: int):
                 )
                 
                 # Celery 진행률 업데이트
-                update_celery_progress(self, chain_id, stage_num, stage_name, f'{stage_name} 시작', 0, status_manager)
+                update_celery_progress(self, chain_id, stage_num, stage_name, f'{stage_name} 시작', 0)
                 
                 # 실제 작업 로직 실행
                 result = func(self, *args, **kwargs)
@@ -99,7 +99,7 @@ def pipeline_stage(stage_name: str, stage_num: int):
                 return result
                 
             except Exception as e:
-                handle_stage_error(self, chain_id, stage_num, stage_name, e, start_time, status_manager)
+                handle_stage_error(self, chain_id, stage_num, stage_name, e, start_time)
                 raise
 
         return wrapper
@@ -107,8 +107,10 @@ def pipeline_stage(stage_name: str, stage_num: int):
 
 
 def update_celery_progress(self, chain_id: str, stage: int, stage_name: str, 
-                          status: str, progress: int, status_manager) -> None:
+                          status: str, progress: int) -> None:
     """Celery 진행 상태 업데이트 공통 로직"""
+    status_manager = RedisPipelineStatusManager()
+
     pipeline_status = status_manager.get_pipeline_status(chain_id)
     total_stages = len(pipeline_status) if pipeline_status else 4  # 기본 4단계
     overall_progress = calculate_overall_progress(stage, progress, total_stages)
@@ -126,7 +128,7 @@ def update_celery_progress(self, chain_id: str, stage: int, stage_name: str,
 
 
 def handle_stage_error(self, chain_id: str, stage: int, stage_name: str, 
-                      error: Exception, start_time: float, status_manager) -> None:
+                      error: Exception, start_time: float) -> None:
     """단계 에러 처리 공통 로직"""
     execution_time = time.time() - start_time
     error_message = f"Chain {chain_id}: Stage {stage} ({stage_name}) 실패 - {str(error)}"
@@ -141,6 +143,7 @@ def handle_stage_error(self, chain_id: str, stage: int, stage_name: str,
     ).dict()
     
     # Redis 상태 업데이트
+    status_manager = RedisPipelineStatusManager()
     status_manager.update_status(
         chain_id, stage, ProcessStatus.FAILURE, 0, error_metadata
     )
