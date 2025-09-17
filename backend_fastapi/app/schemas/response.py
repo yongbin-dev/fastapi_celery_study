@@ -19,8 +19,9 @@ class BaseResponse(BaseModel, Generic[T]):
     error_code: Optional[str] = None
     timestamp: str
 
-    class Config:
-        use_enum_values = True
+    model_config = {
+        "use_enum_values": True
+    }
 
 
 class PaginationMeta(BaseModel):

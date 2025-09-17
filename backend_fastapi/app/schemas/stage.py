@@ -23,8 +23,9 @@ class StageInfo(BaseModel):
     description: Optional[str] = None
     expected_duration: Optional[str] = None
 
-    class Config:
-        use_enum_values = True  # Enum 값을 문자열로 직렬화
+    model_config = {
+        "use_enum_values": True  # Enum 값을 문자열로 직렬화
+    }
 
     @classmethod
     def create_pending_stage(

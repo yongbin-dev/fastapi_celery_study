@@ -3,6 +3,7 @@
 pytest 설정 및 공통 fixture들
 """
 
+import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -74,3 +75,30 @@ def sample_user_data():
 def auth_headers():
     """인증 헤더 (인증 시스템 구현 후 사용)"""
     return {"Authorization": "Bearer test-token"}
+
+
+# 스트레스 테스트용 pytest 옵션과 fixture
+def pytest_addoption(parser):
+    """pytest 명령행 옵션 추가"""
+    parser.addoption(
+        "--num-chains",
+        action="store",
+        default=None,
+        type=int,
+        help="스트레스 테스트에서 실행할 체인 개수"
+    )
+
+
+@pytest.fixture
+def num_chains(request):
+    """체인 개수를 결정하는 fixture (우선순위: 명령행 > 환경변수 > 기본값)"""
+    # 1. 명령행 옵션이 있으면 우선 사용
+    if request.config.getoption("--num-chains"):
+        return request.config.getoption("--num-chains")
+
+    # 2. 환경변수 확인
+    if os.getenv('TEST_NUM_CHAINS'):
+        return int(os.getenv('TEST_NUM_CHAINS'))
+
+    # 3. 기본값
+    return 100

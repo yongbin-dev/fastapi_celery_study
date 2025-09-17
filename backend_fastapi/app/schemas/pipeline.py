@@ -29,9 +29,9 @@ class PipelineData(BaseModel):
     result_type: Optional[str] = Field(None, description="결과 타입")
     created_at: Optional[datetime] = Field(None, description="생성 시간")
     
-    class Config:
-        arbitrary_types_allowed = True
-        json_schema_extra = {
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "json_schema_extra": {
             "example": {
                 "chain_id": "chain_123",
                 "stage": 1,
@@ -40,6 +40,7 @@ class PipelineData(BaseModel):
                 "result_type": "stage1_completed"
             }
         }
+    }
 
 class StageResult(BaseModel):
     """스테이지 실행 결과를 위한 모델"""
@@ -51,8 +52,8 @@ class StageResult(BaseModel):
     success: bool = Field(True, description="성공 여부")
     error_message: Optional[str] = Field(None, description="에러 메시지")
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "chain_id": "chain_123",
                 "stage": 1,
@@ -62,6 +63,7 @@ class StageResult(BaseModel):
                 "success": True
             }
         }
+    }
 
 class PipelineMetadata(BaseModel):
     """파이프라인 메타데이터를 위한 모델"""
@@ -72,8 +74,8 @@ class PipelineMetadata(BaseModel):
     error: Optional[str] = Field(None, description="에러 메시지")
     input_size: Optional[int] = Field(None, description="입력 데이터 크기")
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "stage_name": "데이터 전처리",
                 "start_time": 1640995200.0,
@@ -81,3 +83,4 @@ class PipelineMetadata(BaseModel):
                 "execution_time": 2.5
             }
         }
+    }
