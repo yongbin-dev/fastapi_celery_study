@@ -37,7 +37,11 @@
       "Bash(touch:*)",
       "Bash(find:*)",
       "Bash(sed:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(echo $VIRTUAL_ENV)",
+      "Bash(direnv allow:*)",
+      "Bash(git config:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
