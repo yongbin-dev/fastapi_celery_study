@@ -4,7 +4,8 @@
       "Bash(git add:*)",
       "Bash(find:*)",
       "Bash(docker exec:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(poetry config:*)"
     ],
     "deny": [],
     "ask": []
