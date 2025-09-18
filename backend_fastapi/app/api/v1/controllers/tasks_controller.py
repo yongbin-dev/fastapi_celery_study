@@ -1,84 +1,101 @@
 # app/api/v1/controllers/tasks_controller.py
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends
 from fastapi.params import Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from datetime import datetime
 from app.core.database import get_db
 from app.schemas import (
     AIPipelineRequest, AIPipelineResponse, PipelineStatusResponse,
-    PipelineStagesResponse, StageDetailResponse ,PredictResponse , PredictRequest
+    PipelineStagesResponse, StageDetailResponse, PredictResponse, PredictRequest
 )
 from app.schemas.common import ApiResponse
-from app.api.v1.services import get_pipeline_service , get_redis_service
+from app.api.v1.services import get_pipeline_service, get_redis_service
 from app.utils.response_builder import ResponseBuilder
 import httpx
 
 controller = APIRouter()
 
 # Ollama 서버 설정
+
+# 실제 확인된 설정
 OLLAMA_SERVERS = {
-    "qwen2": "http://localhost:13434",
-    "qwen3": "http://localhost:12434"
+    "server1": {
+        "url": "http://192.168.0.122:12434",
+        "name": "qwen3-server"
+    },
+    "server2": {
+        "url": "http://192.168.0.122:13434",
+        "name": "qwen2-server"
+    }
 }
+
+# 두 서버 모두 동일한 모델 보유
+AVAILABLE_MODELS = [
+    "qwen2.5vl:7b-q8_0",
+    "qwen3:32b",
+    "mistral-small3.2:24b"
+]
 
 
 @controller.get("/models")
-async def get_available_models():
-    """사용 가능한 모델 목록"""
-    models = []
+async def get_available_models() :
+    return ResponseBuilder.success(
+        data={
+            "servers": OLLAMA_SERVERS,
+            "available_models": AVAILABLE_MODELS
+        },
+        message=f""
+    )
 
-    for model_name, url in OLLAMA_SERVERS.items():
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"{url}/api/tags")
-                if response.status_code == 200:
-                    models.append({
-                        "name": model_name,
-                        "status": "available",
-                        "url": url
-                    })
-        except Exception as e :
-            models.append({
-                "name": model_name,
-                "status": "unavailable",
-                "url": url
-            })
-
-    return {"models": models}
 
 @controller.post("/predict", response_model=ApiResponse[PredictResponse])
 async def predict(request: PredictRequest):
-    if request.model not in OLLAMA_SERVERS:
-        raise ValueError(f"지원하지 않는 모델: {request.model}")
+    if request.server not in OLLAMA_SERVERS:
+        return {
+            "message": f"지원하지 않는 서버: {request.server}",
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "data": {"available_servers": list(OLLAMA_SERVERS.keys())}
+        }
 
-    ollama_url = OLLAMA_SERVERS[request.model]
+    if request.model not in AVAILABLE_MODELS:
+        return {
+            "message": f"지원하지 않는 모델: {request.model}",
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "data": {"available_models": AVAILABLE_MODELS}
+        }
 
-    # Ollama API 호출
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    server_info = OLLAMA_SERVERS[request.server]
+    ollama_url = server_info["url"]
+
+    logging.info(f"Server: {server_info['name']} ({ollama_url})")
+    logging.info(f"Model: {request.model}")
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(
             f"{ollama_url}/api/generate",
             json={
                 "model": request.model,
                 "prompt": request.prompt,
-                "stream": request.stream
+                "stream": False
             }
         )
 
-        if response.status_code != 200:
-            raise Exception(f"Ollama API 오류: {response.status_code}")
+        if response.status_code == 200:
+            result = response.json()
+            return ResponseBuilder.success(
+                data=result
+            )
 
-        result = response.json()
 
-        return PredictResponse(
-            success=True,
-            response=result.get("response", "")
-        )
 
 @controller.get("/history", response_model=ApiResponse[list[PipelineStatusResponse]])
 async def get_pipeline_history(
-        service = Depends(get_pipeline_service),
+        service=Depends(get_pipeline_service),
         db: AsyncSession = Depends(get_db),
         hours: Optional[int] = Query(1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168),
         status: Optional[str] = Query(None, description="필터링할 상태"),
@@ -86,7 +103,7 @@ async def get_pipeline_history(
         limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000)
 ) -> ApiResponse[list[PipelineStatusResponse]]:
     result = await service.get_pipeline_history(
-        db=db,  hours=hours, status=status, task_name=task_name, limit=limit
+        db=db, hours=hours, status=status, task_name=task_name, limit=limit
     )
 
 
@@ -100,8 +117,8 @@ async def get_pipeline_history(
 @controller.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
 async def create_ai_pipeline(
         request: AIPipelineRequest,
-        service = Depends(get_pipeline_service),
-        redis_service = Depends(get_redis_service),
+        service=Depends(get_pipeline_service),
+        redis_service=Depends(get_redis_service),
         db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[AIPipelineResponse]:
     """AI 처리 파이프라인 시작"""
@@ -118,8 +135,8 @@ async def create_ai_pipeline(
 @controller.delete("/ai-pipeline/{chain_id}/cancel")
 async def cancel_ai_pipeline(
         chain_id: str,
-        service = Depends(get_pipeline_service),
-        redis_service = Depends(get_redis_service),
+        service=Depends(get_pipeline_service),
+        redis_service=Depends(get_redis_service),
 ):
     """파이프라인 취소 및 데이터 삭제"""
     result = service.cancel_pipeline(redis_service=redis_service, chain_id=chain_id)
@@ -136,8 +153,8 @@ async def cancel_ai_pipeline(
 @controller.get("/ai-pipeline/{chain_id}/tasks", response_model=ApiResponse[PipelineStagesResponse])
 async def get_pipeline_tasks(
         chain_id: str,
-        service = Depends(get_pipeline_service),
-        redis_service = Depends(get_redis_service),
+        service=Depends(get_pipeline_service),
+        redis_service=Depends(get_redis_service),
 ) -> ApiResponse[PipelineStagesResponse]:
     pipeline_stages = service.get_pipeline_tasks(redis_service=redis_service, chain_id=chain_id)
 
@@ -147,13 +164,12 @@ async def get_pipeline_tasks(
     )
 
 
-
 @controller.get("/ai-pipeline/{chain_id}/stage/{stage}", response_model=ApiResponse[StageDetailResponse])
 async def get_stage_task(
         chain_id: str,
         stage: int,
-        service = Depends(get_pipeline_service),
-        redis_service = Depends(get_redis_service),
+        service=Depends(get_pipeline_service),
+        redis_service=Depends(get_redis_service),
 ) -> ApiResponse[StageDetailResponse]:
     stage_detail = service.get_stage_task(redis_service=redis_service, chain_id=chain_id, stage=stage)
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TaskApiTab,
   TaskHistoryTab,
@@ -6,8 +6,43 @@ import {
   TaskModelsTab
 } from '../components';
 
+type TabType = 'management' | 'history' | 'model' | 'etc';
+
 export const TaskPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'management' | 'history' | 'model' | 'etc'>('management');
+  // URL 쿼리 파라미터에서 탭 상태를 가져오는 함수
+  const getTabFromUrl = (): TabType => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    const validTabs: TabType[] = ['management', 'history', 'model', 'etc'];
+    return (tab && validTabs.includes(tab as TabType)) ? tab as TabType : 'management';
+  };
+
+  const [activeTab, setActiveTab] = useState<TabType>(getTabFromUrl);
+
+  // URL 쿼리 파라미터 업데이트 함수
+  const updateUrlTab = (tabId: TabType) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tabId);
+    window.history.pushState({}, '', url.toString());
+  };
+
+  // 탭 변경 시 URL 업데이트
+  const handleTabChange = (tabId: TabType) => {
+    setActiveTab(tabId);
+    updateUrlTab(tabId);
+  };
+
+  // 브라우저 뒤로가기/앞으로가기 처리
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveTab(getTabFromUrl());
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const tabs = [
     { id: 'management' as const, label: '태스크 관리' },
@@ -41,7 +76,7 @@ export const TaskPage: React.FC = () => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'

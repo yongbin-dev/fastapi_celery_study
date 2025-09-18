@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useImageTask } from '../hooks';
 import type { ModelTestRequest } from '../types';
+import { SimpleChatbot } from './SimpleChatbot';
 
 export const TaskModelsTab: React.FC = () => {
 
@@ -241,6 +242,11 @@ export const TaskModelsTab: React.FC = () => {
           </div>
         </div>
       </form>
+
+      {/* 간단한 챗봇 섹션 */}
+      <div className="mt-12">
+        <SimpleChatbot />
+      </div>
 
     </div>
   );

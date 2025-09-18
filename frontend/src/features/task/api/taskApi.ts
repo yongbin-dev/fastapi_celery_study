@@ -21,7 +21,7 @@ export const taskApi = {
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
     const queryString = searchParams.toString();
-    const url = `/api/v1/tasks/history?${queryString ? `${queryString}` : ''}`;
+    const url = `/tasks/history?${queryString ? `${queryString}` : ''}`;
 
     const response = await api.get<PipelineStatusResponse[]>(url);
     return response.data;
@@ -36,7 +36,7 @@ export const taskApi = {
     formData.append('image2', data.image2);
 
     const response = await api.post<ModelTestResponse>(
-      '/api/v1/tasks/model-test',
+      '/tasks/model-test',
       formData,
       {
         headers: {
@@ -53,7 +53,7 @@ export const taskApi = {
     options: { model: string };
   }): Promise<{ pipeline_id: string }> => {
     const response = await api.post<{ pipeline_id: string }>(
-      '/api/v1/tasks/ai-pipeline',
+      '/tasks/ai-pipeline',
       data
     );
     return response.data;
@@ -64,13 +64,13 @@ export const taskApi = {
     pipelineId: string
   ): Promise<PipelineStatusResponse> => {
     const response = await api.get<PipelineStatusResponse>(
-      `/api/v1/tasks/ai-pipeline/${pipelineId}/tasks`
+      `/tasks/ai-pipeline/${pipelineId}/tasks`
     );
     return response.data;
   },
 
   // 파이프라인 취소
   cancelPipeline: async (pipelineId: string): Promise<void> => {
-    await api.delete(`/api/v1/tasks/ai-pipeline/${pipelineId}/cancel`);
+    await api.delete(`/tasks/ai-pipeline/${pipelineId}/cancel`);
   },
 };
