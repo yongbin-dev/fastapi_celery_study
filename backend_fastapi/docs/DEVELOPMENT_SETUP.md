@@ -9,16 +9,19 @@
 ### 1. direnv 설치
 
 #### macOS (Homebrew)
+
 ```bash
 brew install direnv
 ```
 
 #### Ubuntu/Debian
+
 ```bash
 sudo apt install direnv
 ```
 
 #### CentOS/RHEL
+
 ```bash
 # EPEL 저장소 활성화 후
 yum install direnv
@@ -29,18 +32,21 @@ yum install direnv
 사용 중인 Shell에 따라 다음 중 하나를 실행:
 
 #### Zsh (macOS 기본)
+
 ```bash
 echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
 #### Bash
+
 ```bash
 echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 #### Fish Shell
+
 ```bash
 echo 'direnv hook fish | source' >> ~/.config/fish/config.fish
 ```
@@ -48,6 +54,7 @@ echo 'direnv hook fish | source' >> ~/.config/fish/config.fish
 ## 🚀 **프로젝트 설정**
 
 ### 1. 프로젝트 클론 및 초기 설정
+
 ```bash
 git clone <repository-url>
 cd backend_fastapi
@@ -60,6 +67,7 @@ poetry install
 ```
 
 ### 2. 자동 환경 설정 확인
+
 ```bash
 # 프로젝트 디렉토리 진입 시 자동으로 물어봄
 cd backend_fastapi
@@ -72,6 +80,7 @@ direnv allow
 ## ✅ **설정 완료 확인**
 
 ### 정상 작동 테스트
+
 ```bash
 # 디렉토리 나가기
 cd ..
@@ -98,19 +107,19 @@ pip list | grep fastapi
 
 ```json
 {
-    "python.defaultInterpreterPath": "./.venv/bin/python",
-    "python.terminal.activateEnvironment": true,
-    "python.terminal.activateEnvInCurrentTerminal": true,
-    "terminal.integrated.env.osx": {
-        "VIRTUAL_ENV": "${workspaceFolder}/.venv"
-    }
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "terminal.integrated.env.osx": {
+    "VIRTUAL_ENV": "${workspaceFolder}/.venv"
+  }
 }
 ```
 
 ### PyCharm 설정
 
 1. `File` → `Settings` → `Project` → `Python Interpreter`
-2. `Add Interpreter` → `Existing Environment`  
+2. `Add Interpreter` → `Existing Environment`
 3. `Interpreter Path`: `./venv/bin/python` 선택
 
 ## 🔧 **개발 명령어**
@@ -118,6 +127,7 @@ pip list | grep fastapi
 가상환경이 자동 활성화되면 다음 명령어들을 바로 사용할 수 있습니다:
 
 ### 서버 실행
+
 ```bash
 # FastAPI 개발 서버
 uvicorn app.main:app --reload --host 0.0.0.0 --port 5050
@@ -127,6 +137,7 @@ poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 5050
 ```
 
 ### Celery 실행
+
 ```bash
 # Celery Worker
 celery -A app.core.celery_app worker --loglevel=info
@@ -136,6 +147,7 @@ celery -A app.core.celery_app flower --port=5555
 ```
 
 ### 코드 품질 도구
+
 ```bash
 # 코드 포맷팅
 black .
@@ -155,6 +167,7 @@ pytest
 자주 사용하는 명령어를 위한 Shell Alias 추가:
 
 ### ~/.zshrc 또는 ~/.bashrc에 추가
+
 ```bash
 # FastAPI 개발 편의 명령어
 alias fapi-dev="poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 5050"
@@ -165,6 +178,7 @@ alias fapi-format="poetry run black . && poetry run flake8"
 ```
 
 적용:
+
 ```bash
 source ~/.zshrc  # 또는 ~/.bashrc
 ```
@@ -185,6 +199,7 @@ docker-compose up
 ## 🔍 **문제 해결**
 
 ### direnv가 작동하지 않을 때
+
 ```bash
 # direnv 상태 확인
 direnv status
@@ -197,6 +212,7 @@ direnv allow
 ```
 
 ### 가상환경이 생성되지 않았을 때
+
 ```bash
 # Poetry 가상환경 재생성
 poetry env remove python
@@ -204,6 +220,7 @@ poetry install
 ```
 
 ### 권한 오류 발생시
+
 ```bash
 # direnv 캐시 초기화
 direnv reload
