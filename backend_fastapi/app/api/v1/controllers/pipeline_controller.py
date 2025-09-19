@@ -9,9 +9,6 @@ from app.core.database import get_db
 from app.schemas import (
     AIPipelineRequest,
     AIPipelineResponse,
-    PipelineStatusResponse,
-    PipelineStagesResponse,
-    StageDetailResponse,
     PredictResponse,
     PredictRequest,
 )
@@ -72,6 +69,8 @@ async def predict(request: PredictRequest):
             f"{ollama_url}/api/generate",
             json={"model": request.model, "prompt": request.prompt, "stream": False},
         )
+
+        logging.info(f"Response Status Code: {response}")
 
         if response.status_code == 200:
             result = response.json()
