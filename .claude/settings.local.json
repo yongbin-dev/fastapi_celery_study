@@ -5,7 +5,11 @@
       "Bash(find:*)",
       "Bash(docker exec:*)",
       "Bash(mkdir:*)",
-      "Bash(poetry config:*)"
+      "Bash(poetry config:*)",
+      "Bash(dmesg:*)",
+      "Read(//home/yb/**)",
+      "Bash(source ~/.bashrc)",
+      "Bash(sudo ln:*)"
     ],
     "deny": [],
     "ask": []
