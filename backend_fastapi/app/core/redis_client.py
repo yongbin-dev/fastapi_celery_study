@@ -27,7 +27,7 @@ class RedisClient:
                     1: 1,  # TCP_KEEPIDLE
                     2: 1,  # TCP_KEEPINTVL
                     3: 5,  # TCP_KEEPCNT
-                }
+                },
             )
             cls._instance = Redis(connection_pool=cls._pool)
             await cls._instance.ping()

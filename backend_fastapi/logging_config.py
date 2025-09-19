@@ -21,15 +21,13 @@ def setup_logging():
 
     # 파일 핸들러 (선택적)
     file_handler = logging.FileHandler(
-        f"logs/app_{datetime.now().strftime('%Y%m%d')}.log",
-        encoding='utf-8'
+        f"logs/app_{datetime.now().strftime('%Y%m%d')}.log", encoding="utf-8"
     )
     file_handler.setLevel(logging.INFO)
 
     # 포맷터 설정
     formatter = logging.Formatter(
-        fmt='%(asctime)s | %(levelname)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(asctime)s | %(levelname)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     console_handler.setFormatter(formatter)

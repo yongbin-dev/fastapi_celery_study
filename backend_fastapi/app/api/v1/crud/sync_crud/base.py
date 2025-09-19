@@ -53,7 +53,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db: Session,
         *,
         db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+        obj_in: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         """객체 업데이트"""
         obj_data = jsonable_encoder(db_obj)
@@ -61,11 +61,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        
+
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
-        
+
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -87,16 +87,14 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db.query(self.model).filter(self.model.id == id).first() is not None
 
     def get_by_field(
-        self,
-        db: Session,
-        *,
-        field_name: str,
-        field_value: Any
+        self, db: Session, *, field_name: str, field_value: Any
     ) -> Optional[ModelType]:
         """특정 필드 값으로 객체 조회"""
-        return db.query(self.model).filter(
-            getattr(self.model, field_name) == field_value
-        ).first()
+        return (
+            db.query(self.model)
+            .filter(getattr(self.model, field_name) == field_value)
+            .first()
+        )
 
     def get_multi_by_field(
         self,
@@ -105,18 +103,19 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         field_name: str,
         field_value: Any,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[ModelType]:
         """특정 필드 값으로 다중 객체 조회"""
-        return db.query(self.model).filter(
-            getattr(self.model, field_name) == field_value
-        ).offset(skip).limit(limit).all()
+        return (
+            db.query(self.model)
+            .filter(getattr(self.model, field_name) == field_value)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def create_bulk(
-        self,
-        db: Session,
-        *,
-        objs_in: List[CreateSchemaType]
+        self, db: Session, *, objs_in: List[CreateSchemaType]
     ) -> List[ModelType]:
         """대량 객체 생성"""
         db_objs = []
@@ -125,18 +124,16 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db_obj = self.model(**obj_in_data)
             db_objs.append(db_obj)
             db.add(db_obj)
-        
+
         db.commit()
         for db_obj in db_objs:
             db.refresh(db_obj)
-        
+
         return db_objs
 
     def delete_multi(self, db: Session, *, ids: List[int]) -> int:
         """다중 객체 삭제"""
-        deleted_count = db.query(self.model).filter(
-            self.model.id.in_(ids)
-        ).delete()
+        deleted_count = db.query(self.model).filter(self.model.id.in_(ids)).delete()
         db.commit()
         return deleted_count
 
@@ -146,18 +143,23 @@ class CRUDBaseWithSoftDelete(CRUDBase[ModelType, CreateSchemaType, UpdateSchemaT
 
     def get(self, db: Session, id: Any) -> Optional[ModelType]:
         """ID로 단일 객체 조회 (삭제되지 않은 것만)"""
-        return db.query(self.model).filter(
-            self.model.id == id,
-            self.model.is_deleted == False  # noqa
-        ).first()
+        return (
+            db.query(self.model)
+            .filter(self.model.id == id, self.model.is_deleted == False)  # noqa
+            .first()
+        )
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
         """다중 객체 조회 (삭제되지 않은 것만)"""
-        return db.query(self.model).filter(
-            self.model.is_deleted == False  # noqa
-        ).offset(skip).limit(limit).all()
+        return (
+            db.query(self.model)
+            .filter(self.model.is_deleted == False)  # noqa
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def soft_delete(self, db: Session, *, id: int) -> ModelType:
         """소프트 삭제"""
@@ -170,23 +172,28 @@ class CRUDBaseWithSoftDelete(CRUDBase[ModelType, CreateSchemaType, UpdateSchemaT
 
     def restore(self, db: Session, *, id: int) -> ModelType:
         """삭제된 객체 복구"""
-        obj = db.query(self.model).filter(
-            self.model.id == id,
-            self.model.is_deleted == True  # noqa
-        ).first()
-        
+        obj = (
+            db.query(self.model)
+            .filter(self.model.id == id, self.model.is_deleted == True)  # noqa
+            .first()
+        )
+
         if obj:
             obj.is_deleted = False
             db.add(obj)
             db.commit()
             db.refresh(obj)
-        
+
         return obj
 
     def get_deleted(
         self, db: Session, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
         """삭제된 객체들 조회"""
-        return db.query(self.model).filter(
-            self.model.is_deleted == True  # noqa
-        ).offset(skip).limit(limit).all()
+        return (
+            db.query(self.model)
+            .filter(self.model.is_deleted == True)  # noqa
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )

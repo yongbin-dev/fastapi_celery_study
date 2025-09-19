@@ -1,4 +1,3 @@
-
 from .base import Base
 from .user import User
 from .task_log import TaskLog
@@ -11,17 +10,17 @@ from .task_dependency import TaskDependency
 from .chain_execution import ChainExecution
 
 __all__ = [
-    'Base',
-    'User',
-    'TaskLog',
-    'TaskMetadata',
-    'TaskExecutionHistory',
-    'TaskResult',
-    'WorkerStatus',
-    'QueueStats',
-    'TaskDependency',
-    'ChainExecution',
+    "Base",
+    "User",
+    "TaskLog",
+    "TaskMetadata",
+    "TaskExecutionHistory",
+    "TaskResult",
+    "WorkerStatus",
+    "QueueStats",
+    "TaskDependency",
+    "ChainExecution",
 ]
 
 # 모델 버전
-__version__ = '1.0.0'
+__version__ = "1.0.0"

@@ -7,6 +7,7 @@ from datetime import datetime
 
 class UserCreateRequest(BaseModel):
     """사용자 생성 요청 스키마"""
+
     email: str
     username: str
     full_name: Optional[str] = None
@@ -17,6 +18,7 @@ class UserCreateRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     """사용자 수정 요청 스키마"""
+
     full_name: Optional[str] = None
     bio: Optional[str] = None
     is_active: Optional[bool] = None
@@ -25,6 +27,7 @@ class UserUpdateRequest(BaseModel):
 
 class UserResponse(BaseModel):
     """사용자 응답 스키마"""
+
     id: int
     email: str
     username: str
@@ -34,7 +37,5 @@ class UserResponse(BaseModel):
     is_superuser: bool
     created_at: datetime
     updated_at: datetime
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    model_config = {"from_attributes": True}

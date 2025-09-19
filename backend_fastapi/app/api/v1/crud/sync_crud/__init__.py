@@ -17,14 +17,12 @@ __all__ = [
     # Base CRUD classes
     "CRUDBase",
     "CRUDBaseWithSoftDelete",
-
     # CRUD classes
     "CRUDChainExecution",
     "CRUDTaskLog",
     "CRUDTaskResult",
     "CRUDTaskExecutionHistory",
     "CRUDTaskMetadata",
-
     # CRUD instances (ready to use)
     "chain_execution",
     "task_log",

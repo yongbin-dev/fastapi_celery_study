@@ -41,7 +41,9 @@
       "Bash(echo $VIRTUAL_ENV)",
       "Bash(direnv allow:*)",
       "Bash(git config:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(black --version)",
+      "Bash(black:*)"
     ],
     "deny": [],
     "ask": []

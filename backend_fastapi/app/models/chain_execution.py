@@ -13,21 +13,19 @@ class ChainExecution(Base):
     체인 실행 테이블
     Celery 체인(workflow) 실행 상태 및 결과를 추적
     """
+
     __tablename__ = "chain_executions"
 
     # 기본 필드
     id = Column(Integer, primary_key=True, comment="고유 식별자")
-    chain_id : Column[str] = Column(
-        String(255),
-        nullable=True,
-        index=True,
-        comment="체인 고유 ID"
+    chain_id: Column[str] = Column(
+        String(255), nullable=True, index=True, comment="체인 고유 ID"
     )
     chain_name = Column(
         String(255),
         nullable=False,
         index=True,
-        comment="체인 이름 (예: user_signup_workflow)"
+        comment="체인 이름 (예: user_signup_workflow)",
     )
 
     # 상태 관리
@@ -36,70 +34,31 @@ class ChainExecution(Base):
         default=ProcessStatus.PENDING,
         nullable=False,
         index=True,
-        comment="체인 실행 상태"
+        comment="체인 실행 상태",
     )
 
     # 작업 통계
-    total_tasks = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="체인 내 총 작업 수"
-    )
-    completed_tasks = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="완료된 작업 수"
-    )
-    failed_tasks = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="실패한 작업 수"
-    )
+    total_tasks = Column(Integer, default=0, nullable=False, comment="체인 내 총 작업 수")
+    completed_tasks = Column(Integer, default=0, nullable=False, comment="완료된 작업 수")
+    failed_tasks = Column(Integer, default=0, nullable=False, comment="실패한 작업 수")
 
     # 타임스탬프
-    started_at = Column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="시작 시간"
-    )
-    finished_at = Column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="완료 시간"
-    )
+    started_at = Column(DateTime(timezone=True), nullable=True, comment="시작 시간")
+    finished_at = Column(DateTime(timezone=True), nullable=True, comment="완료 시간")
 
     # 메타 정보
-    initiated_by = Column(
-        String(100),
-        nullable=True,
-        comment="시작한 사용자/시스템"
-    )
-    input_data = Column(
-        JSON,
-        nullable=True,
-        comment="입력 데이터 (JSON)"
-    )
-    final_result = Column(
-        JSON,
-        nullable=True,
-        comment="최종 결과 (JSON)"
-    )
-    error_message = Column(
-        Text,
-        nullable=True,
-        comment="오류 메시지"
-    )
+    initiated_by = Column(String(100), nullable=True, comment="시작한 사용자/시스템")
+    input_data = Column(JSON, nullable=True, comment="입력 데이터 (JSON)")
+    final_result = Column(JSON, nullable=True, comment="최종 결과 (JSON)")
+    error_message = Column(Text, nullable=True, comment="오류 메시지")
 
     # 관계 설정 (추후 필요시 TaskLog와 연결)
     # tasks = relationship("TaskLog", back_populates="chain_execution")
 
     # 인덱스 정의
     __table_args__ = (
-        Index('idx_chain_status_created', 'status', 'created_at'),
-        Index('idx_chain_name_status', 'chain_name', 'status'),
+        Index("idx_chain_status_created", "status", "created_at"),
+        Index("idx_chain_name_status", "chain_name", "status"),
     )
 
     def __repr__(self):
@@ -120,7 +79,11 @@ class ChainExecution(Base):
     @property
     def is_completed(self) -> bool:
         """완료 여부 (성공/실패 상관없이)"""
-        return self.status in [ProcessStatus.SUCCESS, ProcessStatus.FAILURE, ProcessStatus.REVOKED]
+        return self.status in [
+            ProcessStatus.SUCCESS,
+            ProcessStatus.FAILURE,
+            ProcessStatus.REVOKED,
+        ]
 
     @property
     def is_successful(self) -> bool:
@@ -139,7 +102,12 @@ class ChainExecution(Base):
         self.status = ProcessStatus.STARTED
         self.started_at = datetime.now()
 
-    def complete_execution(self, success: bool = True, final_result=None, error_message: Optional[str] = None):
+    def complete_execution(
+        self,
+        success: bool = True,
+        final_result=None,
+        error_message: Optional[str] = None,
+    ):
         """체인 실행 완료"""
         self.status = ProcessStatus.SUCCESS if success else ProcessStatus.FAILURE
         self.finished_at = datetime.now()
@@ -161,23 +129,23 @@ class ChainExecution(Base):
     def to_dict(self):
         """딕셔너리 변환"""
         return {
-            'id': self.id,
-            'chain_id': str(self.chain_id),
-            'chain_name': self.chain_name,
-            'status': self.status,
-            'total_tasks': self.total_tasks,
-            'completed_tasks': self.completed_tasks,
-            'failed_tasks': self.failed_tasks,
-            'progress_percentage': self.progress_percentage,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'started_at': self.started_at.isoformat() if self.started_at else None,
-            'finished_at': self.finished_at.isoformat() if self.finished_at else None,
-            'initiated_by': self.initiated_by,
-            'input_data': self.input_data,
-            'final_result': self.final_result,
-            'error_message': self.error_message,
-            'duration_seconds': self.duration_seconds,
-            'is_running': self.is_running,
-            'is_completed': self.is_completed,
-            'is_successful': self.is_successful
+            "id": self.id,
+            "chain_id": str(self.chain_id),
+            "chain_name": self.chain_name,
+            "status": self.status,
+            "total_tasks": self.total_tasks,
+            "completed_tasks": self.completed_tasks,
+            "failed_tasks": self.failed_tasks,
+            "progress_percentage": self.progress_percentage,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "finished_at": self.finished_at.isoformat() if self.finished_at else None,
+            "initiated_by": self.initiated_by,
+            "input_data": self.input_data,
+            "final_result": self.final_result,
+            "error_message": self.error_message,
+            "duration_seconds": self.duration_seconds,
+            "is_running": self.is_running,
+            "is_completed": self.is_completed,
+            "is_successful": self.is_successful,
         }

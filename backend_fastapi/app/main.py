@@ -14,6 +14,7 @@ from app.core.middleware import ResponseLogMiddleware
 from .utils.response_builder import ResponseBuilder
 from app.core.database import init_db
 
+
 # 애플리케이션 시작/종료 이벤트 처리
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,8 +22,9 @@ async def lifespan(app: FastAPI):
     # 시작 시 실행
 
     # 타임존을 서울로 설정
-    os.environ['TZ'] = 'Asia/Seoul'
+    os.environ["TZ"] = "Asia/Seoul"
     import time
+
     time.tzset()  # Unix/Linux에서 타임존 설정 적용
 
     logger.info("🚀 FastAPI 애플리케이션 시작")
@@ -43,7 +45,7 @@ async def lifespan(app: FastAPI):
 
     # 종료 시 실행
     logger.info("🛑 FastAPI 애플리케이션 종료")
-    
+
     # 데이터베이스 연결 종료
     try:
         await close_db()
@@ -54,6 +56,7 @@ async def lifespan(app: FastAPI):
 
 # 로깅 초기화
 from .core.logging import get_logger
+
 logger = get_logger(__name__)
 
 # FastAPI 앱 생성
@@ -64,7 +67,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 
@@ -90,11 +93,7 @@ def setup_middleware():
 def setup_routers():
     """라우터 설정"""
     # API 라우터 등록
-    app.include_router(
-        api_router,
-        prefix=settings.API_V1_STR,
-        tags=["API v1"]
-    )
+    app.include_router(api_router, prefix=settings.API_V1_STR, tags=["API v1"])
 
     logger.info(f"✅ 라우터 설정 완료 - Prefix: {settings.API_V1_STR}")
 
@@ -108,9 +107,9 @@ async def root():
             "name": settings.PROJECT_NAME,
             "version": settings.VERSION,
             "docs": "/docs",
-            "health": "/health"
+            "health": "/health",
         },
-        message="API 서버가 정상 작동 중입니다"
+        message="API 서버가 정상 작동 중입니다",
     )
 
 
@@ -121,9 +120,9 @@ async def health_check():
         data={
             "status": "healthy",
             "version": settings.VERSION,
-            "environment": "development"  # 환경에 따라 변경
+            "environment": "development",  # 환경에 따라 변경
         },
-        message="서버 상태 정상"
+        message="서버 상태 정상",
     )
 
 
@@ -134,9 +133,9 @@ async def get_version():
         data={
             "name": settings.PROJECT_NAME,
             "version": settings.VERSION,
-            "api_version": "v1"
+            "api_version": "v1",
         },
-        message="버전 정보"
+        message="버전 정보",
     )
 
 

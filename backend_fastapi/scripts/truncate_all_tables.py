@@ -56,32 +56,35 @@ class TableTruncator:
 
         self.exclude_tables = exclude_tables or set()
         # 기본적으로 제외할 시스템 테이블들
-        self.exclude_tables.update({
-            'alembic_version',  # 마이그레이션 버전 정보
-            'information_schema',
-            'pg_catalog',
-            'pg_stat_statements'
-        })
+        self.exclude_tables.update(
+            {
+                "alembic_version",  # 마이그레이션 버전 정보
+                "information_schema",
+                "pg_catalog",
+                "pg_stat_statements",
+            }
+        )
 
     async def get_all_tables(self) -> List[str]:
         """데이터베이스의 모든 테이블 목록 조회"""
         try:
             async with self.db_manager.async_engine.begin() as conn:
                 # PostgreSQL에서 사용자 테이블 목록 조회
-                query = text("""
+                query = text(
+                    """
                     SELECT table_name
                     FROM information_schema.tables
                     WHERE table_schema = 'public'
                     AND table_type = 'BASE TABLE'
                     ORDER BY table_name
-                """)
+                """
+                )
                 result = await conn.execute(query)
                 tables = [row[0] for row in result.fetchall()]
 
                 # 제외할 테이블 필터링
                 filtered_tables = [
-                    table for table in tables
-                    if table not in self.exclude_tables
+                    table for table in tables if table not in self.exclude_tables
                 ]
 
                 return filtered_tables
@@ -114,7 +117,9 @@ class TableTruncator:
                     # 각 테이블 truncate
                     for table in tables:
                         print(f"  🧹 {table} 테이블 정리 중...")
-                        await conn.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;"))
+                        await conn.execute(
+                            text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE;")
+                        )
                         logger.info(f"테이블 {table} truncate 완료")
 
                     print("✅ 모든 테이블 데이터 삭제 완료!")
@@ -142,7 +147,9 @@ class TableTruncator:
             async with self.db_manager.async_engine.begin() as conn:
                 for table in tables:
                     try:
-                        result = await conn.execute(text(f"SELECT COUNT(*) FROM {table}"))
+                        result = await conn.execute(
+                            text(f"SELECT COUNT(*) FROM {table}")
+                        )
                         count = result.scalar()
                         stats[table] = count
                     except Exception as e:
@@ -159,7 +166,7 @@ def parse_exclude_tables(exclude_str: str) -> Set[str]:
     """제외할 테이블 문자열을 파싱"""
     if not exclude_str:
         return set()
-    return {table.strip() for table in exclude_str.split(',') if table.strip()}
+    return {table.strip() for table in exclude_str.split(",") if table.strip()}
 
 
 async def main():
@@ -172,38 +179,19 @@ async def main():
   python scripts/truncate_all_tables.py --dry-run
   python scripts/truncate_all_tables.py --confirm
   python scripts/truncate_all_tables.py --exclude users,logs --confirm
-        """
+        """,
     )
 
-    parser.add_argument(
-        '--confirm',
-        action='store_true',
-        help='확인 프롬프트 없이 바로 실행'
-    )
+    parser.add_argument("--confirm", action="store_true", help="확인 프롬프트 없이 바로 실행")
+
+    parser.add_argument("--exclude", type=str, default="", help="제외할 테이블명 (쉼표로 구분)")
+
+    parser.add_argument("--dry-run", action="store_true", help="실제 실행하지 않고 삭제될 테이블만 출력")
+
+    parser.add_argument("--stats", action="store_true", help="각 테이블의 레코드 수만 출력")
 
     parser.add_argument(
-        '--exclude',
-        type=str,
-        default='',
-        help='제외할 테이블명 (쉼표로 구분)'
-    )
-
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='실제 실행하지 않고 삭제될 테이블만 출력'
-    )
-
-    parser.add_argument(
-        '--stats',
-        action='store_true',
-        help='각 테이블의 레코드 수만 출력'
-    )
-
-    parser.add_argument(
-        '--test-db',
-        action='store_true',
-        help='테스트 데이터베이스 사용 (TEST_DATABASE_URL)'
+        "--test-db", action="store_true", help="테스트 데이터베이스 사용 (TEST_DATABASE_URL)"
     )
 
     args = parser.parse_args()
@@ -289,7 +277,7 @@ async def main():
                 print(f"\n⚠️  총 {total_records:,}개의 레코드가 삭제됩니다!")
 
             response = input("\n정말로 모든 테이블 데이터를 삭제하시겠습니까? (yes/no): ")
-            if response.lower() not in ['yes', 'y']:
+            if response.lower() not in ["yes", "y"]:
                 print("❌ 작업이 취소되었습니다.")
                 return
 
@@ -299,7 +287,9 @@ async def main():
         if success and not args.dry_run:
             print("\n📊 작업 완료 후 상태:")
             stats = await truncator.get_table_stats()
-            total_remaining = sum(count for count in stats.values() if isinstance(count, int))
+            total_remaining = sum(
+                count for count in stats.values() if isinstance(count, int)
+            )
             print(f"  총 남은 레코드: {total_remaining}개")
 
         sys.exit(0 if success else 1)

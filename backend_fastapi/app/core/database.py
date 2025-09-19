@@ -42,36 +42,30 @@ class DatabaseManager:
             database_url,
             future=True,
             connect_args={
-                "server_settings": {
-                    "timezone": settings.DB_TIMEZONE
-                },
+                "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": settings.DB_CONNECT_TIMEOUT,
             },
-            **COMMON_ENGINE_CONFIG
+            **COMMON_ENGINE_CONFIG,
         )
 
         # 비동기 세션 팩토리
-        self.AsyncSessionLocal  = sessionmaker(
-            bind=self.async_engine,
-            class_=AsyncSession,
-            expire_on_commit=False
+        self.AsyncSessionLocal = sessionmaker(
+            bind=self.async_engine, class_=AsyncSession, expire_on_commit=False
         )
 
         # 동기 엔진 생성 (Celery signal용)
-        sync_database_url = database_url.replace('postgresql+asyncpg://', 'postgresql://')
+        sync_database_url = database_url.replace(
+            "postgresql+asyncpg://", "postgresql://"
+        )
         self.sync_engine = create_engine(
             sync_database_url,
-            connect_args={
-                "options": f"-c timezone={settings.DB_TIMEZONE}"
-            },
-            **COMMON_ENGINE_CONFIG
+            connect_args={"options": f"-c timezone={settings.DB_TIMEZONE}"},
+            **COMMON_ENGINE_CONFIG,
         )
 
         # 동기 세션 팩토리
         self.SyncSessionLocal = sessionmaker(
-            bind=self.sync_engine,
-            class_=Session,
-            expire_on_commit=False
+            bind=self.sync_engine, class_=Session, expire_on_commit=False
         )
 
         # 헬스체크용 별도 엔진
@@ -84,9 +78,7 @@ class DatabaseManager:
             pool_pre_ping=True,
             pool_recycle=300,
             connect_args={
-                "server_settings": {
-                    "timezone": settings.DB_TIMEZONE
-                },
+                "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": 5,
             },
         )
@@ -113,7 +105,7 @@ class DatabaseManager:
         """
         동기 세션 컨텍스트 매니저 (Celery용)
         """
-        session : Session = self.SyncSessionLocal()
+        session: Session = self.SyncSessionLocal()
         try:
             yield session
             session.commit()
@@ -164,7 +156,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
                 f"데이터베이스 연결 실패 (시도 {attempt + 1}/{max_retries}): {str(e)[:100]}"
             )
             if attempt < max_retries - 1:
-                await asyncio.sleep(retry_delay * (2 ** attempt))
+                await asyncio.sleep(retry_delay * (2**attempt))
                 continue
             else:
                 logger.error(f"데이터베이스 연결 최대 재시도 횟수 초과: {str(e)}")

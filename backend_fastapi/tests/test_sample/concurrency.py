@@ -1,5 +1,6 @@
 import threading
 
+
 # 2. 싱글톤 적용 (Lock 포함)
 class SingletonCounter:
     _instance = None
@@ -17,16 +18,22 @@ class SingletonCounter:
         with self.lock:  # Lock을 이용하여 동기화 처리
             current_value = self.value
             import time
+
             time.sleep(0.0001)
             self.value = current_value + 1
+
 
 def worker_with_lock(counter):
     for _ in range(1000):
         counter.increment()
 
+
 # 테스트 실행
 singleton_counter = SingletonCounter()
-threads = [threading.Thread(target=worker_with_lock, args=(singleton_counter,)) for _ in range(10)]
+threads = [
+    threading.Thread(target=worker_with_lock, args=(singleton_counter,))
+    for _ in range(10)
+]
 
 for t in threads:
     t.start()

@@ -67,7 +67,7 @@ def sample_user_data():
     return {
         "email": "test@example.com",
         "username": "testuser",
-        "full_name": "Test User"
+        "full_name": "Test User",
     }
 
 
@@ -85,7 +85,7 @@ def pytest_addoption(parser):
         action="store",
         default=None,
         type=int,
-        help="스트레스 테스트에서 실행할 체인 개수"
+        help="스트레스 테스트에서 실행할 체인 개수",
     )
 
 
@@ -97,8 +97,8 @@ def num_chains(request):
         return request.config.getoption("--num-chains")
 
     # 2. 환경변수 확인
-    if os.getenv('TEST_NUM_CHAINS'):
-        return int(os.getenv('TEST_NUM_CHAINS'))
+    if os.getenv("TEST_NUM_CHAINS"):
+        return int(os.getenv("TEST_NUM_CHAINS"))
 
     # 3. 기본값
     return 100
