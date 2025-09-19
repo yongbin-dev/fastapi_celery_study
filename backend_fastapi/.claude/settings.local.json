@@ -43,7 +43,8 @@
       "Bash(git config:*)",
       "Bash(git commit:*)",
       "Bash(black --version)",
-      "Bash(black:*)"
+      "Bash(black:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

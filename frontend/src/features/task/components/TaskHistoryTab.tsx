@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
+import { TaskStatus, type TaskHistoryRequest } from '../types';
 import { useHistoryTasks } from '../hooks';
-import type { PipelineStatusResponse, TaskHistoryRequest } from '../types';
-import { TaskGroup } from './history/TaskGroup';
-import { TaskStatus } from '../types';
+import type { ChainExecutionResponseDto } from '../types/pipeline';
+import { TaskGroup } from './history';
 
 export const TaskHistoryTab: React.FC = () => {
   const [searchParams, setSearchParams] = useState<TaskHistoryRequest>({
@@ -89,11 +90,10 @@ export const TaskHistoryTab: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">전체</option>
-              <option value="app.tasks.example_task">예제 태스크</option>
-              <option value="app.tasks.simple_task">간단 태스크</option>
-              <option value="app.tasks.long_running_task">긴 태스크</option>
-              <option value="app.tasks.ai_task">AI 태스크</option>
-              <option value="app.tasks.email_task">이메일 태스크</option>
+              <option value="app.tasks.stage1_preprocessing">stage1_preprocessing</option>
+              <option value="app.tasks.stage2_feature_extraction">stage2_feature_extraction</option>
+              <option value="app.tasks.stage3_model_inference">stage3_model_inference</option>
+              <option value="app.tasks.stage4_post_processing">stage4_post_processing</option>
             </select>
           </div>
 
@@ -141,7 +141,7 @@ export const TaskHistoryTab: React.FC = () => {
       <div className="bg-white rounded-lg border">
         <div className="px-6 py-4 border-b">
           <h3 className="text-lg font-semibold">태스크 이력</h3>
-          <p className="text-sm text-gray-500">최근 1시간 내 실행된 태스크 목록</p>
+          <p className="text-sm text-gray-500">최근 {searchParams.hours}시간 내 실행된 파이프라인 목록</p>
         </div>
 
         {isLoading ? (
@@ -156,9 +156,9 @@ export const TaskHistoryTab: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y">
-            {pipelines.map((pipeline: PipelineStatusResponse, index) => (
+            {pipelines.map((pipeline: ChainExecutionResponseDto) => (
               <TaskGroup
-                key={pipeline.chain_id || `pipeline-${index}`}
+                key={pipeline.id}
                 pipeline={pipeline}
               />
             ))}

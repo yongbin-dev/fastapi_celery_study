@@ -4,6 +4,7 @@
 목표는 코드 품질, 생산성, 디버깅 편의성을 모두 잡는 것입니다.
 
 ## 📂 현재 프로젝트 구조
+
 ```
 backend_fastapi/
 ├── app/
@@ -27,16 +28,16 @@ backend_fastapi/
 
 ## 1️⃣ VSCode 확장 프로그램 추천
 
-| 확장 프로그램 | 설명 | 필수도 |
-|---|---|---|
-| Python | Python 언어 지원 | ⭐⭐⭐ |
-| Pylance | Python 언어 서버 | ⭐⭐⭐ |
-| Black Formatter | 코드 포맷터 | ⭐⭐⭐ |
-| Ruff | 빠른 Python 린터 | ⭐⭐⭐ |
-| Thunder Client | API 테스트 도구 | ⭐⭐ |
-| REST Client | .http 파일 지원 | ⭐⭐ |
-| Docker | Docker 지원 | ⭐⭐ |
-| YAML | YAML 파일 지원 | ⭐ |
+| 확장 프로그램   | 설명             | 필수도 |
+| --------------- | ---------------- | ------ |
+| Python          | Python 언어 지원 | ⭐⭐⭐ |
+| Pylance         | Python 언어 서버 | ⭐⭐⭐ |
+| Black Formatter | 코드 포맷터      | ⭐⭐⭐ |
+| Ruff            | 빠른 Python 린터 | ⭐⭐⭐ |
+| Thunder Client  | API 테스트 도구  | ⭐⭐   |
+| REST Client     | .http 파일 지원  | ⭐⭐   |
+| Docker          | Docker 지원      | ⭐⭐   |
+| YAML            | YAML 파일 지원   | ⭐     |
 
 ## 2️⃣ .vscode/settings.json
 
@@ -60,11 +61,7 @@ backend_fastapi/
   // Ruff 린터
   "ruff.enable": true,
   "ruff.lintOnSave": true,
-  "ruff.args": [
-    "--line-length=88",
-    "--select=E,F,W,B,I",
-    "--ignore=E501"
-  ],
+  "ruff.args": ["--line-length=88", "--select=E,F,W,B,I", "--ignore=E501"],
 
   // 파일 제외
   "files.exclude": {
@@ -110,7 +107,16 @@ backend_fastapi/
       "label": "Run FastAPI (Uvicorn)",
       "type": "shell",
       "command": "poetry",
-      "args": ["run", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "5050"],
+      "args": [
+        "run",
+        "uvicorn",
+        "app.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5050"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -126,7 +132,14 @@ backend_fastapi/
       "label": "Run Celery Worker",
       "type": "shell",
       "command": "poetry",
-      "args": ["run", "celery", "-A", "app.core.celery_app", "worker", "--loglevel=info"],
+      "args": [
+        "run",
+        "celery",
+        "-A",
+        "app.core.celery_app",
+        "worker",
+        "--loglevel=info"
+      ],
       "group": "build",
       "problemMatcher": [],
       "options": {
@@ -139,7 +152,14 @@ backend_fastapi/
       "label": "Run Flower",
       "type": "shell",
       "command": "poetry",
-      "args": ["run", "celery", "-A", "app.core.celery_app", "flower", "--port=5555"],
+      "args": [
+        "run",
+        "celery",
+        "-A",
+        "app.core.celery_app",
+        "flower",
+        "--port=5555"
+      ],
       "group": "build",
       "problemMatcher": []
     },
@@ -181,16 +201,19 @@ backend_fastapi/
   "configurations": [
     {
       "name": "Debug FastAPI",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
       "args": [
         "app.main:app",
         "--reload",
-        "--host", "0.0.0.0",
-        "--port", "5050"
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5050"
       ],
       "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONUNBUFFERED": "1",
         "ENVIRONMENT": "development"
@@ -200,15 +223,12 @@ backend_fastapi/
     },
     {
       "name": "Debug Celery Worker",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "celery",
-      "args": [
-        "-A", "app.core.celery_app",
-        "worker",
-        "--loglevel=debug"
-      ],
+      "args": ["-A", "app.celery_app", "worker", "--loglevel=debug"],
       "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONUNBUFFERED": "1",
         "ENVIRONMENT": "development"
@@ -217,14 +237,12 @@ backend_fastapi/
     },
     {
       "name": "Debug Tests",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "pytest",
-      "args": [
-        "-v",
-        "${file}"
-      ],
+      "args": ["-v", "${file}"],
       "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
       "env": {
         "PYTHONUNBUFFERED": "1",
         "ENVIRONMENT": "development"

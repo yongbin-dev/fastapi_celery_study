@@ -2,15 +2,20 @@
 
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, and_, func
+from sqlalchemy import select, and_, func, desc, asc
+from sqlalchemy.orm import joinedload, selectinload, subqueryload
 from datetime import datetime, timedelta
 
 from .base import AsyncCRUDBase
 from app.models.chain_execution import ChainExecution
+from app.models.task_log import TaskLog
 from app.schemas.enums import ProcessStatus
+from app.schemas.chain_execution import ChainExecutionCreate, ChainExecutionUpdate
 
 
-class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
+class AsyncCRUDChainExecution(
+    AsyncCRUDBase[ChainExecution, ChainExecutionCreate, ChainExecutionUpdate]
+):
     """ChainExecution 모델용 비동기 CRUD 클래스"""
 
     async def get_all(self, db: AsyncSession) -> Optional[list[ChainExecution]]:
@@ -26,123 +31,6 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
             stmt = select(ChainExecution).where(ChainExecution.chain_id == chain_id)
             result = await db.execute(stmt)
             return result.scalar_one_or_none()
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_by_chain_name(
-        self, db: AsyncSession, *, chain_name: str, skip: int = 0, limit: int = 100
-    ) -> List[ChainExecution]:
-        """chain_name으로 체인 실행 목록 조회"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(ChainExecution.chain_name == chain_name)
-                .order_by(desc(ChainExecution.created_at))
-                .offset(skip)
-                .limit(limit)
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_by_status(
-        self,
-        db: AsyncSession,
-        *,
-        status: ProcessStatus,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> List[ChainExecution]:
-        """상태별 체인 실행 목록 조회"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(ChainExecution.status == status.value)
-                .order_by(desc(ChainExecution.created_at))
-                .offset(skip)
-                .limit(limit)
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_running_chains(self, db: AsyncSession) -> List[ChainExecution]:
-        """실행 중인 체인 목록 조회"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(ChainExecution.status == ProcessStatus.STARTED.value)
-                .order_by(desc(ChainExecution.started_at))
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_completed_chains(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
-    ) -> List[ChainExecution]:
-        """완료된 체인 목록 조회 (성공/실패 포함)"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(
-                    ChainExecution.status.in_(
-                        [
-                            ProcessStatus.SUCCESS.value,
-                            ProcessStatus.FAILURE.value,
-                            ProcessStatus.REVOKED.value,
-                        ]
-                    )
-                )
-                .order_by(desc(ChainExecution.finished_at))
-                .offset(skip)
-                .limit(limit)
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_failed_chains(
-        self, db: AsyncSession, *, skip: int = 0, limit: int = 100
-    ) -> List[ChainExecution]:
-        """실패한 체인 목록 조회"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(ChainExecution.status == ProcessStatus.FAILURE.value)
-                .order_by(desc(ChainExecution.finished_at))
-                .offset(skip)
-                .limit(limit)
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def get_by_initiated_by(
-        self, db: AsyncSession, *, initiated_by: str, skip: int = 0, limit: int = 100
-    ) -> List[ChainExecution]:
-        """시작한 사용자/시스템별 체인 실행 목록 조회"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .where(ChainExecution.initiated_by == initiated_by)
-                .order_by(desc(ChainExecution.created_at))
-                .offset(skip)
-                .limit(limit)
-            )
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
         except Exception as e:
             await db.rollback()
             raise e
@@ -175,44 +63,6 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
             await db.rollback()
             raise e
 
-    async def start_chain(
-        self,
-        db: AsyncSession,
-        *,
-        chain_execution: ChainExecution,
-        initiated_by: Optional[str] = None,
-    ) -> ChainExecution:
-        """체인 실행 시작"""
-        try:
-            chain_execution.start_execution(initiated_by)
-            db.add(chain_execution)
-            await db.commit()
-            await db.refresh(chain_execution)
-            return chain_execution
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def complete_chain(
-        self,
-        db: AsyncSession,
-        *,
-        chain_execution: ChainExecution,
-        success: bool = True,
-        final_result: Optional[dict] = None,
-        error_message: Optional[str] = None,
-    ) -> ChainExecution:
-        """체인 실행 완료"""
-        try:
-            chain_execution.complete_execution(success, final_result, error_message)
-            db.add(chain_execution)
-            await db.commit()
-            await db.refresh(chain_execution)
-            return chain_execution
-        except Exception as e:
-            await db.rollback()
-            raise e
-
     async def increment_completed_tasks(
         self, db: AsyncSession, *, chain_execution: ChainExecution
     ) -> ChainExecution:
@@ -241,34 +91,40 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
             await db.rollback()
             raise e
 
-    async def get_stats_by_status(self, db: AsyncSession) -> dict:
-        """상태별 통계 조회"""
+    async def get_with_task_logs(
+        self, db: AsyncSession, *, chain_id: str
+    ) -> Optional[ChainExecution]:
+        """TaskLog와 함께 체인 실행 조회 (Spring의 fetch join과 유사)"""
         try:
-            stats = {}
-            for status in ProcessStatus:
-                stmt = select(func.count(ChainExecution.id)).where(
-                    ChainExecution.status == status.value
-                )
-                result = await db.execute(stmt)
-                count = result.scalar()
-                stats[status.value] = count
-            return stats
+            stmt = (
+                select(ChainExecution)
+                .options(selectinload(ChainExecution.task_logs))
+                .where(ChainExecution.chain_id == chain_id)
+                .order_by(desc(ChainExecution.created_at))
+            )
+            result = await db.execute(stmt)
+            return result.scalar_one_or_none()
         except Exception as e:
             await db.rollback()
             raise e
 
-    async def get_recent_chains(
-        self, db: AsyncSession, *, days: int = 7, limit: int = 50
+    async def get_multi_with_task_logs(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        days: int = 7,
+        limit: int = 100,
+        chain_name: Optional[str] = None,
+        status: Optional[ProcessStatus] = None,
     ) -> List[ChainExecution]:
-        """최근 N일간 체인 실행 목록 조회"""
+        """TaskLog와 함께 여러 체인 실행 조회"""
         try:
-            since_date = datetime.now() - timedelta(days=days)
             stmt = (
                 select(ChainExecution)
-                .where(ChainExecution.created_at >= since_date)
+                .options(selectinload(ChainExecution.task_logs))
                 .order_by(desc(ChainExecution.created_at))
-                .limit(limit)
-            )
+            )  # type: ignore
 
             result = await db.execute(stmt)
             return list(result.scalars().all())
@@ -276,31 +132,40 @@ class AsyncCRUDChainExecution(AsyncCRUDBase[ChainExecution, dict, dict]):
             await db.rollback()
             raise e
 
-    async def cleanup_old_chains(self, db: AsyncSession, *, days: int = 30) -> int:
-        """오래된 완료 체인 정리"""
-        try:
-            from sqlalchemy import delete
-
-            cleanup_date = datetime.now() - timedelta(days=days)
-            stmt = delete(ChainExecution).where(
-                and_(
-                    ChainExecution.finished_at < cleanup_date,
-                    ChainExecution.status.in_(
-                        [
-                            ProcessStatus.SUCCESS.value,
-                            ProcessStatus.FAILURE.value,
-                            ProcessStatus.REVOKED.value,
-                        ]
-                    ),
-                )
-            )
-            result = await db.execute(stmt)
-            await db.commit()
-            return result.rowcount
-        except Exception as e:
-            await db.rollback()
-            raise e
-
 
 # 인스턴스 생성
 chain_execution = AsyncCRUDChainExecution(ChainExecution)
+
+# async def get_by_initiated_by(
+#     self, db: AsyncSession, *, initiated_by: str, skip: int = 0, limit: int = 100
+# ) -> List[ChainExecution]:
+#     """시작한 사용자/시스템별 체인 실행 목록 조회"""
+#     try:
+#         stmt = (
+#             select(ChainExecution)
+#             .where(ChainExecution.initiated_by == initiated_by)
+#             .order_by(desc(ChainExecution.created_at))
+#             .offset(skip)
+#             .limit(limit)
+#         )
+#         result = await db.execute(stmt)
+#         return list(result.scalars().all())
+#     except Exception as e:
+#         await db.rollback()
+#         raise e
+
+# async def get_with_task_logs_joinedload(
+#     self, db: AsyncSession, *, chain_id: str
+# ) -> Optional[ChainExecution]:
+#     """joinedload를 사용한 TaskLog와 함께 체인 실행 조회 (한 번의 쿼리로 JOIN)"""
+#     try:
+#         stmt = (
+#             select(ChainExecution)
+#             .options(joinedload(ChainExecution.task_logs))
+#             .where(ChainExecution.chain_id == chain_id)
+#         )
+#         result = await db.execute(stmt)
+#         return result.unique().scalar_one_or_none()
+#     except Exception as e:
+#         await db.rollback()
+#         raise e

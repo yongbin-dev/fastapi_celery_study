@@ -53,9 +53,11 @@ class StageInfo(BaseModel):
             "stage": self.stage,
             "stage_name": self.stage_name,
             "task_id": self.task_id,
-            "status": self.status.value
-            if isinstance(self.status, ProcessStatus)
-            else self.status,
+            "status": (
+                self.status.value
+                if isinstance(self.status, ProcessStatus)
+                else self.status
+            ),
             "progress": self.progress,
             "created_at": self.created_at,
             "started_at": self.started_at,

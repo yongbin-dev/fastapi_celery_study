@@ -2,14 +2,14 @@ import { api } from '@/shared/utils/api';
 import type {
   ModelTestRequest,
   ModelTestResponse,
-  PipelineStatusResponse,
   TaskHistoryRequest,
 } from '../types';
+import type { ChainExecutionResponseDto } from '../types/pipeline';
 
 export const taskApi = {
   getHistoryTasks: async (
     params: TaskHistoryRequest
-  ): Promise<PipelineStatusResponse[]> => {
+  ): Promise<ChainExecutionResponseDto[]> => {
     // 빈 문자열인 매개변수들을 제거하고 쿼리 스트링 생성
     const searchParams = new URLSearchParams();
 
@@ -23,7 +23,7 @@ export const taskApi = {
     const queryString = searchParams.toString();
     const url = `/tasks/history?${queryString ? `${queryString}` : ''}`;
 
-    const response = await api.get<PipelineStatusResponse[]>(url);
+    const response = await api.get<ChainExecutionResponseDto[]>(url);
     return response.data;
   },
 
@@ -62,8 +62,8 @@ export const taskApi = {
   // 파이프라인 상태 확인
   getPipelineStatus: async (
     pipelineId: string
-  ): Promise<PipelineStatusResponse> => {
-    const response = await api.get<PipelineStatusResponse>(
+  ): Promise<ChainExecutionResponseDto> => {
+    const response = await api.get<ChainExecutionResponseDto>(
       `/tasks/ai-pipeline/${pipelineId}/tasks`
     );
     return response.data;

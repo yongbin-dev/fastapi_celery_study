@@ -1,6 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
 import { useCancelPipeline, usePipelineStatus, useStartPipeline } from '../hooks';
-import { TaskStatus } from '../types';
 
 interface TaskManagementTabProps {
 }
@@ -69,34 +69,22 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
     });
   };
 
-  // 파이프라인 상태에서 전체 상태를 계산하는 헬퍼 함수
-  const getOverallStatus = (pipelineData: typeof pipelineStatus): TaskStatus => {
-    if (!pipelineData?.stages || pipelineData.stages.length === 0) return TaskStatus.PENDING;
-
-    const stages = pipelineData.stages;
-    const allSuccess = stages.every(stage => stage.status === TaskStatus.SUCCESS);
-    const anyFailed = stages.some(stage => stage.status === TaskStatus.FAILURE);
-    const anyInProgress = stages.some(stage => stage.status === TaskStatus.PROGRESS);
-
-    if (allSuccess) return TaskStatus.SUCCESS;
-    if (anyFailed) return TaskStatus.FAILURE;
-    if (anyInProgress) return TaskStatus.PROGRESS;
-    return TaskStatus.PENDING;
-  };
-
-  // 전체 진행률 계산
-  const getTotalProgress = (pipelineData: typeof pipelineStatus) => {
-    if (!pipelineData?.stages || pipelineData.stages.length === 0) return 0;
-    return pipelineData.overall_progress;
-  };
-
   // 파이프라인 완료/실패 시 자동 새로고침 중단
   useEffect(() => {
-    const overallStatus = getOverallStatus(pipelineStatus);
-    if (overallStatus === TaskStatus.SUCCESS || overallStatus === TaskStatus.FAILURE) {
+    if (pipelineStatus?.status === 'SUCCESS' || pipelineStatus?.status === 'FAILURE') {
       setIsAutoRefresh(false);
     }
   }, [pipelineStatus]);
+
+  const renderJson = (jsonString: string | null | undefined) => {
+    if (!jsonString) return <pre>N/A</pre>;
+    try {
+      const obj = JSON.parse(jsonString);
+      return <pre>{JSON.stringify(obj, null, 2)}</pre>;
+    } catch (e) {
+      return <pre>{jsonString}</pre>;
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -118,93 +106,91 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
         )}
 
         {/* 파이프라인 상태 표시 */}
-        {pipelineStatus && pipelineStatus.stages && pipelineStatus.stages.length > 0 && (
+        {pipelineStatus && (
           <div className="mb-6 p-4 bg-white rounded-lg border">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-lg font-semibold text-gray-800">파이프라인 진행 상황</h4>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getOverallStatus(pipelineStatus) === TaskStatus.SUCCESS ? 'bg-green-100 text-green-700' :
-                getOverallStatus(pipelineStatus) === TaskStatus.FAILURE ? 'bg-red-100 text-red-700' :
-                  getOverallStatus(pipelineStatus) === TaskStatus.PROGRESS ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${pipelineStatus.status === 'SUCCESS' ? 'bg-green-100 text-green-700' :
+                pipelineStatus.status === 'FAILURE' ? 'bg-red-100 text-red-700' :
+                  'bg-blue-100 text-blue-700'
                 }`}>
-                {getOverallStatus(pipelineStatus)}
+                {pipelineStatus.status}
               </span>
             </div>
 
             {/* 전체 진행률 */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-700">전체 스테이지</span>
-                <span className="text-sm text-gray-500">{pipelineStatus.stages.filter(stage => stage.status === TaskStatus.SUCCESS).length} / {pipelineStatus.total_stages}</span>
+                <span className="text-sm font-medium text-gray-700">전체 태스크</span>
+                <span className="text-sm text-gray-500">{pipelineStatus.completed_tasks} / {pipelineStatus.total_tasks}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${getTotalProgress(pipelineStatus)}%` }}
+                  style={{ width: `${(pipelineStatus.completed_tasks / pipelineStatus.total_tasks) * 100}%` }}
                 ></div>
               </div>
             </div>
 
             {/* 체인 정보 */}
-            <div className="mb-4 p-3 bg-blue-50 rounded">
-              <div className="space-y-1">
-                <p className="text-sm text-blue-700">
-                  <strong>체인 ID:</strong> {pipelineStatus.chain_id}
-                </p>
-                <p className="text-sm text-blue-700">
-                  <strong>현재 스테이지:</strong> {pipelineStatus.current_stage || 'N/A'}
-                </p>
-                <p className="text-sm text-blue-700">
-                  <strong>전체 진행률:</strong> {pipelineStatus.overall_progress}%
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-blue-50 rounded">
+              <p className="text-sm text-blue-700"><strong>Chain ID:</strong> {pipelineStatus.chain_id}</p>
+              <p className="text-sm text-blue-700"><strong>Chain Name:</strong> {pipelineStatus.chain_name}</p>
+              <p className="text-sm text-blue-700"><strong>Created At:</strong> {new Date(pipelineStatus.created_at).toLocaleString()}</p>
+              <p className="text-sm text-blue-700"><strong>Started At:</strong> {new Date(pipelineStatus.started_at).toLocaleString()}</p>
+              <p className="text-sm text-blue-700"><strong>Finished At:</strong> {pipelineStatus.finished_at ? new Date(pipelineStatus.finished_at).toLocaleString() : 'N/A'}</p>
+              <p className="text-sm text-blue-700"><strong>Initiated By:</strong> {pipelineStatus.initiated_by}</p>
+            </div>
+
+            <div className="mb-4 p-3 bg-gray-100 rounded">
+              <h5 className="font-medium text-gray-800 mb-2">Input Data</h5>
+              <div className="text-xs text-gray-600 overflow-x-auto">
+                {renderJson(JSON.stringify(pipelineStatus.input_data))}
               </div>
             </div>
 
-            {/* 스테이지별 상태 */}
+
+            {/* 태스크 목록 */}
             <div className="space-y-3">
-              <h5 className="font-medium text-gray-800">스테이지 상태</h5>
-              {pipelineStatus.stages.map((stage) => (
-                <div key={`${stage.chain_id}-${stage.stage}`} className="p-3 bg-gray-50 rounded">
+              <h5 className="font-medium text-gray-800">Tasks</h5>
+              {pipelineStatus.task_logs.map((task) => (
+                <div key={task.id} className="p-3 bg-gray-50 rounded">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${stage.status === TaskStatus.SUCCESS ? 'bg-green-500' :
-                        stage.status === TaskStatus.PROGRESS ? 'bg-blue-500' :
-                          stage.status === TaskStatus.FAILURE ? 'bg-red-500' :
+                      <div className={`w-3 h-3 rounded-full ${task.status === 'SUCCESS' ? 'bg-green-500' :
+                        task.status === 'PROGRESS' ? 'bg-blue-500' :
+                          task.status === 'FAILURE' ? 'bg-red-500' :
                             'bg-gray-300'
                         }`}></div>
                       <span className="text-sm font-medium">
-                        스테이지 {stage.stage}: {stage.stage_name}
+                        {task.task_name}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${stage.status === TaskStatus.SUCCESS ? 'bg-green-100 text-green-700' :
-                        stage.status === TaskStatus.PROGRESS ? 'bg-blue-100 text-blue-700' :
-                          stage.status === TaskStatus.FAILURE ? 'bg-red-100 text-red-700' :
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${task.status === 'SUCCESS' ? 'bg-green-100 text-green-700' :
+                        task.status === 'PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                          task.status === 'FAILURE' ? 'bg-red-100 text-red-700' :
                             'bg-gray-100 text-gray-700'
                         }`}>
-                        {stage.status}
+                        {task.status}
                       </span>
-                      <span className="text-xs text-gray-500">진행률: {stage.progress}%</span>
                     </div>
                   </div>
-
-                  {/* 메타데이터 정보 */}
                   <div className="ml-6 space-y-1 text-xs text-gray-600">
-                    {stage.description && (
-                      <p><strong>설명:</strong> {stage.description}</p>
-                    )}
-                    {stage.expected_duration && (
-                      <p><strong>예상 소요시간:</strong> {stage.expected_duration}</p>
-                    )}
-                    {stage.started_at && stage.updated_at && (
-                      <p><strong>실제 소요시간:</strong> {(stage.updated_at - stage.started_at).toFixed(2)}초</p>
-                    )}
-                    {stage.task_id && (
-                      <p><strong>태스크 ID:</strong> {stage.task_id}</p>
-                    )}
-                    {stage.error_message && (
-                      <p className="text-red-600"><strong>오류:</strong> {stage.error_message}</p>
-                    )}
+                    <p><strong>Task ID:</strong> {task.task_id}</p>
+                    <p><strong>Completed At:</strong> {new Date(task.completed_at).toLocaleString()}</p>
+                    <details>
+                      <summary className="cursor-pointer">Args</summary>
+                      <div className="text-xs text-gray-600 overflow-x-auto">
+                        {renderJson(task.args)}
+                      </div>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer">Result</summary>
+                      <div className="text-xs text-gray-600 overflow-x-auto">
+                        {renderJson(task.result)}
+                      </div>
+                    </details>
                   </div>
                 </div>
               ))}

@@ -98,19 +98,19 @@ celery_app.conf.update(
 
 
 # Queue stats를 위한 태스크 등록
-from app.core.celery.celery_signals import collect_queue_stats
+# from app.core.celery.celery_signals import collect_queue_stats
 
-celery_app.task(name="app.core.celery.celery_signals.collect_queue_stats")(
-    collect_queue_stats
-)
+# celery_app.task(name="app.core.celery.celery_signals.collect_queue_stats")(
+#     collect_queue_stats
+# )
 
-# Celery Beat 스케줄 설정
-celery_app.conf.beat_schedule = {
-    "collect-queue-stats": {
-        "task": "app.core.celery.celery_signals.collect_queue_stats",
-        "schedule": 60.0,  # 1분마다
-    },
-}
+# # Celery Beat 스케줄 설정
+# celery_app.conf.beat_schedule = {
+#     "collect-queue-stats": {
+#         "task": "app.core.celery.celery_signals.collect_queue_stats",
+#         "schedule": 60.0,  # 1분마다
+#     },
+# }
 
 # Convenience alias for backward compatibility
 app = celery_app

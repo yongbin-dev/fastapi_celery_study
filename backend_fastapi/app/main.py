@@ -84,8 +84,6 @@ def setup_middleware():
         allow_headers=["*"],
     )
 
-    app.add_middleware(ResponseLogMiddleware)
-
     logger.info("✅ 미들웨어 설정 완료")
 
 

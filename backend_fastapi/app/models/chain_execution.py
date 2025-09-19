@@ -1,9 +1,13 @@
 import uuid
-from typing import Optional
+from typing import Optional, Type
 from datetime import datetime
 
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, String, Integer, DateTime, Index, Text, func
 from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.orm import relationship
+
+from app.schemas.task_log import TaskLogResponse
 from .base import Base
 from ..schemas.enums import ProcessStatus
 
@@ -38,8 +42,12 @@ class ChainExecution(Base):
     )
 
     # 작업 통계
-    total_tasks = Column(Integer, default=0, nullable=False, comment="체인 내 총 작업 수")
-    completed_tasks = Column(Integer, default=0, nullable=False, comment="완료된 작업 수")
+    total_tasks = Column(
+        Integer, default=0, nullable=False, comment="체인 내 총 작업 수"
+    )
+    completed_tasks = Column(
+        Integer, default=0, nullable=False, comment="완료된 작업 수"
+    )
     failed_tasks = Column(Integer, default=0, nullable=False, comment="실패한 작업 수")
 
     # 타임스탬프
@@ -52,8 +60,14 @@ class ChainExecution(Base):
     final_result = Column(JSON, nullable=True, comment="최종 결과 (JSON)")
     error_message = Column(Text, nullable=True, comment="오류 메시지")
 
-    # 관계 설정 (추후 필요시 TaskLog와 연결)
-    # tasks = relationship("TaskLog", back_populates="chain_execution")
+    # 관계 정의
+    task_logs = relationship(
+        "TaskLog",
+        back_populates="chain_execution",
+        foreign_keys="TaskLog.chain_execution_id",
+        cascade="all, delete-orphan",
+        order_by="TaskLog.created_at",
+    )
 
     # 인덱스 정의
     __table_args__ = (
@@ -64,40 +78,20 @@ class ChainExecution(Base):
     def __repr__(self):
         return f"<ChainExecution(id={self.id}, chain_name={self.chain_name}, status={self.status})>"
 
-    @property
-    def progress_percentage(self) -> float:
-        """진행률 계산 (0-100%)"""
-        if self.total_tasks == 0:
-            return 0.0
-        return round((self.completed_tasks / self.total_tasks) * 100, 2)
+    def increment_completed_tasks(self):
+        """완료된 작업 수 증가"""
+        self.completed_tasks += 1
+        # 타입 힌트 문제 해결을 위해 실제 값으로 비교
+        completed = getattr(self, "completed_tasks", 0)
+        total = getattr(self, "total_tasks", 0)
+        if completed >= total:
+            self.complete_execution(success=True)
 
-    @property
-    def is_running(self) -> bool:
-        """실행 중 여부"""
-        return self.status == ProcessStatus.STARTED
+    def increment_failed_tasks(self):
+        """실패한 작업 수 증가"""
+        self.failed_tasks += 1
 
-    @property
-    def is_completed(self) -> bool:
-        """완료 여부 (성공/실패 상관없이)"""
-        return self.status in [
-            ProcessStatus.SUCCESS,
-            ProcessStatus.FAILURE,
-            ProcessStatus.REVOKED,
-        ]
-
-    @property
-    def is_successful(self) -> bool:
-        """성공 여부"""
-        return self.status == ProcessStatus.SUCCESS
-
-    @property
-    def duration_seconds(self) -> Optional[float]:
-        """실행 시간 (초)"""
-        if not self.started_at or not self.finished_at:
-            return None
-        return (self.finished_at - self.started_at).total_seconds()
-
-    def start_execution(self, initiated_by: Optional[str] = None):
+    def start_execution(self):
         """체인 실행 시작"""
         self.status = ProcessStatus.STARTED
         self.started_at = datetime.now()
@@ -115,37 +109,3 @@ class ChainExecution(Base):
             self.final_result = final_result
         if error_message:
             self.error_message = error_message
-
-    def increment_completed_tasks(self):
-        """완료된 작업 수 증가"""
-        self.completed_tasks += 1
-        if self.completed_tasks >= self.total_tasks:
-            self.complete_execution(success=True)
-
-    def increment_failed_tasks(self):
-        """실패한 작업 수 증가"""
-        self.failed_tasks += 1
-
-    def to_dict(self):
-        """딕셔너리 변환"""
-        return {
-            "id": self.id,
-            "chain_id": str(self.chain_id),
-            "chain_name": self.chain_name,
-            "status": self.status,
-            "total_tasks": self.total_tasks,
-            "completed_tasks": self.completed_tasks,
-            "failed_tasks": self.failed_tasks,
-            "progress_percentage": self.progress_percentage,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "finished_at": self.finished_at.isoformat() if self.finished_at else None,
-            "initiated_by": self.initiated_by,
-            "input_data": self.input_data,
-            "final_result": self.final_result,
-            "error_message": self.error_message,
-            "duration_seconds": self.duration_seconds,
-            "is_running": self.is_running,
-            "is_completed": self.is_completed,
-            "is_successful": self.is_successful,
-        }
