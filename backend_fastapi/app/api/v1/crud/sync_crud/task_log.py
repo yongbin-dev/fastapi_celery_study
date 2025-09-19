@@ -21,145 +21,148 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
         """task_id로 작업 로그 조회"""
         return db.query(TaskLog).filter(TaskLog.task_id == task_id).first()
 
+        #     def get_by_task_name(
+        #         self, db: Session, *, task_name: str, skip: int = 0, limit: int = 100
+        #     ) -> List[TaskLog]:
+        #         """task_name으로 작업 로그 목록 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .filter(TaskLog.task_name == task_name)
+        #             .order_by(desc(TaskLog.created_at))
+        #             .offset(skip)
+        #             .limit(limit)
+        #             .all()
+        #         )
 
-#     def get_by_task_name(
-#         self, db: Session, *, task_name: str, skip: int = 0, limit: int = 100
-#     ) -> List[TaskLog]:
-#         """task_name으로 작업 로그 목록 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .filter(TaskLog.task_name == task_name)
-#             .order_by(desc(TaskLog.created_at))
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
+        #     def get_by_status(
+        #         self, db: Session, *, status: str, skip: int = 0, limit: int = 100
+        #     ) -> List[TaskLog]:
+        #         """상태별 작업 로그 목록 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .filter(TaskLog.status == status)
+        #             .order_by(desc(TaskLog.created_at))
+        #             .offset(skip)
+        #             .limit(limit)
+        #             .all()
+        #         )
 
-#     def get_by_status(
-#         self, db: Session, *, status: str, skip: int = 0, limit: int = 100
-#     ) -> List[TaskLog]:
-#         """상태별 작업 로그 목록 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .filter(TaskLog.status == status)
-#             .order_by(desc(TaskLog.created_at))
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
+        #     def get_running_tasks(self, db: Session) -> List[TaskLog]:
+        #         """실행 중인 작업 목록 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .filter(TaskLog.status == "STARTED")
+        #             .order_by(desc(TaskLog.started_at))
+        #             .all()
+        #         )
 
-#     def get_running_tasks(self, db: Session) -> List[TaskLog]:
-#         """실행 중인 작업 목록 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .filter(TaskLog.status == "STARTED")
-#             .order_by(desc(TaskLog.started_at))
-#             .all()
-#         )
+        #     def get_failed_tasks(
+        #         self, db: Session, *, skip: int = 0, limit: int = 100
+        #     ) -> List[TaskLog]:
+        #         """실패한 작업 목록 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .filter(TaskLog.status == "FAILURE")
+        #             .order_by(desc(TaskLog.created_at))
+        #             .offset(skip)
+        #             .limit(limit)
+        #             .all()
+        #         )
 
-#     def get_failed_tasks(
-#         self, db: Session, *, skip: int = 0, limit: int = 100
-#     ) -> List[TaskLog]:
-#         """실패한 작업 목록 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .filter(TaskLog.status == "FAILURE")
-#             .order_by(desc(TaskLog.created_at))
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
+        #     def get_completed_tasks(
+        #         self, db: Session, *, skip: int = 0, limit: int = 100
+        #     ) -> List[TaskLog]:
+        #         """완료된 작업 목록 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .filter(TaskLog.status.in_(["SUCCESS", "FAILURE", "REVOKED"]))  # type: ignore
+        #             .order_by(desc(TaskLog.completed_at))
+        #             .offset(skip)
+        #             .limit(limit)
+        #             .all()
+        #         )
 
-#     def get_completed_tasks(
-#         self, db: Session, *, skip: int = 0, limit: int = 100
-#     ) -> List[TaskLog]:
-#         """완료된 작업 목록 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .filter(TaskLog.status.in_(["SUCCESS", "FAILURE", "REVOKED"]))  # type: ignore
-#             .order_by(desc(TaskLog.completed_at))
-#             .offset(skip)
-#             .limit(limit)
-#             .all()
-#         )
+        #     def get_with_metadata(self, db: Session, *, task_id: str) -> Optional[TaskLog]:
+        #         """메타데이터와 함께 작업 로그 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .options(joinedload(TaskLog.task_metadata))  # type: ignore
+        #             .filter(TaskLog.task_id == task_id)
+        #             .first()
+        #         )
 
-#     def get_with_metadata(self, db: Session, *, task_id: str) -> Optional[TaskLog]:
-#         """메타데이터와 함께 작업 로그 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .options(joinedload(TaskLog.task_metadata))  # type: ignore
-#             .filter(TaskLog.task_id == task_id)
-#             .first()
-#         )
+        #     def get_with_relations(self, db: Session, *, task_id: str) -> Optional[TaskLog]:
+        #         """모든 관련 데이터와 함께 작업 로그 조회"""
+        #         return (
+        #             db.query(TaskLog)
+        #             .options(
+        #                 joinedload(TaskLog.task_metadata),  # type: ignore
+        #                 joinedload(TaskLog.execution_history),  # type: ignore
+        #                 joinedload(TaskLog.task_result),  # type: ignore
+        #                 joinedload(TaskLog.dependencies),  # type: ignore
+        #                 joinedload(TaskLog.dependents),  # type: ignore
+        #             )
+        #             .filter(TaskLog.task_id == task_id)
+        #             .first()
+        #         )
 
-#     def get_with_relations(self, db: Session, *, task_id: str) -> Optional[TaskLog]:
-#         """모든 관련 데이터와 함께 작업 로그 조회"""
-#         return (
-#             db.query(TaskLog)
-#             .options(
-#                 joinedload(TaskLog.task_metadata),  # type: ignore
-#                 joinedload(TaskLog.execution_history),  # type: ignore
-#                 joinedload(TaskLog.task_result),  # type: ignore
-#                 joinedload(TaskLog.dependencies),  # type: ignore
-#                 joinedload(TaskLog.dependents),  # type: ignore
-#             )
-#             .filter(TaskLog.task_id == task_id)
-#             .first()
-#         )
+    def create_task_log(
+        self,
+        db: Session,
+        *,
+        task_id: str,
+        task_name: str,
+        status: str = "PENDING",
+        args: Optional[str] = None,
+        kwargs: Optional[str] = None,
+        chain_execution_id: Optional[int] = None,
+    ) -> TaskLog:
+        """새 작업 로그 생성"""
+        task_log = TaskLog(
+            task_id=task_id,
+            task_name=task_name,
+            status=status,
+            args=args,
+            kwargs=kwargs,
+            chain_execution_id=chain_execution_id,
+        )
+        db.add(task_log)
+        db.commit()
+        db.refresh(task_log)
+        return task_log
 
-#     def create_task_log(
-#         self,
-#         db: Session,
-#         *,
-#         task_id: str,
-#         task_name: str,
-#         status: str = "PENDING",
-#         args: Optional[str] = None,
-#         kwargs: Optional[str] = None,
-#         chain_execution_id: Optional[int] = None,
-#     ) -> TaskLog:
-#         """새 작업 로그 생성"""
-#         task_log = TaskLog(
-#             task_id=task_id,
-#             task_name=task_name,
-#             status=status,
-#             args=args,
-#             kwargs=kwargs,
-#             chain_execution_id=chain_execution_id,
-#         )
-#         db.add(task_log)
-#         db.commit()
-#         db.refresh(task_log)
-#         return task_log
+    def update_status(
+        self,
+        db: Session,
+        *,
+        task_log: TaskLog,
+        status: str,
+        result: Optional[str] = None,
+        error: Optional[str] = None,
+    ) -> TaskLog:
+        """작업 상태 업데이트"""
+        task_log.status = status  # type: ignore
+        if result is not None:
+            task_log.result = result  # type: ignore
+        if error is not None:
+            task_log.error = error  # type: ignore
 
-#     def update_status(
-#         self,
-#         db: Session,
-#         *,
-#         task_log: TaskLog,
-#         status: str,
-#         result: Optional[str] = None,
-#         error: Optional[str] = None,
-#     ) -> TaskLog:
-#         """작업 상태 업데이트"""
-#         task_log.status = status  # type: ignore
-#         if result is not None:
-#             task_log.result = result  # type: ignore
-#         if error is not None:
-#             task_log.error = error  # type: ignore
+        # 시작 시간 설정
+        if status == "STARTED" and task_log.started_at is None:
+            task_log.started_at = datetime.now()  # type: ignore
 
-#         # 시작 시간 설정
-#         if status == "STARTED" and task_log.started_at is None:
-#             task_log.started_at = datetime.now()  # type: ignore
+        # 완료 시간 설정
+        if (
+            status in ["SUCCESS", "FAILURE", "REVOKED"]
+            and task_log.completed_at is None
+        ):
+            task_log.completed_at = datetime.now()  # type: ignore
 
-#         # 완료 시간 설정
-#         if status in ["SUCCESS", "FAILURE", "REVOKED"] and task_log.completed_at is None:
-#             task_log.completed_at = datetime.now()  # type: ignore
+        db.add(task_log)
+        db.commit()
+        db.refresh(task_log)
+        return task_log
 
-#         db.add(task_log)
-#         db.commit()
-#         db.refresh(task_log)
-#         return task_log
 
 #     def increment_retries(self, db: Session, *, task_log: TaskLog) -> TaskLog:
 #         """재시도 횟수 증가"""

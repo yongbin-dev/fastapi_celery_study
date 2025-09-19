@@ -50,7 +50,7 @@ def _handle_chain_execution(
             # 상태를 RUNNING으로 업데이트
             if str(chain_exec.status) != "RUNNING":
                 chain_execution_crud.update_status(
-                    session, chain_execution=chain_exec, status="RUNNING"
+                    session, chain_execution=chain_exec, status=ProcessStatus.RUNNING
                 )
                 logger.info(f"ChainExecution 상태 업데이트: {chain_id} -> RUNNING")
 
