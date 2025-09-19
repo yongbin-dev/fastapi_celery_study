@@ -50,8 +50,8 @@ class DatabaseManager:
 
         # 비동기 세션 팩토리
         self.AsyncSessionLocal = sessionmaker(
-            bind=self.async_engine, class_=AsyncSession, expire_on_commit=False
-        )
+            bind=self.async_engine, class_=AsyncSession, expire_on_commit=False  # type: ignore
+        )  # type: ignore
 
         # 동기 엔진 생성 (Celery signal용)
         sync_database_url = database_url.replace(

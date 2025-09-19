@@ -42,7 +42,8 @@ def setup_exception_handlers(app: FastAPI):
         )
 
         return JSONResponse(
-            status_code=500, content=error_response.dict()  # Celery 에러는 일반적으로 서버 에러로 처리
+            status_code=500,
+            content=error_response.dict(),  # Celery 에러는 일반적으로 서버 에러로 처리
         )
 
     @app.exception_handler(BaseBusinessException)

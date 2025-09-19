@@ -1,51 +1,28 @@
 import React, { useState } from 'react';
-import type { PipelineStatusResponse } from '../../types';
-import { TaskStatus } from '../../types';
+import type { ChainExecutionResponseDto, Task } from '../../types/pipeline';
 
 interface TaskGroupProps {
-  pipeline: PipelineStatusResponse;
+  pipeline: ChainExecutionResponseDto;
 }
 
-export const TaskGroup: React.FC<TaskGroupProps> = ({
-  pipeline,
-}) => {
+export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
 
-  const [collapsedPipelines, setCollapsedPipelines] = useState<Set<string>>(new Set());
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
 
-  // chain_id 추출
-  const chainId = pipeline.chain_id;
-
-  // 전체 진행률
-  const totalProgress = pipeline.overall_progress;
-
-  // 전체 상태 결정
-  const overallStatus = pipeline.stages.every(stage => stage.status === TaskStatus.SUCCESS)
-    ? TaskStatus.SUCCESS
-    : pipeline.stages.some(stage => stage.status === TaskStatus.FAILURE)
-      ? TaskStatus.FAILURE
-      : pipeline.stages.some(stage => stage.status === TaskStatus.PROGRESS)
-        ? TaskStatus.PROGRESS
-        : TaskStatus.PENDING;
-
-  // 시작 시간 (가장 이른 created_at)
-  const startTime = pipeline.stages.length > 0
-    ? Math.min(...pipeline.stages.map(stage => stage.created_at))
-    : Date.now() / 1000;
-
-  const getStatusBadge = (status: TaskStatus) => {
-    const statusColors = {
-      [TaskStatus.SUCCESS]: 'bg-green-100 text-green-800',
-      [TaskStatus.FAILURE]: 'bg-red-100 text-red-800',
-      [TaskStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-      [TaskStatus.PROGRESS]: 'bg-blue-100 text-blue-800',
-      [TaskStatus.REVOKED]: 'bg-gray-100 text-gray-800'
+  const getStatusBadge = (status: string) => {
+    const statusColors: { [key: string]: string } = {
+      SUCCESS: 'bg-green-100 text-green-800',
+      FAILURE: 'bg-red-100 text-red-800',
+      PENDING: 'bg-yellow-100 text-yellow-800',
+      PROGRESS: 'bg-blue-100 text-blue-800',
+      REVOKED: 'bg-gray-100 text-gray-800'
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const formatDate = (timestamp: number) => {
-    if (!timestamp) return '-';
-    return new Date(timestamp * 1000).toLocaleString('ko-KR', {
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -55,50 +32,54 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
     });
   };
 
-  const togglePipelineCollapse = (chainId: string) => {
-    setCollapsedPipelines(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(chainId)) {
-        newSet.delete(chainId);
-      } else {
-        newSet.add(chainId);
-      }
-      return newSet;
-    });
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
+  const totalProgress = pipeline.total_tasks > 0 ? (pipeline.completed_tasks / pipeline.total_tasks) * 100 : 0;
+
+  const renderJson = (jsonString: string | null | undefined) => {
+    if (!jsonString) return <pre>N/A</pre>;
+    try {
+      const obj = JSON.parse(jsonString);
+      return <pre>{JSON.stringify(obj, null, 2)}</pre>;
+    } catch (e) {
+      return <pre>{jsonString}</pre>;
+    }
+  }
+
   return (
-    <div key={chainId} className="p-6">
+    <div key={pipeline.id} className="p-6">
       {/* 파이프라인 헤더 */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => togglePipelineCollapse(chainId)}
+            onClick={toggleCollapse}
             className="flex items-center text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg
-              className={`w-5 h-5 transition-transform ${collapsedPipelines.has(chainId) ? 'rotate-0' : 'rotate-90'}`}
+              className={`w-5 h-5 transition-transform ${isCollapsed ? 'transform -rotate-90' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          <h4 className="text-lg font-semibold">체인: {chainId}</h4>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(overallStatus)}`}>
-            {overallStatus}
+          <h4 className="text-lg font-semibold">Chain: {pipeline.chain_name} ({pipeline.chain_id})</h4>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(pipeline.status)}`}>
+            {pipeline.status}
           </span>
         </div>
         <div className="text-sm text-gray-500">
-          {formatDate(startTime)}
+          {formatDate(pipeline.created_at)}
         </div>
       </div>
 
       {/* 파이프라인 진행률 - 항상 표시 */}
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>진행률: {pipeline.total_stages}개 스테이지 (현재: {pipeline.current_stage || 0})</span>
+          <span>Progress: {pipeline.completed_tasks} / {pipeline.total_tasks} tasks</span>
           <span>{Math.round(totalProgress)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -109,55 +90,40 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
         </div>
       </div>
 
-      {collapsedPipelines.has(chainId) && (
-        <div className="space-y-2">
-          {pipeline.stages.map((stage) => (
-            <div key={`${stage.chain_id}-${stage.stage}`} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+      {!isCollapsed && (
+        <div className="space-y-2 pl-10">
+          {pipeline.task_logs.map((task: Task) => (
+            <div key={task.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium text-gray-600">스테이지 {stage.stage}</span>
-                  <span className="text-sm font-semibold">{stage.stage_name}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(stage.status)}`}>
-                    {stage.status}
+                  <span className="text-sm font-semibold">{task.task_name}</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(task.status)}`}>
+                    {task.status}
                   </span>
-                  {stage.task_id && (
-                    <span className="text-xs text-gray-500 font-mono">
-                      ID: {stage.task_id}
-                    </span>
-                  )}
+                  <span className="text-xs text-gray-500 font-mono">
+                    ID: {task.task_id}
+                  </span>
                 </div>
                 <div className="text-sm text-gray-500">
-                  {formatDate(stage.updated_at)}
+                  {formatDate(task.completed_at)}
                 </div>
               </div>
 
-              <div className="mb-2">
-                <p className="text-sm text-gray-600">{stage.description}</p>
-                <p className="text-xs text-gray-500">소요 시간: {(stage.updated_at - stage.created_at).toFixed(2)}초</p>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                <span>진행률: {stage.progress}%</span>
-                <span>
-                  {stage.created_at > 0 ? `시작: ${formatDate(stage.created_at)}` : '대기 중'}
-                </span>
-              </div>
-
-              {stage.error_message && (
+              {task.error && (
                 <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-                  <strong>오류:</strong> {stage.error_message}
+                  <strong>Error:</strong> {task.error}
                 </div>
               )}
 
-              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-                <div
-                  className={`h-1 rounded-full transition-all duration-300 ${stage.status === TaskStatus.FAILURE ? 'bg-red-500' :
-                    stage.status === TaskStatus.SUCCESS ? 'bg-green-500' :
-                      'bg-blue-500'
-                    }`}
-                  style={{ width: `${stage.progress}%` }}
-                />
-              </div>
+              <details className="mt-2">
+                <summary className="text-sm font-medium cursor-pointer">Details</summary>
+                <div className="mt-2 space-y-2 text-xs text-gray-600 bg-white p-2 rounded">
+                  <p><strong>Args:</strong></p>
+                  {renderJson(task.args)}
+                  <p><strong>Result:</strong></p>
+                  {renderJson(task.result)}
+                </div>
+              </details>
             </div>
           ))}
         </div>
@@ -165,4 +131,3 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({
     </div>
   );
 };
-

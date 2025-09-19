@@ -35,30 +35,7 @@ export interface ModelTestResponse {
   };
 }
 
-// 체인 실행 스테이지 타입
-export interface ChainExecutionStage {
-  chain_id: string;
-  stage: number;
-  stage_name: string;
-  task_id: string | null;
-  status: TaskStatus;
-  progress: number;
-  created_at: number;
-  started_at: number;
-  updated_at: number;
-  error_message: string | null;
-  description: string;
-  expected_duration: string;
-}
 
-// 파이프라인 상태 응답 타입
-export interface PipelineStatusResponse {
-  chain_id: string;
-  total_stages: number;
-  current_stage: number | null;
-  overall_progress: number;
-  stages: ChainExecutionStage[];
-}
 
 // 모델 관련 타입들
 export interface ServerInfo {

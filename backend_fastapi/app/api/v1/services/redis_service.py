@@ -3,13 +3,13 @@
 import json
 import time
 from typing import Dict, Any, List, Optional
-
 import redis
-
 from app.config import settings
 from app.core.logging import get_logger
+from app.schemas.pipeline import PipelineMetadata
 from app.schemas.enums import ProcessStatus
 from app.schemas.stage import StageInfo
+
 
 logger = get_logger(__name__)
 
@@ -18,7 +18,10 @@ class RedisPipelineStatusManager:
     """Redis를 사용한 파이프라인 상태 관리 구현체"""
 
     def __init__(
-        self, redis_host: str = None, redis_port: int = None, redis_db: int = 0
+        self,
+        redis_host: Optional[str] = "",
+        redis_port: Optional[int] = 6379,
+        redis_db: int = 0,
     ):
         self._redis_client = None
         self.redis_host = redis_host or settings.REDIS_HOST
@@ -41,8 +44,8 @@ class RedisPipelineStatusManager:
         chain_id: str,
         stage: int,
         status: ProcessStatus,
-        progress: int = 0,
-        metadata: Optional[Dict] = None,
+        metadata: PipelineMetadata,
+        progress: Optional[int] = 0,
         task_id: Optional[str] = None,
     ) -> bool:
         """Redis에서 파이프라인 상태 업데이트"""
@@ -57,7 +60,7 @@ class RedisPipelineStatusManager:
             pipeline_data = redis_client.get(chain_id)
 
             if pipeline_data:
-                pipeline_tasks = json.loads(pipeline_data)
+                pipeline_tasks = json.loads(pipeline_data)  # type: ignore
                 if not isinstance(pipeline_tasks, list):
                     pipeline_tasks = [pipeline_tasks] if pipeline_tasks else []
             else:
@@ -70,7 +73,7 @@ class RedisPipelineStatusManager:
                 "status": status.value,
                 "progress": progress,
                 "updated_at": time.time(),
-                "metadata": metadata or {},
+                "metadata": metadata.to_dict(),
             }
 
             if task_id:
@@ -80,9 +83,9 @@ class RedisPipelineStatusManager:
                 status == ProcessStatus.PENDING
                 and progress == 0
                 and metadata
-                and "start_time" in metadata
+                and metadata.start_time
             ):
-                current_task["started_at"] = metadata["start_time"]
+                current_task["started_at"] = metadata.start_time
 
             # 단계에 해당하는 task가 이미 있는지 확인
             stage_index = None
@@ -121,7 +124,10 @@ class RedisPipelineStatusManager:
             return True
 
         except Exception as e:
-            logger.error(f"Redis 파이프라인 상태 업데이트 실패 (Chain: {chain_id}): {e}")
+            logger.error(
+                f"Redis 파이프라인 상태 업데이트 실패 (Chain: {chain_id}): {e}",
+                exc_info=True,
+            )
             return False
 
     def get_pipeline_status(self, chain_id: str) -> Optional[List[Dict]]:
@@ -131,7 +137,7 @@ class RedisPipelineStatusManager:
             pipeline_data = redis_client.get(chain_id)
 
             if pipeline_data:
-                pipeline_tasks = json.loads(pipeline_data)
+                pipeline_tasks = json.loads(pipeline_data)  # type: ignore
                 if isinstance(pipeline_tasks, list):
                     return pipeline_tasks
                 else:
@@ -139,7 +145,10 @@ class RedisPipelineStatusManager:
             return None
 
         except Exception as e:
-            logger.error(f"Redis 파이프라인 상태 조회 실패 (Chain: {chain_id}): {e}")
+            logger.error(
+                f"Redis 파이프라인 상태 조회 실패 (Chain: {chain_id}): {e}",
+                exc_info=True,
+            )
             return None
 
     def get_stage_status(self, chain_id: str, stage: int) -> Optional[Dict]:
@@ -161,12 +170,13 @@ class RedisPipelineStatusManager:
             )
             return bool(result)
         except Exception as e:
-            logger.error(f"Redis 파이프라인 데이터 삭제 실패 (Chain: {chain_id}): {e}")
+            logger.error(
+                f"Redis 파이프라인 데이터 삭제 실패 (Chain: {chain_id}): {e}",
+                exc_info=True,
+            )
             return False
 
-    def initialize_pipeline_stages(
-        self, chain_id: str, input_data: Dict[str, Any]
-    ) -> bool:
+    def initialize_pipeline_stages(self, chain_id: str) -> bool:
         """파이프라인 시작 시 모든 스테이지 정보를 미리 생성"""
         try:
             redis_client = self.get_redis_client()
@@ -190,11 +200,15 @@ class RedisPipelineStatusManager:
             ttl = getattr(settings, "PIPELINE_TTL", 3600)
             redis_client.setex(chain_id, ttl, json.dumps(stages_info))
 
-            logger.info(f"Pipeline {chain_id}: 전체 스테이지 정보 초기화 완료 ({len(stages)}단계)")
+            logger.info(
+                f"Pipeline {chain_id}: 전체 스테이지 정보 초기화 완료 ({len(stages)}단계)"
+            )
             return True
 
         except Exception as e:
-            logger.error(f"Pipeline {chain_id}: 스테이지 초기화 실패 - {e}")
+            logger.error(
+                f"Pipeline {chain_id}: 스테이지 초기화 실패 - {e}", exc_info=True
+            )
             return False
 
 

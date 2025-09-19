@@ -1,6 +1,10 @@
 # models/task_log.py
-from sqlalchemy import Column, String, Integer, Text, DateTime, Index
+from typing import Optional, Type
+from pydantic import BaseModel
+from sqlalchemy import Column, String, Integer, Text, DateTime, Index, ForeignKey
 from sqlalchemy.orm import relationship
+
+from app.schemas.task_log import TaskLogResponse
 from .base import Base
 
 
@@ -49,33 +53,20 @@ class TaskLog(Base):
     # 재시도 정보
     retries = Column(Integer, default=0, comment="재시도 횟수")
 
-    # 관계 설정
-    task_metadata = relationship(
-        "TaskMetadata",
-        back_populates="task",
-        uselist=False,
-        cascade="all, delete-orphan",
-        lazy="joined",  # 자동으로 조인하여 로드
+    # 체인 실행과의 관계
+    chain_execution_id = Column(
+        Integer,
+        ForeignKey("chain_executions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="소속된 체인 실행 ID",
     )
-    execution_history = relationship(
-        "TaskExecutionHistory",
-        back_populates="task",
-        cascade="all, delete-orphan",
-        order_by="TaskExecutionHistory.attempt_number",
-    )
-    task_result = relationship(
-        "TaskResult", back_populates="task", uselist=False, cascade="all, delete-orphan"
-    )
-    dependencies = relationship(
-        "TaskDependency",
-        foreign_keys="TaskDependency.task_id",
-        back_populates="task",
-        cascade="all, delete-orphan",
-    )
-    dependents = relationship(
-        "TaskDependency",
-        foreign_keys="TaskDependency.depends_on_task_id",
-        back_populates="depends_on",
+
+    # 관계 정의
+    chain_execution = relationship(
+        "ChainExecution",
+        back_populates="task_logs",
+        foreign_keys=[chain_execution_id],
     )
 
     # 인덱스 정의
@@ -83,45 +74,17 @@ class TaskLog(Base):
         Index("idx_task_logs_status_created", "status", "created_at"),
         Index("idx_task_logs_name_status", "task_name", "status"),
         Index("idx_task_logs_started_at_desc", started_at.desc()),
+        Index("idx_task_logs_chain_execution", "chain_execution_id", "status"),
     )
 
     def __repr__(self):
         return f"<TaskLog(task_id={self.task_id}, name={self.task_name}, status={self.status})>"
 
-    @property
-    def duration(self):
-        """작업 실행 시간 (초)"""
-        if self.started_at and self.completed_at:
-            return (self.completed_at - self.started_at).total_seconds()
-        return None
-
-    @property
-    def is_completed(self):
-        """작업 완료 여부"""
-        return self.status in ["SUCCESS", "FAILURE", "REVOKED"]
-
-    @property
-    def is_running(self):
-        """작업 실행 중 여부"""
-        return self.status == "STARTED"
-
-    def to_dict(self):
-        """딕셔너리 변환"""
-        return {
-            "id": self.id,
-            "task_id": self.task_id,
-            "task_name": self.task_name,
-            "status": self.status,
-            "args": self.args,
-            "kwargs": self.kwargs,
-            "result": self.result,
-            "error": self.error,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat()
-            if self.completed_at
-            else None,
-            "duration": self.duration,
-            "retries": self.retries,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        }
+    def to_schema(
+        self, schema: Optional[Type[BaseModel]] = None
+    ) -> Optional[BaseModel]:
+        """Pydantic 스키마로 변환"""
+        schema = schema or TaskLogResponse
+        if not hasattr(schema, "from_orm"):
+            return None
+        return schema.from_orm(self)

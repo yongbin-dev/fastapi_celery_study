@@ -7,6 +7,6 @@ source .env.development
 set +a
 
 echo "👷 Table Clear 시작..."
-exec python scripts/truncate_all_tables.py --confirm
+exec python scripts/truncate_all_tables.py 
 #exec python scripts/truncate_all_tables.py
 #exec
