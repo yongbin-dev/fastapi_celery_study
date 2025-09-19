@@ -10,19 +10,10 @@ from celery import chain
 from fastapi import HTTPException, Depends
 
 from app.models.chain_execution import ChainExecution
-from app.schemas import (
-    AIPipelineRequest,
-    AIPipelineResponse,
-    PipelineStagesResponse,
-    StageDetailResponse,
-    StageInfo,
-    ProcessStatus,
-)
-from app.schemas.chain_execution import ChainExecutionResponse
+from app.schemas import AIPipelineRequest, AIPipelineResponse, ChainExecutionResponse
 from app.api.v1.crud import (
     async_chain_execution as chain_execution_crud,
 )
-from app.pipeline_config import STAGES
 
 from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from sqlalchemy.ext.asyncio import AsyncSession
