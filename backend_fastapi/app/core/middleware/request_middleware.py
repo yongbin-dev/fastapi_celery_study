@@ -29,5 +29,3 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
         )
 
         return response
-
-

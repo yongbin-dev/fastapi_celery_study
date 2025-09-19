@@ -14,7 +14,7 @@ class TestMainEndpoints:
         """루트 엔드포인트 테스트"""
         response = client.get("/")
         assert response.status_code == 200
-        
+
         json_response = response.json()
         assert json_response["success"] is True
         assert "name" in json_response["data"]
@@ -26,7 +26,7 @@ class TestMainEndpoints:
         """헬스체크 엔드포인트 테스트"""
         response = client.get("/health")
         assert response.status_code == 200
-        
+
         json_response = response.json()
         assert json_response["success"] is True
         assert json_response["data"]["status"] == "healthy"
@@ -37,7 +37,7 @@ class TestMainEndpoints:
         """버전 정보 엔드포인트 테스트"""
         response = client.get("/version")
         assert response.status_code == 200
-        
+
         json_response = response.json()
         assert json_response["success"] is True
         assert "name" in json_response["data"]

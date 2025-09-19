@@ -1,6 +1,6 @@
-
 from fastapi import FastAPI, Request
 from app.core.logging import get_logger
+
 logger = get_logger(__name__)
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -8,6 +8,7 @@ from app.core.exceptions import BaseBusinessException, BaseCeleryException
 from app.utils.response_builder import ResponseBuilder
 from starlette.responses import JSONResponse
 import traceback
+
 
 def setup_exception_handlers(app: FastAPI):
     """예외 핸들러 설정"""
@@ -34,15 +35,14 @@ def setup_exception_handlers(app: FastAPI):
                     "chain_id": exc.chain_id,
                     "stage_num": exc.stage_num,
                     "retry_count": exc.retry_count,
-                    "max_retries": exc.max_retries
+                    "max_retries": exc.max_retries,
                 },
-                **exc.details
-            }
+                **exc.details,
+            },
         )
 
         return JSONResponse(
-            status_code=500,  # Celery 에러는 일반적으로 서버 에러로 처리
-            content=error_response.dict()
+            status_code=500, content=error_response.dict()  # Celery 에러는 일반적으로 서버 에러로 처리
         )
 
     @app.exception_handler(BaseBusinessException)
@@ -55,15 +55,10 @@ def setup_exception_handlers(app: FastAPI):
         )
 
         error_response = ResponseBuilder.error(
-            message=exc.message,
-            error_code=exc.error_code,
-            details=exc.details
+            message=exc.message, error_code=exc.error_code, details=exc.details
         )
 
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=error_response.dict()
-        )
+        return JSONResponse(status_code=exc.status_code, content=error_response.dict())
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
@@ -87,30 +82,23 @@ def setup_exception_handlers(app: FastAPI):
             429: "TOO_MANY_REQUESTS",
             500: "INTERNAL_SERVER_ERROR",
             502: "BAD_GATEWAY",
-            503: "SERVICE_UNAVAILABLE"
+            503: "SERVICE_UNAVAILABLE",
         }
 
         error_response = ResponseBuilder.error(
             message=str(exc.detail),
-            error_code=error_code_map.get(exc.status_code, "HTTP_ERROR")
+            error_code=error_code_map.get(exc.status_code, "HTTP_ERROR"),
         )
 
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=error_response.dict()
-        )
+        return JSONResponse(status_code=exc.status_code, content=error_response.dict())
 
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         logger.error(f"에러 발생: {traceback.format_exc()}")
         error_response = ResponseBuilder.error(
-            message="서버 내부 오류가 발생했습니다",
-            error_code="INTERNAL_SERVER_ERROR"
+            message="서버 내부 오류가 발생했습니다", error_code="INTERNAL_SERVER_ERROR"
         )
 
-        return JSONResponse(
-            status_code=500,
-            content=error_response.dict()
-        )
+        return JSONResponse(status_code=500, content=error_response.dict())
 
     logger.info("✅ 예외 핸들러 설정 완료")

@@ -56,7 +56,7 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType) -> ModelType:
         """객체 생성"""
         try:
-            obj_in_data = obj_in.dict() if hasattr(obj_in, 'dict') else obj_in
+            obj_in_data = obj_in.dict() if hasattr(obj_in, "dict") else obj_in
             db_obj = self.model(**obj_in_data)
             db.add(db_obj)
             await db.commit()
@@ -66,7 +66,9 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             await db.rollback()
             raise e
 
-    async def create_from_dict(self, db: AsyncSession, *, obj_in: Dict[str, Any]) -> ModelType:
+    async def create_from_dict(
+        self, db: AsyncSession, *, obj_in: Dict[str, Any]
+    ) -> ModelType:
         """딕셔너리에서 새 객체 생성"""
         try:
             db_obj = self.model(**obj_in)
@@ -83,7 +85,7 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db: AsyncSession,
         *,
         db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+        obj_in: Union[UpdateSchemaType, Dict[str, Any]],
     ) -> ModelType:
         """객체 업데이트"""
         try:
@@ -140,16 +142,14 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise e
 
     async def get_by_field(
-        self,
-        db: AsyncSession,
-        *,
-        field_name: str,
-        field_value: Any
+        self, db: AsyncSession, *, field_name: str, field_value: Any
     ) -> Optional[ModelType]:
         """특정 필드 값으로 객체 조회"""
         try:
             if hasattr(self.model, field_name):
-                stmt = select(self.model).where(getattr(self.model, field_name) == field_value)
+                stmt = select(self.model).where(
+                    getattr(self.model, field_name) == field_value
+                )
                 result = await db.execute(stmt)
                 return result.scalar_one_or_none()
             return None
@@ -164,14 +164,17 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         field_name: str,
         field_value: Any,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[ModelType]:
         """특정 필드 값으로 다중 객체 조회"""
         try:
             if hasattr(self.model, field_name):
-                stmt = select(self.model).where(
-                    getattr(self.model, field_name) == field_value
-                ).offset(skip).limit(limit)
+                stmt = (
+                    select(self.model)
+                    .where(getattr(self.model, field_name) == field_value)
+                    .offset(skip)
+                    .limit(limit)
+                )
                 result = await db.execute(stmt)
                 return list(result.scalars().all())
             return []
@@ -180,16 +183,13 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise e
 
     async def create_bulk(
-        self,
-        db: AsyncSession,
-        *,
-        objs_in: List[CreateSchemaType]
+        self, db: AsyncSession, *, objs_in: List[CreateSchemaType]
     ) -> List[ModelType]:
         """대량 객체 생성"""
         try:
             db_objs = []
             for obj_in in objs_in:
-                obj_in_data = obj_in.dict() if hasattr(obj_in, 'dict') else obj_in
+                obj_in_data = obj_in.dict() if hasattr(obj_in, "dict") else obj_in
                 db_obj = self.model(**obj_in_data)
                 db_objs.append(db_obj)
                 db.add(db_obj)
@@ -215,15 +215,16 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise e
 
 
-class AsyncCRUDBaseWithSoftDelete(AsyncCRUDBase[ModelType, CreateSchemaType, UpdateSchemaType]):
+class AsyncCRUDBaseWithSoftDelete(
+    AsyncCRUDBase[ModelType, CreateSchemaType, UpdateSchemaType]
+):
     """소프트 삭제를 지원하는 비동기 CRUD 클래스"""
 
     async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]:
         """ID로 단일 객체 조회 (삭제되지 않은 것만)"""
         try:
             stmt = select(self.model).where(
-                self.model.id == id,
-                self.model.is_deleted == False  # noqa
+                self.model.id == id, self.model.is_deleted == False  # noqa
             )
             result = await db.execute(stmt)
             return result.scalar_one_or_none()
@@ -236,9 +237,12 @@ class AsyncCRUDBaseWithSoftDelete(AsyncCRUDBase[ModelType, CreateSchemaType, Upd
     ) -> List[ModelType]:
         """다중 객체 조회 (삭제되지 않은 것만)"""
         try:
-            stmt = select(self.model).where(
-                self.model.is_deleted == False  # noqa
-            ).offset(skip).limit(limit)
+            stmt = (
+                select(self.model)
+                .where(self.model.is_deleted == False)  # noqa
+                .offset(skip)
+                .limit(limit)
+            )
             result = await db.execute(stmt)
             return list(result.scalars().all())
         except SQLAlchemyError as e:
@@ -266,8 +270,7 @@ class AsyncCRUDBaseWithSoftDelete(AsyncCRUDBase[ModelType, CreateSchemaType, Upd
         """삭제된 객체 복구"""
         try:
             stmt = select(self.model).where(
-                self.model.id == id,
-                self.model.is_deleted == True  # noqa
+                self.model.id == id, self.model.is_deleted == True  # noqa
             )
             result = await db.execute(stmt)
             obj = result.scalar_one_or_none()
@@ -288,9 +291,12 @@ class AsyncCRUDBaseWithSoftDelete(AsyncCRUDBase[ModelType, CreateSchemaType, Upd
     ) -> List[ModelType]:
         """삭제된 객체들 조회"""
         try:
-            stmt = select(self.model).where(
-                self.model.is_deleted == True  # noqa
-            ).offset(skip).limit(limit)
+            stmt = (
+                select(self.model)
+                .where(self.model.is_deleted == True)  # noqa
+                .offset(skip)
+                .limit(limit)
+            )
             result = await db.execute(stmt)
             return list(result.scalars().all())
         except SQLAlchemyError as e:

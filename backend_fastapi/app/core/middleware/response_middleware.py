@@ -28,11 +28,13 @@ class ResponseLogMiddleware(BaseHTTPMiddleware):
 
         # Response body를 문자열로 변환
         try:
-            response_text = response_body.decode('utf-8')
+            response_text = response_body.decode("utf-8")
             # JSON인 경우 예쁘게 출력
             if response.headers.get("content-type") == "application/json":
                 response_data = json.loads(response_text)
-                response_log = json.dumps(response_data, ensure_ascii=False)[:200]  # 200자 제한
+                response_log = json.dumps(response_data, ensure_ascii=False)[
+                    :200
+                ]  # 200자 제한
             else:
                 response_log = response_text[:200]  # 200자 제한
         except:
@@ -50,7 +52,5 @@ class ResponseLogMiddleware(BaseHTTPMiddleware):
             content=response_body,
             status_code=response.status_code,
             headers=dict(response.headers),
-            media_type=response.media_type
+            media_type=response.media_type,
         )
-
-

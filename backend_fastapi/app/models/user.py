@@ -8,6 +8,7 @@ class User(Base):
     """
     사용자 모델 (예시)
     """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -29,5 +30,5 @@ class User(Base):
             "is_superuser": self.is_superuser,
             "bio": self.bio,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

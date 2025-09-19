@@ -31,6 +31,7 @@ class ModelService:
 # 전역 서비스 인스턴스
 model_service = ModelService()
 
+
 # 의존성 주입 함수
 def get_model_service():
     """Model 서비스 의존성"""

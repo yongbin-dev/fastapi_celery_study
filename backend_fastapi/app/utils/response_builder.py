@@ -8,9 +8,7 @@ from app.schemas.response import ResponseStatus, PaginationMeta
 class ResponseBuilder:
     @staticmethod
     def success(
-            data: Any = None,
-            message: str = "성공",
-            meta: Optional[PaginationMeta] = None
+        data: Any = None, message: str = "성공", meta: Optional[PaginationMeta] = None
     ) -> ApiResponse:
         """성공 응답 생성"""
 
@@ -26,9 +24,9 @@ class ResponseBuilder:
 
     @staticmethod
     def error(
-            message: str = "오류가 발생했습니다",
-            error_code: str = "UNKNOWN_ERROR",
-            details: Any = None
+        message: str = "오류가 발생했습니다",
+        error_code: str = "UNKNOWN_ERROR",
+        details: Any = None,
     ) -> ApiResponse:
         """에러 응답 생성"""
         response = ApiResponse(
@@ -38,18 +36,14 @@ class ResponseBuilder:
             timestamp=datetime.now().isoformat(),
             data=None,
             error_code=error_code,
-            details=details
+            details=details,
         )
 
         return response
 
     @staticmethod
     def paginated(
-            data: list,
-            page: int,
-            size: int,
-            total: int,
-            message: str = "성공"
+        data: list, page: int, size: int, total: int, message: str = "성공"
     ) -> ApiResponse:
         """페이지네이션 응답 생성"""
         total_pages = (total + size - 1) // size
@@ -60,7 +54,7 @@ class ResponseBuilder:
             total=total,
             total_pages=total_pages,
             has_next=page < total_pages,
-            has_previous=page > 1
+            has_previous=page > 1,
         )
 
         response = ApiResponse(
@@ -69,7 +63,7 @@ class ResponseBuilder:
             message=message,
             timestamp=datetime.now().isoformat(),
             data=data,
-            meta=meta
+            meta=meta,
         )
 
         return response

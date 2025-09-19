@@ -1,4 +1,3 @@
-
 # tests/test_stress_chain.py
 
 import asyncio
@@ -13,13 +12,16 @@ from app.models.base import Base
 from app.api.v1.services.pipeline_service import PipelineService
 from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from app.schemas.pipeline import AIPipelineRequest
-from app.api.v1.crud.async_crud.chain_execution import chain_execution as chain_execution_crud
+from app.api.v1.crud.async_crud.chain_execution import (
+    chain_execution as chain_execution_crud,
+)
 
 # .env 파일의 DATABASE_URL을 사용하도록 설정
 ASYNC_SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # 테스트용 비동기 in-memory SQLite 데이터베이스 설정                                                                                                                                                                                                      │
 # --- 3. 데이터 삭제 함수 ---
+
 
 @pytest_asyncio.fixture(scope="function")
 async def async_engine():
@@ -40,14 +42,11 @@ async def async_engine():
 
     await engine.dispose()
 
+
 @pytest_asyncio.fixture
 async def session_maker(async_engine):
     """비동기 데이터베이스 세션 메이커 fixture"""
-    return sessionmaker(
-        bind=async_engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-
+    return sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 @pytest.mark.asyncio
@@ -69,7 +68,7 @@ async def test_run_1000_chains_concurrently(session_maker, num_chains):
             text=f"Stress test message {i}",
             options={"param": "value"},
             priority=1,
-            callback_url="http://localhost/callback"
+            callback_url="http://localhost/callback",
         )
         for i in range(num_chains)
     ]

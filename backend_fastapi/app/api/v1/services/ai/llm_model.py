@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from typing import Dict, Any
 
+
 class LLMModel(BaseModel):
     def __init__(self, model_name: str = "microsoft/DialoGPT-medium"):
         super().__init__()
@@ -40,7 +41,7 @@ class LLMModel(BaseModel):
                     max_length=max_length,
                     temperature=0.7,
                     pad_token_id=self.tokenizer.eos_token_id,
-                    do_sample=True
+                    do_sample=True,
                 )
 
             # 디코딩

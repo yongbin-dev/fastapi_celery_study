@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from enum import Enum
 from datetime import datetime
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ResponseStatus(str, Enum):
@@ -19,9 +19,7 @@ class BaseResponse(BaseModel, Generic[T]):
     error_code: Optional[str] = None
     timestamp: str
 
-    model_config = {
-        "use_enum_values": True
-    }
+    model_config = {"use_enum_values": True}
 
 
 class PaginationMeta(BaseModel):

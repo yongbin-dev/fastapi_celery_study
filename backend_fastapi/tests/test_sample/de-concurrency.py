@@ -1,5 +1,6 @@
 import threading
 
+
 # 1. 싱글톤 미적용 (동기화 없음)
 class SharedCounter:
     def __init__(self):
@@ -11,17 +12,23 @@ class SharedCounter:
         # 1-2. 컨텍스트 스위치 유도 (고의로 지연)
         # 여러 스레드가 동시에 이 부분에 진입하게 만듭니다.
         import time
+
         time.sleep(0.0001)
         # 1-3. 새로운 값을 업데이트합니다.
         self.value = current_value + 1
+
 
 def worker_without_lock(counter):
     for _ in range(1000):
         counter.increment()
 
+
 # 테스트 실행
 non_singleton_counter = SharedCounter()
-threads = [threading.Thread(target=worker_without_lock, args=(non_singleton_counter,)) for _ in range(10)]
+threads = [
+    threading.Thread(target=worker_without_lock, args=(non_singleton_counter,))
+    for _ in range(10)
+]
 
 for t in threads:
     t.start()

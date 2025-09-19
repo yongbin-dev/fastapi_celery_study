@@ -10,7 +10,7 @@ from app.core.exceptions import (
     NotFoundError,
     UnauthorizedError,
     UserNotFoundException,
-    UserAlreadyExistsException
+    UserAlreadyExistsException,
 )
 
 
@@ -23,9 +23,9 @@ class TestBaseBusinessException:
             message="테스트 오류",
             error_code="TEST_ERROR",
             status_code=400,
-            details={"field": "value"}
+            details={"field": "value"},
         )
-        
+
         assert exc.message == "테스트 오류"
         assert exc.error_code == "TEST_ERROR"
         assert exc.status_code == 400
@@ -34,19 +34,17 @@ class TestBaseBusinessException:
     def test_exception_to_dict(self):
         """예외를 딕셔너리로 변환 테스트"""
         exc = BaseBusinessException(
-            message="테스트 오류",
-            error_code="TEST_ERROR",
-            status_code=400
+            message="테스트 오류", error_code="TEST_ERROR", status_code=400
         )
-        
+
         result = exc.to_dict()
         expected = {
             "error_code": "TEST_ERROR",
             "message": "테스트 오류",
             "status_code": 400,
-            "details": {}
+            "details": {},
         }
-        
+
         assert result == expected
 
     def test_exception_str_representation(self):
