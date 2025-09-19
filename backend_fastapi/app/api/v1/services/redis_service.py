@@ -130,36 +130,6 @@ class RedisPipelineStatusManager:
             )
             return False
 
-    def get_pipeline_status(self, chain_id: str) -> Optional[List[Dict]]:
-        """파이프라인 전체 상태 조회"""
-        try:
-            redis_client = self.get_redis_client()
-            pipeline_data = redis_client.get(chain_id)
-
-            if pipeline_data:
-                pipeline_tasks = json.loads(pipeline_data)  # type: ignore
-                if isinstance(pipeline_tasks, list):
-                    return pipeline_tasks
-                else:
-                    return [pipeline_tasks] if pipeline_tasks else []
-            return None
-
-        except Exception as e:
-            logger.error(
-                f"Redis 파이프라인 상태 조회 실패 (Chain: {chain_id}): {e}",
-                exc_info=True,
-            )
-            return None
-
-    def get_stage_status(self, chain_id: str, stage: int) -> Optional[Dict]:
-        """특정 단계의 상태 조회"""
-        pipeline_tasks = self.get_pipeline_status(chain_id)
-        if pipeline_tasks:
-            for task in pipeline_tasks:
-                if task.get("stage") == stage:
-                    return task
-        return None
-
     def delete_pipeline(self, chain_id: str) -> bool:
         """파이프라인 데이터 삭제"""
         try:
