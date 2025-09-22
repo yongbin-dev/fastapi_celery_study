@@ -112,18 +112,19 @@ class AsyncCRUDChainExecution(
         self,
         db: AsyncSession,
         *,
-        skip: int = 0,
         days: int = 7,
         limit: int = 100,
-        chain_name: Optional[str] = None,
-        status: Optional[ProcessStatus] = None,
     ) -> List[ChainExecution]:
         """TaskLog와 함께 여러 체인 실행 조회"""
         try:
+            cutoff_date = datetime.now() - timedelta(days=days)
+
             stmt = (
                 select(ChainExecution)
                 .options(selectinload(ChainExecution.task_logs))
+                .where(ChainExecution.created_at > cutoff_date)
                 .order_by(desc(ChainExecution.created_at))
+                .limit(limit)
             )  # type: ignore
 
             result = await db.execute(stmt)
