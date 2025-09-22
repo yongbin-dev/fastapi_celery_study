@@ -60,43 +60,6 @@ export const TaskHistoryTab: React.FC = () => {
             </select>
           </div>
 
-          {/* 상태 필터 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              상태
-            </label>
-            <select
-              value={searchParams.status}
-              onChange={(e) => handleSearchChange('status', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">전체</option>
-              <option value={TaskStatus.SUCCESS}>성공</option>
-              <option value={TaskStatus.FAILURE}>실패</option>
-              <option value={TaskStatus.PENDING}>대기</option>
-              <option value={TaskStatus.PROGRESS}>진행중</option>
-              <option value={TaskStatus.REVOKED}>취소됨</option>
-            </select>
-          </div>
-
-          {/* 태스크 이름 필터 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              태스크 이름
-            </label>
-            <select
-              value={searchParams.task_name}
-              onChange={(e) => handleSearchChange('task_name', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">전체</option>
-              <option value="app.tasks.stage1_preprocessing">stage1_preprocessing</option>
-              <option value="app.tasks.stage2_feature_extraction">stage2_feature_extraction</option>
-              <option value="app.tasks.stage3_model_inference">stage3_model_inference</option>
-              <option value="app.tasks.stage4_post_processing">stage4_post_processing</option>
-            </select>
-          </div>
-
           {/* 결과 수 제한 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
