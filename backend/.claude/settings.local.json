@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(poetry install:*)",
+      "Bash(poetry lock:*)",
+      "Bash(POETRY_INSTALLER_NO_BINARY=torch poetry lock)",
+      "Bash(python:*)",
+      "Bash(ollama:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(mv:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
