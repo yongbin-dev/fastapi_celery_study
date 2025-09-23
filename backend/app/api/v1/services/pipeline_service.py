@@ -17,6 +17,9 @@ from app.api.v1.crud import (
 
 from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logging import get_logger
+
+logging = get_logger(__name__)
 
 
 class PipelineService:
@@ -37,15 +40,18 @@ class PipelineService:
     async def get_pipeline_history(
         self,
         db: AsyncSession,
-        hours: int = 1,
+        hours: Optional[int] = None,
         status: Optional[str] = None,
         task_name: Optional[str] = None,
-        limit: int = 100,
+        limit: Optional[int] = None,
     ) -> List[ChainExecutionResponse]:
         """파이프라인 히스토리 조회 - DB 기반"""
+        # hours가 None일 경우 기본값 1을 사용
+        hours_value = hours or 1
+        limit_value = limit or 100
 
         chain_executions = await chain_execution_crud.get_multi_with_task_logs(
-            db, days=hours // 24 + 1, limit=limit
+            db, days=hours_value // 24 + 1, limit=limit_value
         )
 
         return [ChainExecutionResponse.model_validate(ce) for ce in chain_executions]

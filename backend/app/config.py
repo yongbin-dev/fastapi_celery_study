@@ -84,6 +84,9 @@ class Settings(BaseSettings):
     HUGGINGFACE_CACHE_DIR: str = "./cache/huggingface"
     MODEL_CACHE_SIZE: int = 1000
 
+    # Ollama 설정
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+
     # 개발 도구
     ENABLE_RELOAD: bool = True
     ENABLE_DOCS: bool = True

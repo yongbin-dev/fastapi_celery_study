@@ -1,5 +1,4 @@
 # app/api/v1/controllers/tasks_controller.py
-import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -14,9 +13,13 @@ from app.schemas import (
 )
 from app.schemas.chain_execution import ChainExecutionResponse
 from app.schemas.common import ApiResponse
-from app.api.v1.services import get_pipeline_service, get_redis_service
+from app.api.v1.services import get_pipeline_service, get_redis_service, PipelineService
+from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from app.utils.response_builder import ResponseBuilder
 import httpx
+from app.core.logging import get_logger
+
+logging = get_logger(__name__)
 
 controller = APIRouter()
 
@@ -79,7 +82,7 @@ async def predict(request: PredictRequest):
 
 @controller.get("/history", response_model=ApiResponse[list[ChainExecutionResponse]])
 async def get_pipeline_history(
-    service=Depends(get_pipeline_service),
+    service: PipelineService = Depends(get_pipeline_service),
     db: AsyncSession = Depends(get_db),
     hours: Optional[int] = Query(
         1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168
@@ -88,6 +91,7 @@ async def get_pipeline_history(
     task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
     limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000),
 ) -> ApiResponse[list[ChainExecutionResponse]]:
+
     result = await service.get_pipeline_history(
         db=db, hours=hours, status=status, task_name=task_name, limit=limit
     )
@@ -101,8 +105,8 @@ async def get_pipeline_history(
 @controller.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
 async def create_ai_pipeline(
     request: AIPipelineRequest,
-    service=Depends(get_pipeline_service),
-    redis_service=Depends(get_redis_service),
+    service: PipelineService = Depends(get_pipeline_service),
+    redis_service: RedisPipelineStatusManager = Depends(get_redis_service),
     db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[AIPipelineResponse]:
     """AI 처리 파이프라인 시작"""
@@ -121,8 +125,8 @@ async def create_ai_pipeline(
 @controller.delete("/ai-pipeline/{chain_id}/cancel")
 async def cancel_ai_pipeline(
     chain_id: str,
-    service=Depends(get_pipeline_service),
-    redis_service=Depends(get_redis_service),
+    service: PipelineService = Depends(get_pipeline_service),
+    redis_service: RedisPipelineStatusManager = Depends(get_redis_service),
 ):
     """파이프라인 취소 및 데이터 삭제"""
     result = service.cancel_pipeline(redis_service=redis_service, chain_id=chain_id)
@@ -139,8 +143,8 @@ async def cancel_ai_pipeline(
 )
 async def get_pipeline_tasks(
     chain_id: str,
-    service=Depends(get_pipeline_service),
-    db=Depends(get_db),
+    service: PipelineService = Depends(get_pipeline_service),
+    db: AsyncSession = Depends(get_db),
 ) -> ApiResponse[ChainExecutionResponse]:
     pipeline_stages = await service.get_pipeline_tasks(db=db, chain_id=chain_id)
 

@@ -8,7 +8,8 @@
 ## 일반적인 개발 명령어
 
 ### 환경 설정
-- **Poetry**: `poetry install` - 의존성 설치
+- **개발 환경 (CPU)**: `poetry install` - 기본 의존성 설치 (PyTorch CPU 버전)
+- **운영 환경 (GPU)**: `poetry install --with prod` - CUDA 지원 PyTorch 포함 설치
 - **Docker**: `docker-compose up` - 모든 서비스 시작 (app, Redis, Celery worker, Flower)
 
 ### 개발
@@ -57,7 +58,7 @@
 
 ### AI/ML 통합
 - 모델 관리를 위한 Transformers 및 HuggingFace Hub 사용
-- 추론을 위한 PyTorch CPU 전용
+- PyTorch: 개발환경은 CPU, 운영환경은 CUDA 지원
 - `app/services/ai/`에서 모델 서비스 추상화
 
 ## 환경 설정
@@ -68,3 +69,28 @@
 - `.env.staging`
 
 설정을 전환하려면 `ENVIRONMENT` 변수를 설정하세요.
+
+## PyTorch 환경별 설치
+
+### 개발 환경 (CPU 전용)
+```bash
+poetry install
+```
+- 기본적으로 CPU 버전의 PyTorch가 설치됩니다
+- macOS, 로컬 개발에 적합
+
+### 운영 환경 (CUDA 지원)
+```bash
+# 기본 의존성 설치
+poetry install --with prod
+
+# CUDA 버전 PyTorch 별도 설치
+poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+- 기본 의존성 설치 후 CUDA 지원 PyTorch를 별도로 설치합니다
+- 운영 서버, GPU 가속이 필요한 환경에 적합
+
+### 주의사항
+- 운영 환경에서는 CUDA 호환 GPU와 적절한 CUDA 드라이버가 설치되어 있어야 합니다
+- CUDA 버전에 맞는 PyTorch 인덱스 URL을 사용하세요 (cu118, cu121 등)
+- poetry.lock 파일은 개발 환경(CPU) 기준으로 관리됩니다
