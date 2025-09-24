@@ -40,6 +40,10 @@ async def lifespan(app: FastAPI):
         logger.info("✅ 데이터베이스 연결 초기화 완료")
     except Exception as e:
         logger.error(f"❌ 데이터베이스 연결 실패: {e}")
+        logger.error("💥 DB 연결 없이는 애플리케이션을 시작할 수 없습니다. 종료합니다.")
+        # DB 필수인 경우 애플리케이션 종료
+        import sys
+        sys.exit(1)
 
     yield  # 애플리케이션 실행
 
