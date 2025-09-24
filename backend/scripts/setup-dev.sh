@@ -82,7 +82,28 @@ setup_shell_hook() {
 # 메인 실행
 main() {
     echo "🔍 필수 도구 확인 중..."
-    
+
+    # pyenv 확인 및 설치
+    if ! command -v pyenv >/dev/null 2>&1; then
+        echo "📦 pyenv 설치 중..."
+        curl https://pyenv.run | bash
+
+        # PATH 추가
+        export PATH="$HOME/.pyenv/bin:$PATH"
+
+        if ! command -v pyenv >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚠️ pyenv 설치 완료. 새 터미널에서 다시 실행해주세요.${NC}"
+            echo "또는 다음 명령어를 실행하세요:"
+            echo "export PATH=\"\$HOME/.pyenv/bin:\$PATH\""
+            exit 0
+        fi
+    fi
+
+    # pyenv 초기화 (Poetry에서 python 명령어 사용 가능하도록)
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+    echo -e "${GREEN}✅ pyenv가 초기화되었습니다.${NC}"
+
     # Python 확인
     if ! check_command python3; then
         echo -e "${RED}❌ Python3가 필요합니다. 설치해주세요.${NC}"
