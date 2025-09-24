@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     DB_TIMEZONE: str = "Asia/Seoul"  # 데이터베이스 시간대
     DB_POOL_PRE_PING: bool = True  # 연결 유효성 검사
     DB_POOL_RECYCLE: int = 3600  # 연결 재활용 시간(초)
-    DB_CONNECT_TIMEOUT: int = 30  # 연결 타임아웃(초)
+    DB_CONNECT_TIMEOUT: int = 3  # 연결 타임아웃(초)
     DB_HEALTH_CHECK_POOL_SIZE: int = 5  # 헬스체크용 별도 풀 크기
 
     # Pipeline 설정
