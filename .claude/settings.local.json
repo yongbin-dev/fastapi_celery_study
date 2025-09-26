@@ -9,7 +9,8 @@
       "Bash(dmesg:*)",
       "Read(//home/yb/**)",
       "Bash(source ~/.bashrc)",
-      "Bash(sudo ln:*)"
+      "Bash(sudo ln:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
