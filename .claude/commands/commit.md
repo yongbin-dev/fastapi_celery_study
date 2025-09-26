@@ -1,16 +1,16 @@
-# Commit Command
+# 커밋 명령어
 
-This command performs a complete git commit workflow: adds all files, generates a commit message, and commits the changes.
+이 명령어는 완전한 git 커밋 워크플로우를 수행합니다: 모든 파일을 추가하고, 커밋 메시지를 생성하며, 변경사항을 커밋합니다.
 
-## Usage
+## 사용법
 ```
-/commit [optional commit message]
+/commit [선택적 커밋 메시지]
 ```
 
-## Examples
+## 예시
 ```
 /commit
-/commit "feat: add new user authentication feature"
+/commit "feat: 새로운 사용자 인증 기능 추가"
 ```
 
 ## Implementation
@@ -40,17 +40,17 @@ if [ -z "$COMMIT_MSG" ]; then
 
     # Simple commit message generation based on file patterns
     if echo "$STATUS" | grep -q "^A"; then
-        COMMIT_MSG="feat: add new files and features"
+        COMMIT_MSG="feat: 새로운 파일 및 기능 추가"
     elif echo "$STATUS" | grep -q "^M.*\.py$"; then
-        COMMIT_MSG="update: modify Python files"
+        COMMIT_MSG="update: Python 파일 수정"
     elif echo "$STATUS" | grep -q "^M.*\.(js|ts|tsx)$"; then
-        COMMIT_MSG="update: modify JavaScript/TypeScript files"
+        COMMIT_MSG="update: JavaScript/TypeScript 파일 수정"
     elif echo "$STATUS" | grep -q "^M.*\.md$"; then
-        COMMIT_MSG="docs: update documentation"
+        COMMIT_MSG="docs: 문서 업데이트"
     elif echo "$STATUS" | grep -q "^D"; then
-        COMMIT_MSG="remove: delete files"
+        COMMIT_MSG="remove: 파일 삭제"
     else
-        COMMIT_MSG="update: general code changes"
+        COMMIT_MSG="update: 일반적인 코드 변경사항"
     fi
 fi
 

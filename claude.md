@@ -11,6 +11,11 @@
 [optional footer]
 ```
 
+### 언어 설정
+- 커밋 메시지는 한글로 작성
+- type은 영문 컨벤션 유지 (feat, fix, docs, style, refactor, test, chore 등)
+- description 부분은 한글로 작성
+
 ### 타입 (Type)
 - `feat`: 새로운 기능 추가
 - `fix`: 버그 수정
