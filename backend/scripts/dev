@@ -3,8 +3,17 @@
 
 # .env 파일에서 환경 변수 로드
 set -a
-source .env.development
+if [ -f .env.development ]; then
+    source .env.development
+elif [ -f .env ]; then
+    source .env
+else
+    echo "⚠️  환경 파일을 찾을 수 없습니다. (.env 또는 .env.development)"
+fi
 set +a
+
+# 환경 변수 설정
+export ENVIRONMENT=development
 
 echo "🚀 FastAPI 개발 서버 시작..."
 exec poetry run uvicorn app.main:app --reload --host ${HOST:-0.0.0.0} --port ${PORT:-5050}

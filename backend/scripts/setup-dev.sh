@@ -138,6 +138,15 @@ main() {
     # 가상환경 정보 출력
     echo -e "${GREEN}✅ 가상환경 경로: $(poetry env info --path)${NC}"
     
+    # .env.development 파일 확인
+    if [[ ! -f ".env.development" ]]; then
+        echo -e "${YELLOW}⚠️ .env.development 파일이 없습니다.${NC}"
+        echo -e "${YELLOW}   개발환경 설정을 위해 .env.development 파일을 생성해주세요.${NC}"
+        echo -e "${YELLOW}   예시: cp .env.development.example .env.development${NC}"
+    else
+        echo -e "${GREEN}✅ .env.development 파일이 존재합니다.${NC}"
+    fi
+
     # .envrc 허용
     if [[ -f ".envrc" ]]; then
         echo "🔒 .envrc 파일 허용 중..."
