@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
+    REDIS_DB: str = "s"
 
     # Database 설정
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
@@ -97,6 +98,7 @@ class Settings(BaseSettings):
     OCR_ENGINE: str = "easyocr"
     OCR_DET: str = ""
     OCR_REC: str = ""
+    
 
 
 # 전역 설정 객체

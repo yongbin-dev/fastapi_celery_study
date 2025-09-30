@@ -1,6 +1,7 @@
 # app/domains/ocr/services/engines/base.py
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Any, Optional
+from ...schemas import OCRResultDTO
 
 
 class BaseOCREngine(ABC):
@@ -18,7 +19,7 @@ class BaseOCREngine(ABC):
         pass
 
     @abstractmethod
-    def predict(self, image_data: bytes, confidence_threshold: float) -> Dict[str, Any]:
+    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
         """
         OCR 예측 수행
 
@@ -27,11 +28,7 @@ class BaseOCREngine(ABC):
             confidence_threshold: 신뢰도 임계값
 
         Returns:
-            {
-                "text_boxes": [...],
-                "full_text": "...",
-                "status": "success" or "failed"
-            }
+            OCRResultDTO 객체
         """
         pass
 
