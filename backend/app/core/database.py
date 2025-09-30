@@ -154,7 +154,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
                 return
         except (DisconnectionError, SQLAlchemyError) as e:
             logger.warning(
-                f"데이터베이스 연결 실패 (시도 {attempt + 1}/{max_retries}): {str(e)[:100]}"
+                f"데이터베이스 연결 실패 "
+                f"(시도 {attempt + 1}/{max_retries}): {str(e)[:100]}"
             )
             if attempt < max_retries - 1:
                 await asyncio.sleep(retry_delay * (2**attempt))

@@ -4,12 +4,12 @@ import time
 from typing import Any, Dict
 
 from app.celery_app import celery_app
-from app.orchestration.schemas.enums import ProcessStatus
 from app.core.celery.task_decorators import (
     create_stage_result,
     task_logger,
 )
 from app.core.logging import get_logger
+from app.orchestration.schemas.enums import ProcessStatus
 from app.shared.config.pipeline_config import STAGES
 
 logger = get_logger(__name__)
