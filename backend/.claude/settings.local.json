@@ -12,20 +12,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(mv:*)",
       "Bash(git add:*)",
-<<<<<<< HEAD
-      "Bash(bash:*)",
-      "Read(//usr/bin/**)",
-      "Bash(poetry config:*)",
-      "Bash(poetry env use:*)",
-      "Bash(sudo ln:*)",
-      "Bash(pyenv:*)",
-      "Bash(direnv allow:*)",
-      "Bash(poetry:*)"
-=======
       "Bash(git commit:*)",
       "Bash(mkdir:*)",
       "Bash(rmdir:*)"
->>>>>>> a1485c2 (feat : http 테스트 파일 추가)
     ],
     "deny": [],
     "ask": []

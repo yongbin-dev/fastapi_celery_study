@@ -10,7 +10,17 @@
       "Read(//home/yb/**)",
       "Bash(source ~/.bashrc)",
       "Bash(sudo ln:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(poetry install:*)",
+      "Bash(poetry lock:*)",
+      "Bash(POETRY_INSTALLER_NO_BINARY=torch poetry lock)",
+      "Bash(python:*)",
+      "Bash(ollama:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []
