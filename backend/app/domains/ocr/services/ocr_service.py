@@ -1,7 +1,6 @@
 # app/domains/ocr/services/ocr_service.py
 from app.shared.base_service import BaseService
 from typing import Dict, Any, Optional
-import os
 from .ocr_model import get_ocr_model, OCRModel
 from app.core.logging import get_logger
 
@@ -64,7 +63,7 @@ class OCRService(BaseService):
             result = self.postprocess(result)
 
             logger.info(f"OCR 실행 완료")
-            return result
+            return 
 
         except Exception as e:
             logger.error(f"OCR 실행 중 오류 발생: {str(e)}")
@@ -74,5 +73,5 @@ class OCRService(BaseService):
 ocr_service = OCRService()
 
 
-def get_ocr_service() -> OCRService:
+def get_ocr_service() :
     return ocr_service

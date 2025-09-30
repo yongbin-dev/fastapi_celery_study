@@ -5,6 +5,7 @@ from app.core.logging import get_logger
 import traceback
 import cv2
 import numpy as np
+from app.config import settings
 
 logger = get_logger(__name__)
 
@@ -21,11 +22,16 @@ class PaddleOCREngine(BaseOCREngine):
             from paddleocr import PaddleOCR
 
             logger.info("PaddleOCR 모델 로딩 시작...")
-
+            logger.info("rect_model_dir: " + settings.OCR_REC)
+            logger.info("dect_model_dir: " + settings.OCR_DET)
             # PaddleOCR 생성
             self.model = PaddleOCR(
-                use_angle_cls=self.use_angle_cls,
-                lang=self.lang,
+                text_detection_model_name=settings.OCR_DET,
+                text_recognition_model_name=settings.OCR_REC,
+                # text_recognition_model_dir=settings.OCR_REC,
+                # text_detection_model_dir=settings.OCR_DET,
+                # use_angle_cls=self.use_angle_cls,
+                # lang=self.lang,
             )
 
             logger.info(f"PaddleOCR Model loaded (lang={self.lang})")

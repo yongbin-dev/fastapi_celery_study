@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12, <4"
 resolution-markers = [
     "sys_platform == 'win32'",
@@ -657,7 +657,6 @@ dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
     { name = "celery" },
-    { name = "easyocr" },
     { name = "fastapi" },
     { name = "greenlet" },
     { name = "httpx" },
@@ -703,7 +702,6 @@ ocr = [
     { name = "easyocr" },
     { name = "opencv-python" },
     { name = "paddleocr" },
-    { name = "paddlepaddle" },
     { name = "pillow" },
     { name = "python-levenshtein" },
 ]
@@ -727,7 +725,6 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.12.1" },
     { name = "celery", specifier = ">=5.5.3" },
     { name = "cryptography", marker = "extra == 'prod'", specifier = ">=41.0.7" },
-    { name = "easyocr", specifier = ">=1.7.2" },
     { name = "easyocr", marker = "extra == 'ocr'", specifier = ">=1.7.2" },
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.0.0" },
@@ -744,8 +741,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
     { name = "opencv-python", marker = "extra == 'ocr'", specifier = ">=4.9.0" },
     { name = "opencv-python", marker = "extra == 'vision'", specifier = ">=4.9.0" },
-    { name = "paddleocr", marker = "extra == 'ocr'", specifier = ">=2.7.0" },
-    { name = "paddlepaddle", marker = "extra == 'ocr'", specifier = ">=2.5.2" },
+    { name = "paddleocr", marker = "extra == 'ocr'", specifier = ">=3.2.0" },
     { name = "pillow", marker = "extra == 'ocr'", specifier = ">=10.2.0" },
     { name = "pillow", marker = "extra == 'vision'", specifier = ">=10.2.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.6.0" },
@@ -1886,18 +1882,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opt-einsum"
-version = "3.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/bf/9257e53a0e7715bc1127e15063e831f076723c6cd60985333a1c18878fb8/opt_einsum-3.3.0.tar.gz", hash = "sha256:59f6475f77bbc37dcf7cd748519c0ec60722e91e63ca114e68821c0c54a46549", size = 73951, upload-time = "2020-07-19T22:40:32.141Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/19/404708a7e54ad2798907210462fd950c3442ea51acc8790f3da48d2bee8b/opt_einsum-3.3.0-py3-none-any.whl", hash = "sha256:2455e59e3947d3c275477df7f5205b30635e266fe6dc300e3d9f9646bfcea147", size = 65486, upload-time = "2020-07-19T22:40:30.301Z" },
-]
-
-[[package]]
 name = "orjson"
 version = "3.11.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1967,31 +1951,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/84/c9/2abb5aa6c3dc7e67e4e9f5d5a4b5352d51092b3fcdd2ae06f7e4c3886ee1/paddleocr-3.2.0.tar.gz", hash = "sha256:72f6a1844808003123cebe1b5a9a73302cc394185d948e865ccf104e3d93bc19", size = 2394507, upload-time = "2025-08-21T11:11:38.425Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/74/72/c8218cc7489762ab3d1fb25721f8c928f10085e38feb8d52fd6583bfc592/paddleocr-3.2.0-py3-none-any.whl", hash = "sha256:2b942295ad5963de8e01d68afb15a9507d713bc7299e2dfeb198d9c3ac5cf76f", size = 75976, upload-time = "2025-08-21T11:11:37.037Z" },
-]
-
-[[package]]
-name = "paddlepaddle"
-version = "3.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "networkx" },
-    { name = "numpy" },
-    { name = "opt-einsum" },
-    { name = "pillow" },
-    { name = "protobuf" },
-    { name = "safetensors" },
-    { name = "typing-extensions" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/29/5d/41ed9bd2d6a33a191bb3e289d3ad78566356cd9c981b80db3c5007a379d2/paddlepaddle-3.2.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:ac334af72d1b0d49d4c933cfd4eb42d73ec2dc7a6aaf2248c628643d419b6da7", size = 99428886, upload-time = "2025-09-08T07:54:40.947Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/82/47a8001a9897f608c12218e2cc63e6b841b710e3359d752973d5e46c43ef/paddlepaddle-3.2.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:2c17f675a25ebd0675f703f7b82777ea92db0c360bd55a5c6b2dfaad7bc3f260", size = 189034109, upload-time = "2025-09-08T12:47:29.588Z" },
-    { url = "https://files.pythonhosted.org/packages/63/b8/5cfb96745d79917b3c26d72f2e68433cab7c092cd58b2085d37cee947117/paddlepaddle-3.2.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:4ce514114af7671875fc4927ea005afb9d5d0fd777aeb56a1078d22f7f4eb3fb", size = 87938157, upload-time = "2025-09-08T09:41:31.936Z" },
-    { url = "https://files.pythonhosted.org/packages/61/f9/eadca6e6499269f8de35b3f51675240d476023919b381acca5bf526d7fb2/paddlepaddle-3.2.0-cp312-cp312-win_amd64.whl", hash = "sha256:918e69c98a1310db08610f28a2d0812ea779ec819053c44cc55ce7dc72ab6ee6", size = 101654665, upload-time = "2025-09-08T08:31:07.475Z" },
-    { url = "https://files.pythonhosted.org/packages/e6/7c/32f4ae078f4a56c27442ed6ef23cb9145932374463ba78a811d7305bbca3/paddlepaddle-3.2.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:38184e1ea7fd7bf03883ea61f45619b9712d92c13ad1fa16934ea9e0d6d3e991", size = 99425234, upload-time = "2025-09-08T07:56:43.559Z" },
-    { url = "https://files.pythonhosted.org/packages/7a/79/953d2f61a956e1c0603f53ae28eec6abcaecac910b09f2f9ea387a549077/paddlepaddle-3.2.0-cp313-cp313-manylinux1_x86_64.whl", hash = "sha256:fa2aecd061424350f6770a83dda079691f7224635cff276eaef4e3e17440039d", size = 189027552, upload-time = "2025-09-08T12:24:52.608Z" },
-    { url = "https://files.pythonhosted.org/packages/d2/b4/8cb0035148eeee3d35aeac78ea88f54c0cb82d359eb7ad5c8be270330a71/paddlepaddle-3.2.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:2aa0e502f6dd284eda21c287d326454dfa26acca88c23aa0ac581d1ef98318c5", size = 87937771, upload-time = "2025-09-08T09:43:35.638Z" },
-    { url = "https://files.pythonhosted.org/packages/ff/74/9568e268b6057cdd5437768ca6070247b363ed37151c314d89f65b592e8f/paddlepaddle-3.2.0-cp313-cp313-win_amd64.whl", hash = "sha256:5f59640901b44c99f1b03ec89f1785a66b04867d16f6d764908534dc07149418", size = 101655761, upload-time = "2025-09-08T08:33:32.941Z" },
 ]
 
 [[package]]
@@ -2254,20 +2213,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1db213e061a4602dd6032a8a97ef6c1a862537732421/prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855", size = 434198, upload-time = "2025-08-27T15:24:02.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/84/03/0d3ce49e2505ae70cf43bc5bb3033955d2fc9f932163e84dc0779cc47f48/prompt_toolkit-3.0.52-py3-none-any.whl", hash = "sha256:9aac639a3bbd33284347de5ad8d68ecc044b91a762dc39b7c21095fcd6a19955", size = 391431, upload-time = "2025-08-27T15:23:59.498Z" },
-]
-
-[[package]]
-name = "protobuf"
-version = "6.32.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fa/a4/cc17347aa2897568beece2e674674359f911d6fe21b0b8d6268cd42727ac/protobuf-6.32.1.tar.gz", hash = "sha256:ee2469e4a021474ab9baafea6cd070e5bf27c7d29433504ddea1a4ee5850f68d", size = 440635, upload-time = "2025-09-11T21:38:42.935Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/98/645183ea03ab3995d29086b8bf4f7562ebd3d10c9a4b14ee3f20d47cfe50/protobuf-6.32.1-cp310-abi3-win32.whl", hash = "sha256:a8a32a84bc9f2aad712041b8b366190f71dde248926da517bde9e832e4412085", size = 424411, upload-time = "2025-09-11T21:38:27.427Z" },
-    { url = "https://files.pythonhosted.org/packages/8c/f3/6f58f841f6ebafe076cebeae33fc336e900619d34b1c93e4b5c97a81fdfa/protobuf-6.32.1-cp310-abi3-win_amd64.whl", hash = "sha256:b00a7d8c25fa471f16bc8153d0e53d6c9e827f0953f3c09aaa4331c718cae5e1", size = 435738, upload-time = "2025-09-11T21:38:30.959Z" },
-    { url = "https://files.pythonhosted.org/packages/10/56/a8a3f4e7190837139e68c7002ec749190a163af3e330f65d90309145a210/protobuf-6.32.1-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:d8c7e6eb619ffdf105ee4ab76af5a68b60a9d0f66da3ea12d1640e6d8dab7281", size = 426454, upload-time = "2025-09-11T21:38:34.076Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/be/8dd0a927c559b37d7a6c8ab79034fd167dcc1f851595f2e641ad62be8643/protobuf-6.32.1-cp39-abi3-manylinux2014_aarch64.whl", hash = "sha256:2f5b80a49e1eb7b86d85fcd23fe92df154b9730a725c3b38c4e43b9d77018bf4", size = 322874, upload-time = "2025-09-11T21:38:35.509Z" },
-    { url = "https://files.pythonhosted.org/packages/5c/f6/88d77011b605ef979aace37b7703e4eefad066f7e84d935e5a696515c2dd/protobuf-6.32.1-cp39-abi3-manylinux2014_x86_64.whl", hash = "sha256:b1864818300c297265c83a4982fd3169f97122c299f56a56e2445c3698d34710", size = 322013, upload-time = "2025-09-11T21:38:37.017Z" },
-    { url = "https://files.pythonhosted.org/packages/97/b7/15cc7d93443d6c6a84626ae3258a91f4c6ac8c0edd5df35ea7658f71b79c/protobuf-6.32.1-py3-none-any.whl", hash = "sha256:2601b779fc7d32a866c6b4404f9d42a3f67c5b9f3f15b4db3cccabe06b95c346", size = 169289, upload-time = "2025-09-11T21:38:41.234Z" },
 ]
 
 [[package]]
