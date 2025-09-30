@@ -51,6 +51,3 @@ def heartbeat_handler(sender=None, **kwargs):
     # 하트비트는 너무 자주 발생하므로 로깅하지 않음
     pass
 
-
-# 노트: TaskLog 및 ChainExecution 관련 처리는 모두 @task_logger 데코레이터에서 처리합니다.
-# 이제 signals는 워커 상태 모니터링 용도로만 사용됩니다.
