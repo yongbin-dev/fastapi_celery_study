@@ -2,7 +2,7 @@
 
 import os
 from contextlib import asynccontextmanager
-
+import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -65,6 +65,7 @@ from .core.logging import get_logger
 logger = get_logger(__name__)
 
 # FastAPI 앱 생성
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -81,7 +82,7 @@ def setup_middleware():
     """미들웨어 설정"""
 
     # Request/Response 로깅 미들웨어
-    app.add_middleware(RequestLogMiddleware)
+    # app.add_middleware(RequestLogMiddleware)
     app.add_middleware(ResponseLogMiddleware)
 
     # CORS 미들웨어 (가장 먼저 실행되어야 함)

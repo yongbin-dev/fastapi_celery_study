@@ -1,8 +1,9 @@
 # app/domains/ocr/controllers/ocr_controller.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.core.logging import get_logger
-from ..schemas import OCRExtractRequest, OCRExtractResponse
+from ..schemas import OCRExtractResponse
 from ..tasks.ocr_tasks import extract_text_task
+from ..services import OCRService, get_ocr_service
 from app.schemas.common import ApiResponse
 from app.utils.response_builder import ResponseBuilder
 
@@ -12,18 +13,30 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 
 
 @router.post("/extract", response_model=ApiResponse[OCRExtractResponse])
-async def extract_text(request: OCRExtractRequest):
+async def extract_text(
+    image_file: UploadFile = File(...),
+    language: str = Form("korean"),
+    confidence_threshold: float = Form(0.5),
+    use_angle_cls: bool = Form(True),
+):
     """
-    OCR 텍스트 추출 API
+    OCR 텍스트 추출 API (비동기)
 
-    - **image_path**: 이미지 파일 경로
+    - **image_file**: 이미지 파일 (multipart/form-data)
     - **language**: 추출할 언어 (기본값: korean)
     - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
     - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
     """
     try:
+        # 이미지 파일 읽기
+        image_data = await image_file.read()
+
+        # Celery Task로 비동기 처리
         task = extract_text_task.delay(
-            request.image_path, request.language, request.confidence_threshold
+            image_data=image_data,
+            language=language,
+            confidence_threshold=confidence_threshold,
+            use_angle_cls=use_angle_cls,
         )
 
         response = OCRExtractResponse(task_id=task.id, status="PENDING")
@@ -32,6 +45,46 @@ async def extract_text(request: OCRExtractRequest):
             data=response, message="OCR 텍스트 추출 태스크가 시작되었습니다"
         )
 
+    except Exception as e:
+        logger.error(f"OCR 텍스트 추출 API 오류: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/extract/sync", response_model=ApiResponse[dict])
+async def extract_text_sync(
+    image_file: UploadFile = File(...),
+    language: str = Form("korean"),
+    confidence_threshold: float = Form(0.5),
+    use_angle_cls: bool = Form(True),
+    ocr_service: OCRService = Depends(get_ocr_service),
+):
+    """
+    OCR 텍스트 추출 API (동기)
+
+    - **image_file**: 이미지 파일 (multipart/form-data)
+    - **language**: 추출할 언어 (기본값: korean)
+    - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
+    - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
+    """
+    try:
+        # 이미지 파일 읽기
+        image_data = await image_file.read()
+
+        # Service를 통한 동기 처리
+        result = ocr_service.extract_text_from_image(
+            image_data=image_data,
+            language=language,
+            confidence_threshold=confidence_threshold,
+            use_angle_cls=use_angle_cls,
+        )
+
+        if result.get("status") == "failed":
+            raise HTTPException(status_code=400, detail=result.get("error"))
+
+        return ResponseBuilder.success(data=result, message="OCR 텍스트 추출 완료")
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"OCR 텍스트 추출 API 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -51,51 +104,12 @@ async def get_supported_languages():
         data={"languages": languages}, message="지원 언어 목록"
     )
 
-    # @router.post("/predict")
-    # async def predict(request: PredictRequest):
-    if request.server not in OLLAMA_SERVERS:
-        return {
-            "message": f"지원하지 않는 서버: {request.server}",
-            "status": "error",
-            "timestamp": datetime.now().isoformat(),
-            "data": {"available_servers": list(OLLAMA_SERVERS.keys())},
-        }
 
-    if request.model not in AVAILABLE_MODELS:
-        return {
-            "message": f"지원하지 않는 모델: {request.model}",
-            "status": "error",
-            "timestamp": datetime.now().isoformat(),
-            "data": {"available_models": AVAILABLE_MODELS},
-        }
-
-    server_info = OLLAMA_SERVERS[request.server]
-    ollama_url = server_info["url"]
-
-    logging.info(f"Server: {server_info['name']} ({ollama_url})")
-    logging.info(f"Model: {request.model}")
-
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            f"{ollama_url}/api/generate",
-            json={"model": request.model, "prompt": request.prompt, "stream": False},
-        )
-
-        logging.info(f"Response Status Code: {response}")
-
-        if response.status_code == 200:
-            result = response.json()
-            return ResponseBuilder.success(data=result)
-
-
-# @router.get("/models")
-# async def get_supported_models():
-#     """지원하는 언어 목록 조회"""
-#     languages = [
-#         {"code": "korean", "name": "한국어"},
-#         {"code": "english", "name": "영어"},
-#         {"code": "chinese", "name": "중국어"},
-#         {"code": "japanese", "name": "일본어"},
-#     ]
-
-#     return ResponseBuilder.success(data={"languages": languages}, message="지원 언어 목록")
+@router.get("/health")
+async def health_check(
+    ocr_service: OCRService = Depends(get_ocr_service),
+):
+    """헬스 체크"""
+    return ResponseBuilder.success(
+        data={"status": "healthy"}, message="OCR 서비스 정상"
+    )

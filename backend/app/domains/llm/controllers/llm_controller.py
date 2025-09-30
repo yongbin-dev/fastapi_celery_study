@@ -1,5 +1,5 @@
 # app/domains/llm/controllers/llm_controller.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.core.logging import get_logger
 from ..schemas import (
     LLMPredictRequest,
@@ -8,6 +8,7 @@ from ..schemas import (
     LLMChatResponse,
 )
 from ..tasks.llm_tasks import generate_text_task, chat_task
+from ..services import LLMModel, get_llm_model, LLMService, get_llm_service
 from app.schemas.common import ApiResponse
 from app.utils.response_builder import ResponseBuilder
 
@@ -24,6 +25,26 @@ OLLAMA_SERVERS = {
 
 # 두 서버 모두 동일한 모델 보유
 AVAILABLE_MODELS = ["qwen2.5vl:7b-q8_0", "qwen3:32b", "mistral-small3.2:24b"]
+
+
+@router.get("/")
+async def ocr_healthy():
+    """사용 가능한 LLM 모델 목록 조회"""
+
+    return ResponseBuilder.success(
+        data={"success"},
+        message=f"",
+    )
+
+
+@router.get("/models")
+async def get_available_models():
+    """사용 가능한 LLM 모델 목록 조회"""
+
+    return ResponseBuilder.success(
+        data={"servers": OLLAMA_SERVERS, "available_models": AVAILABLE_MODELS},
+        message=f"",
+    )
 
 
 @router.post("/generate", response_model=ApiResponse[LLMPredictResponse])
@@ -51,7 +72,7 @@ async def generate_text(request: LLMPredictRequest):
 
 
 @router.post("/chat", response_model=ApiResponse[LLMChatResponse])
-async def chat(request: LLMChatRequest):
+async def chat(request: LLMChatRequest, model: LLMModel = Depends(get_llm_model)):
     """
     LLM 채팅 API
 
@@ -61,12 +82,6 @@ async def chat(request: LLMChatRequest):
     - **max_length**: 최대 응답 길이
     """
     try:
-        # 동기 실행 (즉시 응답)
-        from ..services.llm_model import LLMModel
-
-        model = LLMModel()
-        model.load_model()
-
         result = model.predict(
             {"message": request.message, "max_length": request.max_length}
         )
@@ -85,13 +100,3 @@ async def chat(request: LLMChatRequest):
     except Exception as e:
         logger.error(f"LLM 채팅 API 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/models")
-async def get_available_models():
-    """사용 가능한 LLM 모델 목록 조회"""
-
-    return ResponseBuilder.success(
-        data={"servers": OLLAMA_SERVERS, "available_models": AVAILABLE_MODELS},
-        message=f"",
-    )

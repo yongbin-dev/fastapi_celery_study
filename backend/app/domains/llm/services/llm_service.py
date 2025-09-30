@@ -22,3 +22,10 @@ class LLMService(BaseService):
         if "message" in input_data:
             input_data["message"] = input_data["message"].strip()
         return input_data
+
+
+llm_service = LLMService()
+
+
+def get_llm_service():
+    return llm_service

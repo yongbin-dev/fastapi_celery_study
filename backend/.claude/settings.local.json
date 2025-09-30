@@ -17,7 +17,11 @@
       "Bash(rmdir:*)",
       "Bash(tree:*)",
       "Bash(uv:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Read(//Users/aipim/yb/python/models/**)",
+      "Bash(cat:*)",
+      "Read(//Applications/**)",
+      "Bash(/Applications/Python 3.12/Install Certificates.command)"
     ],
     "deny": [],
     "ask": []

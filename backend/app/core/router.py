@@ -15,6 +15,7 @@ for _, domain_name, _ in pkgutil.iter_modules(app.domains.__path__):
         controller_module = import_module(
             f"app.domains.{domain_name}.controllers.{domain_name}_controller"
         )
+
         api_router.include_router(
             controller_module.router,
             tags=[domain_name.upper()],
@@ -25,7 +26,10 @@ for _, domain_name, _ in pkgutil.iter_modules(app.domains.__path__):
 
 # 2. 오케스트레이션 컨트롤러 등록 (pipeline_controller)
 try:
-    from app.orchestration.controllers.pipeline_controller import router as pipeline_router
+    from app.orchestration.controllers.pipeline_controller import (
+        router as pipeline_router,
+    )
+
     api_router.include_router(pipeline_router, tags=["Orchestration"])
     logger.info("✅ Loaded orchestration controller: pipeline")
 except (ImportError, AttributeError) as e:
