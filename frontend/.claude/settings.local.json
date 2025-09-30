@@ -6,7 +6,10 @@
       "Bash(npm install:*)",
       "Bash(npx tailwindcss init:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor(frontend): API 엔드포인트 경로 변경 및 코드 정리\n\n- LLM 관련 API 경로를 /pipelines에서 /llm으로 변경\n- import 순서 정리 (외부 라이브러리 -> 내부 모듈)\n- TaskPage에서 사용하지 않는 TaskApiTab 제거\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs(claude): commit 가이드에 push 단계 추가 및 권한 설정 업데이트\n\n- commit.md에 원격저장소 push 단계 추가\n- 루트 settings.local.json에 리팩토링 커밋 권한 추가\n- frontend settings.local.json에 프론트엔드 리팩토링 커밋 권한 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
