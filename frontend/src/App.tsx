@@ -24,7 +24,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/tasks" element={<TaskPage />} />
+              <Route path="/pipelines" element={<TaskPage />} />
             </Routes>
           </main>
         </div>

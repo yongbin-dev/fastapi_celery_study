@@ -218,7 +218,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             <div className="bg-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
               <div className="text-gray-600">curl 명령어:</div>
               <div className="mt-1">
-                curl -X POST "http://localhost:8000/api/v1/tasks/ai-pipeline" \<br />
+                curl -X POST "http://localhost:8000/api/v1/pipelines/ai-pipeline" \<br />
                 &nbsp;&nbsp;-H "Content-Type: application/json" \<br />
                 &nbsp;&nbsp;-d '&#123;"text": "분석할 텍스트", "options": &#123;"model": "bert"&#125;&#125;'
               </div>
@@ -273,7 +273,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             <div className="bg-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
               <div className="text-gray-600">curl 명령어:</div>
               <div className="mt-1">
-                curl "http://localhost:8000/api/v1/tasks/ai-pipeline/&#123;pipeline_id&#125;/status"
+                curl "http://localhost:8000/api/v1/pipelines/ai-pipeline/&#123;pipeline_id&#125;/status"
               </div>
             </div>
           </div>
@@ -296,7 +296,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             <div className="bg-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
               <div className="text-gray-600">curl 명령어:</div>
               <div className="mt-1">
-                curl -X DELETE "http://localhost:8000/api/v1/tasks/ai-pipeline/&#123;pipeline_id&#125;/cancel"
+                curl -X DELETE "http://localhost:8000/api/v1/pipelines/ai-pipeline/&#123;pipeline_id&#125;/cancel"
               </div>
             </div>
           </div>
