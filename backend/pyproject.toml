@@ -2,7 +2,7 @@
 name = "fastapi-celery-multi-domain"
 version = "0.2.0"
 description = "팀별 도메인 기반 FastAPI + Celery 마이크로서비스"
-authors = [{name = "albin", email = "ybkim@aipim.io"}]
+authors = [{name = "yb", email = "dydqls5757@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 
@@ -100,19 +100,25 @@ select = [
     "N",   # pep8-naming
     "W",   # pycodestyle warnings
 ]
-ignore = ["E501"]  # line too long (Black이 처리)
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
-# ===== 타입 검사 설정 =====
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-ignore_missing_imports = true
+[tool.pyright]
+typeCheckingMode = "basic"  # 또는 "standard", "strict"
+pythonVersion = "3.12"
+include = ["app"]
+exclude = [
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    "__pycache__",
+    "migrations",
+]
+reportMissingImports = true
+reportMissingTypeStubs = false
+
 
 # ===== 테스트 설정 =====
 [tool.pytest.ini_options]
@@ -132,7 +138,6 @@ markers = [
     "integration: marks tests as integration tests",
     "domain_llm: LLM 도메인 테스트",
     "domain_ocr: OCR 도메인 테스트",
-    "domain_vision: Vision 도메인 테스트",
 ]
 
 

@@ -4,7 +4,6 @@
   "python.terminal.activateEnvironment": true,
 
   // Pylance 설정
-  // "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
   // "python.analysis.autoSearchPaths": true,
   "python.analysis.diagnosticMode": "workspace",
@@ -22,7 +21,7 @@
     }
   },
 
-  // 파일 제외 설정
+  // // 파일 제외 설정
   "files.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true,
