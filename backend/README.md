@@ -1,110 +1,102 @@
-# FastAPI & Celery 백엔드 프로젝트
+## 일반적인 개발 명령어
 
-이 프로젝트는 FastAPI를 웹 프레임워크로, Celery를 비동기 작업 처리용으로 사용하는 백엔드 서비스입니다. SQLAlchemy를 통해 데이터베이스와 상호작용하며, Docker를 통해 개발 환경을 쉽게 구성할 수 있습니다.
+### 환경 설정
 
-## ✨ 주요 기능
+- **개발 환경**: `uv sync --extra dev` - 개발 의존성 포함 설치
+- **운영 환경**: `uv sync --extra prod` - 운영 의존성 포함 설치
+- **LLM 도메인**: `uv sync --extra llm` - LLM 관련 의존성 설치
+- **OCR 도메인**: `uv sync --extra ocr` - OCR 관련 의존성 설치
+- **Vision 도메인**: `uv sync --extra vision` - Vision 관련 의존성 설치
+- **Docker**: `docker-compose up` - 모든 서비스 시작 (app, Redis, Celery worker, Flower)
 
-- **FastAPI 기반 API**: 현대적이고 빠른 웹 API 프레임워크 사용
-- **Celery 비동기 작업**: Redis를 메시지 브로커로 사용하여 오래 걸리는 작업을 백그라운드에서 처리
-- **SQLAlchemy ORM**: PostgreSQL 데이터베이스와의 효율적인 통신
-- **Alembic 데이터베이스 마이그레이션**: 데이터베이스 스키마 변경 관리
-- **Docker Compose**: 개발에 필요한 서비스(PostgreSQL, Redis)를 컨테이너화하여 실행
-- **환경 변수 기반 설정**: `.env` 파일을 통해 주요 설정 관리
+### 개발
 
-## 🛠️ 기술 스택
+- **로컬 실행**: `uv run python -m app.main` 또는 `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 5050`
+- **환경별 실행**: `ENVIRONMENT=production uv run python -m app.main`
+- **Celery Worker**: `uv run celery -A app.core.celery_app worker --loglevel=info --logfile=logs/celery_worker_$(date +%Y-%m-%d).log`
+- **Flower (Celery 모니터링)**: `uv run celery -A app.core.celery_app flower --port=5555`
 
-- **언어**: Python 3.12+
-- **웹 프레임워크**: FastAPI
-- **비동기 작업**: Celery
-- **데이터베이스**: PostgreSQL
-- **ORM**: SQLAlchemy, Alembic
-- **메시지 브로커**: Redis
-- **서버**: Uvicorn
-- **의존성 관리**: Poetry
-- **컨테이너**: Docker
+### 코드 품질
 
-## 🚀 시작하기
+- **포맷팅**: `uv run black .` - 코드 포맷팅
+- **린트**: `uv run flake8` - 코드 린트
+- **타입 검사**: `uv run mypy .` - 정적 타입 검사
+- **테스트**: `uv run pytest` - 모든 테스트 실행
+- **개별 테스트**: `uv run pytest tests/test_specific.py` - 특정 테스트 파일 실행
 
-### 1. 환경 변수 설정
+### Docker 작업
 
-`.env.development` 파일을 복사하여 `.env` 파일을 생성합니다. 이 파일에는 데이터베이스 연결 정보 등 주요 환경 변수가 포함되어 있습니다.
+- **빌드**: `docker-compose build`
+- **서비스 시작**: `docker-compose up -d`
+- **로그 확인**: `docker-compose logs -f app`
+- **중지**: `docker-compose down`
 
-```bash
-cp .env.development .env
-```
+## 아키텍처 개요
 
-### 2. 의존성 설치
+백그라운드 작업 처리를 위한 Celery가 포함된 FastAPI 기반 마이크로서비스입니다:
 
-Poetry를 사용하여 Python 의존성을 설치합니다.
+### 주요 구성 요소
 
-```bash
-poetry install
-```
+- **응답 시스템**: 모든 엔드포인트에서 일관된 JSON 응답을 위해 `ResponseBuilder` 사용
+- **환경 설정**: 다중 환경 지원 (.env.development, .env.production, .env.staging)
+- **Celery 통합**: Redis를 브로커로 하는 백그라운드 작업 처리
+- **Docker 다중 서비스**: App, Redis, Celery worker, Flower 모니터링
 
-### 3. Docker 서비스 실행
+### 서비스 아키텍처
 
-개발에 필요한 PostgreSQL 데이터베이스와 Redis를 Docker Compose로 실행합니다.
+- **FastAPI App** (포트 5050): 메인 API 서버
+- **Redis** (포트 6379): 메시지 브로커 및 결과 백엔드
+- **Celery Worker**: 백그라운드 작업 처리기
+- **Flower** (포트 5555): Celery 작업 모니터링 UI
 
-```bash
-docker-compose up -d
-```
+### AI/ML 통합
 
-### 4. 데이터베이스 마이그레이션
+- 모델 관리를 위한 Transformers 및 HuggingFace Hub 사용
+- PyTorch: 개발환경은 CPU, 운영환경은 CUDA 지원
+- `app/services/ai/`에서 모델 서비스 추상화
 
-Alembic을 사용하여 데이터베이스 스키마를 최신 상태로 업데이트합니다.
+## 환경 설정
 
-```bash
-poetry run alembic upgrade head
-```
+애플리케이션은 환경별 .env 파일을 통해 다중 환경을 지원합니다:
 
-### 5. 애플리케이션 실행
+- `.env.development` (기본값)
+- `.env.production`
+- `.env.staging`
 
-Uvicorn을 사용하여 FastAPI 개발 서버를 실행하고, 별도의 터미널에서 Celery 워커를 실행합니다.
+설정을 전환하려면 `ENVIRONMENT` 변수를 설정하세요.
 
-- **FastAPI 서버 실행:**
-  ```bash
-  poetry run uvicorn run:app --reload --host 0.0.0.0 --port 8000
-  ```
+## 패키지 관리 (uv)
 
-- **Celery 워커 실행:**
-  ```bash
-  poetry run celery -A celery_worker.worker worker --loglevel=info
-  ```
+이 프로젝트는 **uv**를 사용하여 패키지를 관리합니다.
 
-이제 다음 주소에서 API 서버에 접속할 수 있습니다:
-- **API 문서 (Swagger UI)**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **대체 API 문서 (ReDoc)**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-## ✅ 테스트
-
-`pytest`를 사용하여 프로젝트의 테스트를 실행할 수 있습니다.
+### uv 설치
 
 ```bash
-poetry run pytest
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-## 📁 프로젝트 구조
+### 의존성 설치
 
+```bash
+# 기본 의존성만 설치
+uv sync
+
+# 개발 의존성 포함
+uv sync --extra dev
+
+# 여러 그룹 동시 설치
+uv sync --extra dev --extra llm --extra ocr
 ```
-backend_fastapi/
-├── app/                      # 📱 애플리케이션 소스 코드
-│   ├── api/                  # 🚀 API 엔드포인트 라우터
-│   ├── core/                 # ⚙️ 핵심 설정 (FastAPI, Celery, DB 등)
-│   ├── crud/                 # 🗄️ 데이터베이스 CRUD 연산
-│   ├── exceptions/           # 🚨 사용자 정의 예외
-│   ├── handlers/             # ✋ 예외 핸들러
-│   ├── middleware/           # 🔄 미들웨어
-│   ├── models/               # 🏗️ SQLAlchemy 모델
-│   ├── schemas/              # 📋 Pydantic 스키마
-│   ├── security/             # 🔐 보안 관련 로직
-│   ├── services/             # 💼 비즈니스 로직
-│   └── utils/                # 🛠️ 유틸리티 함수
-├── tests/                    # 🧪 테스트 코드
-├── migrations/               # 📊 데이터베이스 마이그레이션 (Alembic)
-├── .env.development          # 🌱 개발 환경 변수 예시
-├── celery_worker.py          # 👷 Celery 워커 엔트리포인트
-├── docker-compose.yml        # 🐳 Docker 서비스 정의
-├── poetry.lock               # 🔒 의존성 잠금 파일
-├── pyproject.toml            # 📦 Poetry 의존성 및 프로젝트 설정
-└── README.md                 # 📖 이 파일
+
+### 새 패키지 추가
+
+```bash
+# 기본 의존성에 추가
+uv add fastapi
+
+# 개발 의존성에 추가
+uv add --dev pytest
+
+# 특정 그룹에 추가
+uv add --optional llm transformers
 ```
