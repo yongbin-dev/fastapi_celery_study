@@ -1,68 +1,51 @@
-# 커밋 명령어
+# git commit 명령어 가이드
 
-이 명령어는 완전한 git 커밋 워크플로우를 수행합니다: 모든 파일을 추가하고, 커밋 메시지를 생성하며, 변경사항을 커밋합니다.
+Git에서 변경사항을 기록하는 핵심적인 명령어입니다. 커밋은 특정 시점의 프로젝트 스냅샷이라고 할 수 있습니다.
 
-## 사용법
-```
-/commit [선택적 커밋 메시지]
-```
+### 커밋 기본 프로세스
 
-## 예시
-```
-/commit
-/commit "feat: 새로운 사용자 인증 기능 추가"
-```
+1.  **변경사항 스테이징 (Staging):**
 
-## Implementation
-```bash
-#!/bin/bash
+    - 커밋할 파일들을 먼저 스테이징 영역에 추가해야 합니다.
+    - `git add <파일_이름>`: 특정 파일만 추가
+    - `git add .` 또는 `git add *`: 현재 디렉토리의 모든 변경사항 추가
 
-# Get optional commit message from arguments
-COMMIT_MSG="$*"
+2.  **상태 확인:**
 
-# Add all files
-echo "Adding all files to staging..."
-git add .
+    - 커밋하기 전에 어떤 파일이 스테이징되었는지 확인하는 것이 좋습니다.
+    - `git status`: 현재 Git 상태를 보여줍니다.
+    - `git diff --staged`: 스테이징된 변경사항의 내용을 구체적으로 보여줍니다.
 
-# Check if there are any changes to commit
-if git diff --cached --quiet; then
-    echo "No changes to commit."
-    exit 0
-fi
+3.  **커밋 메시지 작성 및 커밋:**
+    - `git commit -m "여기에 커밋 메시지 작성"`
+    - `-m` 옵션은 커밋 메시지를 인라인으로 바로 작성할 때 사용합니다.
+    - 옵션 없이 `git commit`만 실행하면 텍스트 편집기가 열려 더 긴 메시지를 작성할 수 있습니다.
 
-# If no commit message provided, generate one based on changes
-if [ -z "$COMMIT_MSG" ]; then
-    echo "Generating commit message based on changes..."
+### 좋은 커밋 메시지 작성법 (컨벤셔널 커밋 형식)
 
-    # Get status and diff for message generation
-    STATUS=$(git status --porcelain)
-    DIFF=$(git diff --cached --name-only | head -10)
+커밋 히스토리를 명확하게 관리하기 위해 일관된 형식을 따르는 것이 중요합니다.
 
-    # Simple commit message generation based on file patterns
-    if echo "$STATUS" | grep -q "^A"; then
-        COMMIT_MSG="feat: 새로운 파일 및 기능 추가"
-    elif echo "$STATUS" | grep -q "^M.*\.py$"; then
-        COMMIT_MSG="update: Python 파일 수정"
-    elif echo "$STATUS" | grep -q "^M.*\.(js|ts|tsx)$"; then
-        COMMIT_MSG="update: JavaScript/TypeScript 파일 수정"
-    elif echo "$STATUS" | grep -q "^M.*\.md$"; then
-        COMMIT_MSG="docs: 문서 업데이트"
-    elif echo "$STATUS" | grep -q "^D"; then
-        COMMIT_MSG="remove: 파일 삭제"
-    else
-        COMMIT_MSG="update: 일반적인 코드 변경사항"
-    fi
-fi
+**형식:** `<타입>(<범위>): <제목>`
 
-# Perform the commit
-echo "Committing with message: $COMMIT_MSG"
-git commit -m "$COMMIT_MSG
+- **타입 (Type):**
 
-> Generated with [Claude Code](https://claude.ai/code)
+  - `feat`: 새로운 기능 추가
+  - `fix`: 버그 수정
+  - `docs`: 문서 변경
+  - `style`: 코드 포맷팅, 세미콜론 누락 등 (코드 로직 변경 없음)
+  - `refactor`: 코드 리팩토링
+  - `test`: 테스트 코드 추가 또는 수정
+  - `chore`: 빌드 프로세스, 패키지 매니저 설정 등 (프로덕션 코드 변경 없음)
 
-Co-Authored-By: Claude <noreply@anthropic.com>"
+- **범위 (Scope):** (선택사항)
 
-# Show the result
-echo "Commit completed successfully!"
-git log --oneline -1
-```
+  - 커밋이 영향을 미치는 부분 (예: `api`, `db`, `ui`)
+
+- **제목 (Subject):**
+  - 변경사항을 요약하는 간결한 설명
+  - 현재형으로, 첫 글자는 대문자로, 문장 끝에 마침표는 찍지 않습니다.
+
+**예시:**
+`feat(auth): 소셜 로그인 기능 추가`
+`fix(api): 유저 조회 시 발생하는 버그 수정`
+`docs: README.md 파일에 설치 방법 업데이트`
