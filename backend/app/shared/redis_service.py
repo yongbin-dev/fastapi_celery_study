@@ -60,7 +60,7 @@ class RedisService:
         try:
             redis_client = self.get_redis_client()
 
-            from app.pipeline_config import STAGES
+            from app.shared.config.pipeline_config import STAGES
 
             stages = []
             for stage_config in STAGES:

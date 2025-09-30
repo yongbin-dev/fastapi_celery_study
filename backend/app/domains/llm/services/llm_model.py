@@ -29,27 +29,29 @@ class LLMModel(BaseModel):
         if not self.is_loaded:
             return {"error": "Model not loaded", "status": "failed"}
 
-        message = input_data.get("message", "")
-        max_length = input_data.get("max_length", 100)
+        return {"response": "", "status": "success"}
 
-        try:
-            # 토큰화
-            inputs = self.tokenizer.encode(message, return_tensors="pt")
+        # message = input_data.get("message", "")
+        # max_length = input_data.get("max_length", 100)
 
-            # 생성
-            with torch.no_grad():
-                outputs = self.model.generate(
-                    inputs,
-                    max_length=max_length,
-                    temperature=0.7,
-                    pad_token_id=self.tokenizer.eos_token_id,
-                    do_sample=True,
-                )
+        # try:
+        #     # 토큰화
+        #     inputs = self.tokenizer.encode(message, return_tensors="pt")
 
-            # 디코딩
-            response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        #     # 생성
+        #     with torch.no_grad():
+        #         outputs = self.model.generate(
+        #             inputs,
+        #             max_length=max_length,
+        #             temperature=0.7,
+        #             pad_token_id=self.tokenizer.eos_token_id,
+        #             do_sample=True,
+        #         )
 
-            return {"response": response, "status": "success"}
+        #     # 디코딩
+        #     response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        except Exception as e:
-            return {"error": str(e), "status": "failed"}
+        #     return {"response": response, "status": "success"}
+
+        # except Exception as e:
+        #     return {"error": str(e), "status": "failed"}

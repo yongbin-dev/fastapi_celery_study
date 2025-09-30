@@ -8,22 +8,25 @@
 ## 일반적인 개발 명령어
 
 ### 환경 설정
-- **개발 환경 (CPU)**: `poetry install` - 기본 의존성 설치 (PyTorch CPU 버전)
-- **운영 환경 (GPU)**: `poetry install --with prod` - CUDA 지원 PyTorch 포함 설치
+- **개발 환경**: `uv sync --extra dev` - 개발 의존성 포함 설치
+- **운영 환경**: `uv sync --extra prod` - 운영 의존성 포함 설치
+- **LLM 도메인**: `uv sync --extra llm` - LLM 관련 의존성 설치
+- **OCR 도메인**: `uv sync --extra ocr` - OCR 관련 의존성 설치
+- **Vision 도메인**: `uv sync --extra vision` - Vision 관련 의존성 설치
 - **Docker**: `docker-compose up` - 모든 서비스 시작 (app, Redis, Celery worker, Flower)
 
 ### 개발
-- **로컬 실행**: `python -m app.main` 또는 `uvicorn app.main:app --reload --host 0.0.0.0 --port 5050`
-- **환경별 실행**: `ENVIRONMENT=production python -m app.main`
-- **Celery Worker**: `python -m celery -A app.core.celery_app worker --loglevel=info --logfile=logs/celery_worker_$(date +%Y-%m-%d).log`
-- **Flower (Celery 모니터링)**: `python -m celery -A app.core.celery_app flower --port=5555`
+- **로컬 실행**: `uv run python -m app.main` 또는 `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 5050`
+- **환경별 실행**: `ENVIRONMENT=production uv run python -m app.main`
+- **Celery Worker**: `uv run celery -A app.core.celery_app worker --loglevel=info --logfile=logs/celery_worker_$(date +%Y-%m-%d).log`
+- **Flower (Celery 모니터링)**: `uv run celery -A app.core.celery_app flower --port=5555`
 
 ### 코드 품질
-- **포맷팅**: `black .` - 코드 포맷팅
-- **린트**: `flake8` - 코드 린트
-- **타입 검사**: `mypy .` - 정적 타입 검사
-- **테스트**: `pytest` - 모든 테스트 실행
-- **개별 테스트**: `pytest tests/test_specific.py` - 특정 테스트 파일 실행
+- **포맷팅**: `uv run black .` - 코드 포맷팅
+- **린트**: `uv run flake8` - 코드 린트
+- **타입 검사**: `uv run mypy .` - 정적 타입 검사
+- **테스트**: `uv run pytest` - 모든 테스트 실행
+- **개별 테스트**: `uv run pytest tests/test_specific.py` - 특정 테스트 파일 실행
 
 ### Docker 작업
 - **빌드**: `docker-compose build`
@@ -65,32 +68,52 @@
 
 애플리케이션은 환경별 .env 파일을 통해 다중 환경을 지원합니다:
 - `.env.development` (기본값)
-- `.env.production` 
+- `.env.production`
 - `.env.staging`
 
 설정을 전환하려면 `ENVIRONMENT` 변수를 설정하세요.
 
-## PyTorch 환경별 설치
+## 패키지 관리 (uv)
 
-### 개발 환경 (CPU 전용)
+이 프로젝트는 **uv**를 사용하여 패키지를 관리합니다.
+
+### uv 설치
 ```bash
-poetry install
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
-- 기본적으로 CPU 버전의 PyTorch가 설치됩니다
-- macOS, 로컬 개발에 적합
 
-### 운영 환경 (CUDA 지원)
+### 의존성 설치
 ```bash
-# 기본 의존성 설치
-poetry install --with prod
+# 기본 의존성만 설치
+uv sync
 
-# CUDA 버전 PyTorch 별도 설치
-poetry run pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# 개발 의존성 포함
+uv sync --extra dev
+
+# 여러 그룹 동시 설치
+uv sync --extra dev --extra llm --extra ocr
 ```
-- 기본 의존성 설치 후 CUDA 지원 PyTorch를 별도로 설치합니다
-- 운영 서버, GPU 가속이 필요한 환경에 적합
+
+### PyTorch 설치
+- PyTorch는 기본적으로 포함되어 있지만, CUDA 버전이 필요한 경우:
+```bash
+# CUDA 지원 PyTorch 설치
+uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+
+### 새 패키지 추가
+```bash
+# 기본 의존성에 추가
+uv add fastapi
+
+# 개발 의존성에 추가
+uv add --dev pytest
+
+# 특정 그룹에 추가
+uv add --optional llm transformers
+```
 
 ### 주의사항
-- 운영 환경에서는 CUDA 호환 GPU와 적절한 CUDA 드라이버가 설치되어 있어야 합니다
-- CUDA 버전에 맞는 PyTorch 인덱스 URL을 사용하세요 (cu118, cu121 등)
-- poetry.lock 파일은 개발 환경(CPU) 기준으로 관리됩니다
+- `uv.lock` 파일은 git에 커밋되어야 합니다
+- 의존성 변경 시 `uv sync`를 실행하여 동기화하세요
+- `uv run` 명령어로 가상환경 내 명령어를 실행할 수 있습니다

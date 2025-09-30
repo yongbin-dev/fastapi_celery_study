@@ -16,4 +16,4 @@ set +a
 export ENVIRONMENT=development
 
 echo "🚀 FastAPI 개발 서버 시작..."
-exec poetry run uvicorn app.main:app --reload --host ${HOST:-0.0.0.0} --port ${PORT:-5050}
+exec uv run uvicorn app.main:app --reload --host ${HOST:-0.0.0.0} --port ${PORT:-5050}

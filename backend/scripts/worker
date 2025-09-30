@@ -6,4 +6,4 @@ source .env.development
 set +a
 
 echo "👷 Celery Worker 시작..."
-exec poetry run celery -A app.celery_app worker --loglevel=INFO
+exec uv run celery -A app.celery_app worker --loglevel=INFO

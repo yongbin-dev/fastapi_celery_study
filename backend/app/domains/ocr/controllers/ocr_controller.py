@@ -47,4 +47,55 @@ async def get_supported_languages():
         {"code": "japanese", "name": "일본어"},
     ]
 
-    return ResponseBuilder.success(data={"languages": languages}, message="지원 언어 목록")
+    return ResponseBuilder.success(
+        data={"languages": languages}, message="지원 언어 목록"
+    )
+
+    # @router.post("/predict")
+    # async def predict(request: PredictRequest):
+    if request.server not in OLLAMA_SERVERS:
+        return {
+            "message": f"지원하지 않는 서버: {request.server}",
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "data": {"available_servers": list(OLLAMA_SERVERS.keys())},
+        }
+
+    if request.model not in AVAILABLE_MODELS:
+        return {
+            "message": f"지원하지 않는 모델: {request.model}",
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "data": {"available_models": AVAILABLE_MODELS},
+        }
+
+    server_info = OLLAMA_SERVERS[request.server]
+    ollama_url = server_info["url"]
+
+    logging.info(f"Server: {server_info['name']} ({ollama_url})")
+    logging.info(f"Model: {request.model}")
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        response = await client.post(
+            f"{ollama_url}/api/generate",
+            json={"model": request.model, "prompt": request.prompt, "stream": False},
+        )
+
+        logging.info(f"Response Status Code: {response}")
+
+        if response.status_code == 200:
+            result = response.json()
+            return ResponseBuilder.success(data=result)
+
+
+# @router.get("/models")
+# async def get_supported_models():
+#     """지원하는 언어 목록 조회"""
+#     languages = [
+#         {"code": "korean", "name": "한국어"},
+#         {"code": "english", "name": "영어"},
+#         {"code": "chinese", "name": "중국어"},
+#         {"code": "japanese", "name": "일본어"},
+#     ]
+
+#     return ResponseBuilder.success(data={"languages": languages}, message="지원 언어 목록")

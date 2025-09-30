@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 from app.celery_app import celery_app
 from app.core.exceptions import TaskValidationError
 from app.core.logging import get_logger
-from app.pipeline_config import STAGES
+from app.shared.config.pipeline_config import STAGES
 from app.schemas.enums import ProcessStatus
 from app.core.celery.task_decorators import (
     task_logger,
