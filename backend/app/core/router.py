@@ -12,6 +12,7 @@ api_router = APIRouter()
 # 1. 도메인 컨트롤러 자동 검색 및 등록
 for _, domain_name, _ in pkgutil.iter_modules(app.domains.__path__):
     try:
+        
         controller_module = import_module(
             f"app.domains.{domain_name}.controllers.{domain_name}_controller"
         )
