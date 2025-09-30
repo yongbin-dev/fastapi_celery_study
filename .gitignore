@@ -66,3 +66,4 @@ yarn-error.log*
 # Environment variables
 .env.*
 !.env.example
+!.env.example_prod
