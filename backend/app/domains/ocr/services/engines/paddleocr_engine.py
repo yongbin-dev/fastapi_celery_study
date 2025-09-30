@@ -1,7 +1,7 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
-from typing import Dict, Any
 from .base import BaseOCREngine
 from app.core.logging import get_logger
+from ...schemas import OCRResultDTO, TextBoxDTO
 import traceback
 import cv2
 import numpy as np
@@ -52,10 +52,15 @@ class PaddleOCREngine(BaseOCREngine):
             logger.error(f"Traceback: {traceback.format_exc()}")
             self.is_loaded = False
 
-    def predict(self, image_data: bytes, confidence_threshold: float) -> Dict[str, Any]:
+    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
         """PaddleOCR 예측"""
         if not self.is_loaded or self.model is None:
-            return {"error": "Model not loaded", "status": "failed"}
+            return OCRResultDTO(
+                text_boxes=[],
+                full_text="",
+                status="failed",
+                error="Model not loaded"
+            )
 
         try:
             logger.info(f"PaddleOCR 실행 시작")
@@ -79,24 +84,29 @@ class PaddleOCREngine(BaseOCREngine):
                         # numpy 배열을 Python 리스트로 변환
                         bbox_list = [[float(x), float(y)] for x, y in bbox]
                         text_boxes.append(
-                            {
-                                "text": text,
-                                "confidence": float(confidence),
-                                "bbox": bbox_list,
-                            }
+                            TextBoxDTO(
+                                text=text,
+                                confidence=float(confidence),
+                                bbox=bbox_list,
+                            )
                         )
 
-            full_text = " ".join([box["text"] for box in text_boxes])
+            full_text = " ".join([box.text for box in text_boxes])
 
             logger.info(f"PaddleOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
-            return {
-                "text_boxes": text_boxes,
-                "full_text": full_text,
-                "status": "success",
-            }
+            return OCRResultDTO(
+                text_boxes=text_boxes,
+                full_text=full_text,
+                status="success"
+            )
 
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            return {"error": str(e), "status": "failed"}
+            return OCRResultDTO(
+                text_boxes=[],
+                full_text="",
+                status="failed",
+                error=str(e)
+            )

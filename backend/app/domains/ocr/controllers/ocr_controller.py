@@ -1,10 +1,8 @@
 # app/domains/ocr/controllers/ocr_controller.py
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.core.logging import get_logger
-from ..schemas import OCRExtractResponse
 # from ..tasks.ocr_tasks import extract_text_task
 from ..services import OCRService, get_ocr_service
-from app.schemas.common import ApiResponse
 from app.utils.response_builder import ResponseBuilder
 
 logger = get_logger(__name__)
@@ -50,7 +48,7 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 #         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/extract/sync", response_model=ApiResponse[dict])
+@router.post("/extract/sync")
 async def extract_text_sync(
     image_file: UploadFile = File(...),
     language: str = Form("korean"),
@@ -66,8 +64,8 @@ async def extract_text_sync(
     - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
     - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
     """
-    
-        # 이미지 파일 읽기
+
+    # 이미지 파일 읽기
     image_data = await image_file.read()
 
     # Service를 통한 동기 처리
@@ -78,10 +76,10 @@ async def extract_text_sync(
         use_angle_cls=use_angle_cls,
     )
 
-    # if result.get("status") == "failed":
-    #     raise HTTPException(status_code=400, detail=result.get("error"))
+    if result.status == "failed":
+        raise HTTPException(status_code=400, detail=result.error)
 
-    return ResponseBuilder.success(data=result, message="OCR 텍스트 추출 완료")
+    return ResponseBuilder.success(data=result.model_dump(), message="OCR 텍스트 추출 완료")
 
 
 

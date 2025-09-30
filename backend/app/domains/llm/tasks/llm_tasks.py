@@ -21,22 +21,17 @@ def generate_text_task(self, prompt: str, model_name: str = "microsoft/DialoGPT-
     """
     logger.info(f"LLM 텍스트 생성 시작 - Task ID: {self.request.id}")
 
-    try:
-        model = LLMModel(model_name=model_name)
-        model.load_model()
+    model = LLMModel(model_name=model_name)
+    model.load_model()
 
-        result = model.predict({"message": prompt, "max_length": 100})
+    result = model.predict({"message": prompt, "max_length": 100})
 
-        logger.info(f"LLM 텍스트 생성 완료 - Task ID: {self.request.id}")
-        return result
-
-    except Exception as e:
-        logger.error(f"LLM 텍스트 생성 실패 - Task ID: {self.request.id}, Error: {str(e)}")
-        return {"error": str(e), "status": "failed"}
+    logger.info(f"LLM 텍스트 생성 완료 - Task ID: {self.request.id}")
+    return result
 
 
 @celery_app.task(bind=True, name="llm.chat")
-def chat_task(self, message: str, conversation_id: str = None) -> Dict[str, Any]:
+def chat_task(self, message: str, conversation_id: str = "") -> Dict[str, Any]:
     """
     LLM 채팅 태스크
 
@@ -49,16 +44,11 @@ def chat_task(self, message: str, conversation_id: str = None) -> Dict[str, Any]
     """
     logger.info(f"LLM 채팅 시작 - Task ID: {self.request.id}")
 
-    try:
-        model = LLMModel()
-        model.load_model()
+    model = LLMModel()
+    model.load_model()
 
-        result = model.predict({"message": message, "max_length": 100})
-        result["conversation_id"] = conversation_id
+    result = model.predict({"message": message, "max_length": 100})
+    result["conversation_id"] = conversation_id
 
-        logger.info(f"LLM 채팅 완료 - Task ID: {self.request.id}")
-        return result
-
-    except Exception as e:
-        logger.error(f"LLM 채팅 실패 - Task ID: {self.request.id}, Error: {str(e)}")
-        return {"error": str(e), "status": "failed"}
+    logger.info(f"LLM 채팅 완료 - Task ID: {self.request.id}")
+    return result

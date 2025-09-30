@@ -1,9 +1,10 @@
 # app/domains/ocr/services/ocr_model.py
 from app.shared.base_model import BaseModel
-from typing import Dict, Any, Optional
+from typing import Optional
 from app.core.logging import get_logger
 from app.config import settings
 from .engines import BaseOCREngine, OCREngineFactory
+from ..schemas import OCRResultDTO
 
 logger = get_logger(__name__)
 
@@ -40,10 +41,15 @@ class OCRModel(BaseModel):
         else:
             logger.error(f"{self.engine.get_engine_name()} 엔진 로드 실패")
 
-    def predict(self, image_data: bytes, confidence_threshold: float = 0.5) -> Dict[str, Any]:
+    def predict(self, image_data: bytes, confidence_threshold: float = 0.5) -> OCRResultDTO:
         """OCR 텍스트 추출 실행"""
         if not self.is_loaded or self.engine is None:
-            return {"error": "Model not loaded", "status": "failed"}
+            return OCRResultDTO(
+                text_boxes=[],
+                full_text="",
+                status="failed",
+                error="Model not loaded"
+            )
 
         # 엔진에 위임
         return self.engine.predict(image_data, confidence_threshold)
