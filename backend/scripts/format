@@ -3,7 +3,7 @@
 
 echo "✨ 코드 포맷팅..."
 echo "🖤 Black 실행 중..."
-poetry run black .
+uv run black .
 echo "🔍 Flake8 실행 중..."
-poetry run flake8
+uv run flake8
 echo "✅ 코드 포맷팅 완료!"

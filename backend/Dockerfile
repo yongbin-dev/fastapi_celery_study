@@ -8,20 +8,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Poetry 설치
-RUN pip install poetry
-
-# Poetry 설정 (가상환경 생성 안함)
-RUN poetry config virtualenvs.create false
+# uv 설치
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # 의존성 파일 복사 (캐시 최적화)
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml uv.lock ./
 
 # 의존성 설치 (운영 환경만)
-RUN poetry install --only=main --no-root
-
-# PyTorch CPU 버전 설치 (M1 Mac 호환성)
-RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+RUN uv sync --no-dev --frozen
 
 # 소스코드 복사
 COPY . .

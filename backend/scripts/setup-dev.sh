@@ -109,15 +109,15 @@ main() {
         echo -e "${RED}❌ Python3가 필요합니다. 설치해주세요.${NC}"
         exit 1
     fi
-    
-    # Poetry 확인 및 설치
-    if ! check_command poetry; then
-        echo "📦 Poetry 설치 중..."
-        curl -sSL https://install.python-poetry.org | python3 -
+
+    # uv 확인 및 설치
+    if ! check_command uv; then
+        echo "📦 uv 설치 중..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
         export PATH="$HOME/.local/bin:$PATH"
-        
-        if ! check_command poetry; then
-            echo -e "${RED}❌ Poetry 설치 실패${NC}"
+
+        if ! check_command uv; then
+            echo -e "${RED}❌ uv 설치 실패${NC}"
             exit 1
         fi
     fi
@@ -129,14 +129,15 @@ main() {
     
     # Shell Hook 설정
     setup_shell_hook
-    
-    # Poetry 의존성 설치
-    echo "📚 Poetry 의존성 설치 중..."
-    poetry env use python3
-    poetry install
-    
+
+    # uv 의존성 설치
+    echo "📚 uv 의존성 설치 중..."
+    uv sync --extra dev
+
     # 가상환경 정보 출력
-    echo -e "${GREEN}✅ 가상환경 경로: $(poetry env info --path)${NC}"
+    if [[ -d ".venv" ]]; then
+        echo -e "${GREEN}✅ 가상환경 경로: $(pwd)/.venv${NC}"
+    fi
     
     # .env.development 파일 확인
     if [[ ! -f ".env.development" ]]; then

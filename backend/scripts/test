@@ -2,4 +2,4 @@
 # test - 테스트 실행
 
 echo "🧪 테스트 실행..."
-exec poetry run pytest "$@"
+exec uv run pytest "$@"
