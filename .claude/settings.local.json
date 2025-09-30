@@ -22,7 +22,8 @@
       "mcp__ide__getDiagnostics",
       "Bash(mv:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nchore(config): Claude Code 권한 설정 정리 및 병합 충돌 해결\n\n- 루트 및 backend의 settings.local.json에서 중복된 권한 정의 정리\n- 병합 충돌 마커 제거 및 권한 설정 통합\n- poetry, python, ollama 등 개발 도구 관련 권한 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit -m \"$(cat <<''EOF''\ndocs(claude): commit 명령어 가이드 업데이트 및 권한 추가\n\n- commit.md를 실행 스크립트에서 커밋 가이드 문서로 변경\n- git commit 명령어 사용법 및 컨벤셔널 커밋 형식 설명 추가\n- settings.local.json에 git commit 권한 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs(claude): commit 명령어 가이드 업데이트 및 권한 추가\n\n- commit.md를 실행 스크립트에서 커밋 가이드 문서로 변경\n- git commit 명령어 사용법 및 컨벤셔널 커밋 형식 설명 추가\n- settings.local.json에 git commit 권한 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: 도메인 중심 아키텍처로 프로젝트 구조 재구성\n\n- 기존 v1 API 구조(controllers, services, CRUD) 제거\n- 도메인 기반 아키텍처 도입 (domains, orchestration, repository)\n- 미들웨어 및 로깅 설정 개선\n- 프론트엔드 API 통합 업데이트\n- 아키텍처 개선 문서 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
