@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
-import type { ModelsResponse } from '../types';
 import { api } from '@/shared/utils/api';
+import type { ModelsResponse } from '../types';
 
 // 모델 리스트 조회 API
 const fetchModels = async (): Promise<ModelsResponse> => {
-  const response = await api.get(`/pipelines/models`, {
+  const response = await api.get(`/llm/models`, {
     headers: {
       accept: 'application/json',
     },

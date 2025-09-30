@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  TaskApiTab,
   TaskHistoryTab,
   TaskManagementTab,
   TaskModelsTab
@@ -60,7 +59,8 @@ export const TaskPage: React.FC = () => {
       case 'model':
         return <TaskModelsTab />;
       case 'etc':
-        return <TaskApiTab />;
+        return <></>
+      // return <TaskApiTab />;
       default:
         return null;
     }
