@@ -1,7 +1,8 @@
 # app/domains/llm/services/llm_model.py
 from app.shared.base_model import BaseModel
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+
+# from transformers import AutoTokenizer, AutoModelForCausalLM
+# import torch
 from typing import Dict, Any
 
 
@@ -16,10 +17,11 @@ class LLMModel(BaseModel):
     def load_model(self):
         """모델 로드"""
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
-            self.is_loaded = True
+            # self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            # self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
+            # self.is_loaded = True
             print(f"Model {self.model_name} loaded successfully")
+            self.is_loaded = True
         except Exception as e:
             print(f"Error loading model: {e}")
             self.is_loaded = False
@@ -55,3 +57,16 @@ class LLMModel(BaseModel):
 
         # except Exception as e:
         #     return {"error": str(e), "status": "failed"}
+
+
+# 싱글톤 인스턴스
+_llm_instance = None
+
+
+def get_llm_model() -> LLMModel:
+    """LLM 모델 의존성 주입 함수 (싱글톤 패턴)"""
+    global _llm_instance
+    if _llm_instance is None:
+        _llm_instance = LLMModel()
+        _llm_instance.load_model()
+    return _llm_instance

@@ -1,7 +1,11 @@
 # app/domains/ocr/services/ocr_service.py
 from app.shared.base_service import BaseService
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import os
+from .ocr_model import get_ocr_model, OCRModel
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class OCRService(BaseService):
@@ -9,29 +13,66 @@ class OCRService(BaseService):
 
     def __init__(self):
         super().__init__()
+        self.model: Optional[OCRModel] = None
 
-    def validate_input(self, input_data: Dict[str, Any]) -> bool:
-        """OCR 입력 데이터 검증"""
-        if "image_path" not in input_data:
-            return False
+    def postprocess(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        """후처리: 결과 데이터 정제"""
+        if result.get("status") == "failed":
+            return result
 
-        image_path = input_data["image_path"]
+        # 텍스트 박스 정보 정리
+        if "text_boxes" in result:
+            result["total_boxes"] = len(result["text_boxes"])
+            result["average_confidence"] = (
+                sum(box.get("confidence", 0) for box in result["text_boxes"])
+                / len(result["text_boxes"])
+                if result["text_boxes"]
+                else 0
+            )
 
-        # 파일 존재 확인
-        if not os.path.exists(image_path):
-            return False
+        return result
 
-        # 이미지 파일 확장자 검증
-        valid_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]
-        _, ext = os.path.splitext(image_path)
+    def extract_text_from_image(
+        self,
+        image_data: bytes,
+        language: str = "korean",
+        confidence_threshold: float = 0.5,
+        use_angle_cls: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        OCR 텍스트 추출 메인 메서드
 
-        if ext.lower() not in valid_extensions:
-            return False
+        Args:
+            image_data: 이미지 데이터 (bytes)
+            language: 추출할 언어
+            confidence_threshold: 신뢰도 임계값
+            use_angle_cls: 각도 분류 사용 여부
 
-        return True
+        Returns:
+            추출된 텍스트 결과
+        """
+        try:
+            # 모델 로드 (싱글톤)
+            if self.model is None:
+                self.model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
 
-    def preprocess(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
-        """전처리: 이미지 경로 정규화"""
-        if "image_path" in input_data:
-            input_data["image_path"] = os.path.abspath(input_data["image_path"])
-        return input_data
+            # OCR 실행
+            logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
+            result = self.model.predict(image_data, confidence_threshold)
+
+            # 후처리
+            result = self.postprocess(result)
+
+            logger.info(f"OCR 실행 완료")
+            return result
+
+        except Exception as e:
+            logger.error(f"OCR 실행 중 오류 발생: {str(e)}")
+            return {"error": str(e), "status": "failed"}
+
+
+ocr_service = OCRService()
+
+
+def get_ocr_service() -> OCRService:
+    return ocr_service

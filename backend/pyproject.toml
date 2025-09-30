@@ -25,6 +25,7 @@ dependencies = [
     "httpx>=0.28.1",
     "psutil>=7.0.0",
     "python-json-logger>=2.0.7",
+    "easyocr>=1.7.2",
 ]
 
 [project.optional-dependencies]
@@ -67,6 +68,7 @@ ocr = [
     "opencv-python>=4.9.0",
     "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
+    "easyocr>=1.7.2",
 ]
 
 vision = [

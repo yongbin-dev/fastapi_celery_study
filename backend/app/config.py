@@ -73,7 +73,9 @@ class Settings(BaseSettings):
     # Celery 설정
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
-    CELERY_TASK_MODULES: List[str] = ["app.core.celery.celery_tasks"]  # 동적 태스크 모듈 설정
+    CELERY_TASK_MODULES: List[str] = [
+        "app.core.celery.celery_tasks"
+    ]  # 동적 태스크 모듈 설정
 
     # JWT 인증 설정
     SECRET_KEY: str = "dev-secret-key-change-in-production"
@@ -92,6 +94,9 @@ class Settings(BaseSettings):
     ENABLE_DOCS: bool = True
 
     model_config = {"env_file": get_env_file(), "env_file_encoding": "utf-8"}
+    OCR_ENGINE: str = "easyocr"
+    OCR_DET: str = ""
+    OCR_REC: str = ""
 
 
 # 전역 설정 객체

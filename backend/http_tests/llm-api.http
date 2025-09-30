@@ -1,14 +1,10 @@
 @baseUrl = http://localhost:5050
 
 ### 모델 서비스 - 사용 가능한 모델 조회
-GET {{baseUrl}}/api/v1/ocr/languages
+GET {{baseUrl}}/api/v1/llm
 
 ###
 
- curl -X POST "http://localhost:5050/api/v1/ocr/extract/sync" \
-    -H "Content-Type: application/json" \
-    -d '{"image_path": "/Users/aipim/yb/python/models/images/page_0029.png"}'
-    
 ### 모델 서비스 - 예측 요청
 # POST {{baseUrl}}/api/v1/model/predict
 # Content-Type: application/json
@@ -19,4 +15,4 @@ GET {{baseUrl}}/api/v1/ocr/languages
 #   "prompt": "모델 서비스를 통한 테스트 요청입니다."
 # }
 
-###
+### 
