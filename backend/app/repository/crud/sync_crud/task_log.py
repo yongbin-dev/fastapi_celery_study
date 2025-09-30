@@ -3,12 +3,10 @@
 from datetime import datetime
 from typing import Optional
 
-# from app.schemas.enums import ProcessStatus  # 사용하지 않음
-# TaskLog 스키마가 존재한다면 import, 없다면 dict 사용
-from orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 from sqlalchemy.orm import Session
 
 from app.models.task_log import TaskLog
+from app.orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 
 from .base import CRUDBase
 

@@ -2,8 +2,9 @@
 
 from typing import Any, Dict, Optional
 
-from orchestration.schemas.enums import ProcessStatus
 from pydantic import BaseModel, Field
+
+from app.orchestration.schemas.enums import ProcessStatus
 
 
 class AIPipelineRequest(BaseModel):

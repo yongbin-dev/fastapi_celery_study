@@ -3,9 +3,8 @@
 import time
 from typing import Any, Dict
 
-from orchestration.schemas.enums import ProcessStatus
-
 from app.celery_app import celery_app
+from app.orchestration.schemas.enums import ProcessStatus
 from app.core.celery.task_decorators import (
     create_stage_result,
     task_logger,

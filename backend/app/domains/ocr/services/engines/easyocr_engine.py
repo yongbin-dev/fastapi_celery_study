@@ -18,7 +18,7 @@ class EasyOCREngine(BaseOCREngine):
     def load_model(self) -> None:
         """EasyOCR 모델 로드"""
         try:
-            import easyocr
+            import easyocr  # type: ignore
 
             logger.info("EasyOCR 모델 로딩 시작...")
 
