@@ -14,22 +14,21 @@ class OCRService(BaseService):
         super().__init__()
         self.model: Optional[OCRModel] = None
 
-    def postprocess(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """후처리: 결과 데이터 정제"""
-        if result.get("status") == "failed":
-            return result
+    def validate_input(self, input_data: Dict[str, Any]) -> bool:
+        """LLM 입력 데이터 검증"""
+        if "prompt" not in input_data and "message" not in input_data:
+            return False
+        return True
 
-        # 텍스트 박스 정보 정리
-        if "text_boxes" in result:
-            result["total_boxes"] = len(result["text_boxes"])
-            result["average_confidence"] = (
-                sum(box.get("confidence", 0) for box in result["text_boxes"])
-                / len(result["text_boxes"])
-                if result["text_boxes"]
-                else 0
-            )
+    def preprocess(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """전처리: 프롬프트 정제"""
+        if "prompt" in input_data:
+            input_data["prompt"] = input_data["prompt"].strip()
+        if "message" in input_data:
+            input_data["message"] = input_data["message"].strip()
+        return input_data
 
-        return result
+
 
     def extract_text_from_image(
         self,
@@ -63,7 +62,7 @@ class OCRService(BaseService):
         result = self.postprocess(result)
 
         logger.info(f"OCR 실행 완료")
-        return 
+        return result
 
 
 

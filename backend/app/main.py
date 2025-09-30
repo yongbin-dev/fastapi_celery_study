@@ -88,7 +88,8 @@ def setup_middleware():
     # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        # allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
