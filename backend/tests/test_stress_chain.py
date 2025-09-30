@@ -7,20 +7,17 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.api.v1.crud.async_crud.chain_execution import (
-    chain_execution as chain_execution_crud,
-)
-from app.api.v1.services.pipeline_service import PipelineService
-from app.api.v1.services.redis_service import RedisPipelineStatusManager
 from app.config import settings
 from app.models.base import Base
-from app.schemas.pipeline import AIPipelineRequest
+from app.orchestration.schemas.pipeline import AIPipelineRequest
+from app.orchestration.services.pipeline_service import PipelineService
+from app.repository.crud.async_crud.chain_execution import (
+    chain_execution as chain_execution_crud,
+)
+from app.shared.redis_service import RedisService
 
 # .env 파일의 DATABASE_URL을 사용하도록 설정
 ASYNC_SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
-
-# 테스트용 비동기 in-memory SQLite 데이터베이스 설정                                                                                                                                                                                                      │
-# --- 3. 데이터 삭제 함수 ---
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -30,15 +27,16 @@ async def async_engine():
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # print("--- 모든 테이블의 데이터 삭제 시작 ---")
+        # 테스트 시작 전 기존 데이터 삭제
+        for table in reversed(Base.metadata.sorted_tables):
+            await conn.execute(table.delete())
+
     yield engine
 
-    # async with engine.begin() as conn:
-    #     print("--- 모든 테이블의 데이터 삭제 시작 ---")
-    #     for table in reversed(Base.metadata.sorted_tables):
-    #         print(f"Deleting data from table: {table.name}")
-    #         await conn.execute(table.delete())
-    #     print("--- 모든 테이블의 데이터 삭제 완료 ---")
+    # 테스트 종료 후 데이터 정리
+    async with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            await conn.execute(table.delete())
 
     await engine.dispose()
 
@@ -60,7 +58,7 @@ async def test_run_1000_chains_concurrently(session_maker, num_chains):
     """
     # given
     print(f"\n🚀 {num_chains}개의 체인으로 스트레스 테스트 시작")
-    redis_manager = RedisPipelineStatusManager()
+    redis_manager = RedisService()
 
     # when
     requests = [
@@ -104,4 +102,5 @@ async def test_run_1000_chains_concurrently(session_maker, num_chains):
     # 데이터베이스에 실제로 레코드가 생성되었는지 확인
     async with session_maker() as session:
         all_chains = await chain_execution_crud.get_all(db=session)
+        assert all_chains is not None
         assert len(all_chains) == num_chains

@@ -3,14 +3,14 @@
 from datetime import datetime
 from typing import Optional
 
-from orchestration.schemas.chain_execution import (
-    ChainExecutionCreate,
-    ChainExecutionUpdate,
-)
-from orchestration.schemas.enums import ProcessStatus
 from sqlalchemy.orm import Session
 
 from app.models.chain_execution import ChainExecution
+from app.orchestration.schemas.chain_execution import (
+    ChainExecutionCreate,
+    ChainExecutionUpdate,
+)
+from app.orchestration.schemas.enums import ProcessStatus
 
 from .base import CRUDBase
 

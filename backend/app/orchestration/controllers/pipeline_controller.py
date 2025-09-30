@@ -8,11 +8,11 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from orchestration.schemas.chain_execution import ChainExecutionResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.logging import get_logger
+from app.orchestration.schemas.chain_execution import ChainExecutionResponse
 from app.orchestration.services import PipelineService, get_pipeline_service
 from app.schemas.common import ApiResponse
 from app.shared.redis_service import RedisService, get_redis_service

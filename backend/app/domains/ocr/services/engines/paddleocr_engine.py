@@ -1,9 +1,6 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
 import traceback
 
-import cv2
-import numpy as np
-
 from app.core.logging import get_logger
 
 from ...schemas import OCRResultDTO, TextBoxDTO
@@ -21,7 +18,7 @@ class PaddleOCREngine(BaseOCREngine):
     def load_model(self) -> None:
         """PaddleOCR 모델 로드"""
         try:
-            from paddleocr import PaddleOCR
+            from paddleocr import PaddleOCR  # type: ignore
 
             # logger.info("PaddleOCR 모델 로딩 시작...")
             # logger.info(f"PaddlePaddle version: {paddle.__version__}")
@@ -55,6 +52,9 @@ class PaddleOCREngine(BaseOCREngine):
 
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
         """PaddleOCR 예측"""
+        import cv2  # type: ignore
+        import numpy as np  # type: ignore
+
         if not self.is_loaded or self.model is None:
             return OCRResultDTO(
                 text_boxes=[], full_text="", status="failed", error="Model not loaded"

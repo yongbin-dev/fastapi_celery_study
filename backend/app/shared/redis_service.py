@@ -4,10 +4,10 @@ import json
 from typing import Optional
 
 import redis
-from orchestration.schemas.stage import StageInfo
 
 from app.config import settings
 from app.core.logging import get_logger
+from app.orchestration.schemas.stage import StageInfo
 
 logger = get_logger(__name__)
 

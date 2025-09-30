@@ -2,11 +2,11 @@
 
 from typing import Optional
 
-from orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task_log import TaskLog
+from app.orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 
 from .base import AsyncCRUDBase
 
