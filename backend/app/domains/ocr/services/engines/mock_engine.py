@@ -1,7 +1,8 @@
 # app/domains/ocr/services/engines/mock_engine.py
-from .base import BaseOCREngine
 from app.core.logging import get_logger
+
 from ...schemas import OCRResultDTO, TextBoxDTO
+from .base import BaseOCREngine
 
 logger = get_logger(__name__)
 
@@ -22,10 +23,7 @@ class MockOCREngine(BaseOCREngine):
         """Mock OCR 예측 (샘플 데이터 반환)"""
         if not self.is_loaded:
             return OCRResultDTO(
-                text_boxes=[],
-                full_text="",
-                status="failed",
-                error="Model not loaded"
+                text_boxes=[], full_text="", status="failed", error="Model not loaded"
             )
 
         logger.info(f"Mock OCR 실행: 이미지 데이터 (size: {len(image_data)} bytes)")
@@ -53,7 +51,5 @@ class MockOCREngine(BaseOCREngine):
         logger.info(f"Mock OCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
         return OCRResultDTO(
-            text_boxes=text_boxes,
-            full_text=full_text,
-            status="success"
+            text_boxes=text_boxes, full_text=full_text, status="success"
         )

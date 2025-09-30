@@ -4,14 +4,15 @@ pytest 설정 및 공통 fixture들
 """
 
 import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
 from app.core.database import Base, get_db
+from app.main import app
 
 # 테스트용 in-memory SQLite 데이터베이스
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

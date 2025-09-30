@@ -1,6 +1,7 @@
 # config.py
 import os
 from typing import List
+
 from pydantic_settings import BaseSettings
 
 
@@ -98,7 +99,6 @@ class Settings(BaseSettings):
     OCR_ENGINE: str = "easyocr"
     OCR_DET: str = ""
     OCR_REC: str = ""
-    
 
 
 # 전역 설정 객체

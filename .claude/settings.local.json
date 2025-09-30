@@ -26,7 +26,10 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: 도메인 중심 아키텍처로 프로젝트 구조 재구성\n\n- 기존 v1 API 구조(controllers, services, CRUD) 제거\n- 도메인 기반 아키텍처 도입 (domains, orchestration, repository)\n- 미들웨어 및 로깅 설정 개선\n- 프론트엔드 API 통합 업데이트\n- 아키텍처 개선 문서 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit -m \"$(cat <<''EOF''\nchore(config): 리팩토링 커밋 명령어 권한 추가\n\n- settings.local.json에 도메인 아키텍처 리팩토링 커밋 권한 추가\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(python3:*)",
+      "Bash(uv remove:*)",
+      "Bash(uv add:*)"
     ],
     "deny": [],
     "ask": []

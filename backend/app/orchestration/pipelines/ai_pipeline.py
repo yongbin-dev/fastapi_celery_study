@@ -4,8 +4,10 @@ AI 처리 파이프라인
 
 OCR → LLM → Vision 도메인을 순차적으로 실행하는 파이프라인
 """
+
+from typing import Any, Dict
+
 from celery import chain
-from typing import Dict, Any
 
 
 def create_ai_processing_pipeline(chain_id: str, input_data: Dict[str, Any]):
@@ -60,8 +62,8 @@ def create_document_pipeline(chain_id: str, document_path: str):
     Returns:
         Celery chain 객체
     """
-    from app.domains.ocr.tasks.ocr_tasks import extract_text_task
     from app.domains.llm.tasks.llm_tasks import generate_text_task
+    from app.domains.ocr.tasks.ocr_tasks import extract_text_task
 
     # 향후 구현: OCR → LLM 요약 파이프라인
     pipeline = chain(
@@ -88,8 +90,8 @@ def create_image_analysis_pipeline(chain_id: str, image_path: str):
     Returns:
         Celery chain 객체
     """
-    from app.domains.ocr.tasks.ocr_tasks import extract_text_task
     from app.domains.llm.tasks.llm_tasks import generate_text_task
+    from app.domains.ocr.tasks.ocr_tasks import extract_text_task
 
     # 향후 구현: Vision + OCR + LLM 조합
     pipeline = chain(

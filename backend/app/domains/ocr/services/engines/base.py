@@ -1,6 +1,7 @@
 # app/domains/ocr/services/engines/base.py
 from abc import ABC, abstractmethod
 from typing import Any, Optional
+
 from ...schemas import OCRResultDTO
 
 

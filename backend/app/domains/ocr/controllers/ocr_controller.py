@@ -1,9 +1,10 @@
 # app/domains/ocr/controllers/ocr_controller.py
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+
 from app.core.logging import get_logger
-# from ..tasks.ocr_tasks import extract_text_task
-from ..services import OCRService, get_ocr_service
 from app.utils.response_builder import ResponseBuilder
+
+from ..services import OCRService, get_ocr_service
 
 logger = get_logger(__name__)
 
@@ -79,9 +80,9 @@ async def extract_text_sync(
     if result.status == "failed":
         raise HTTPException(status_code=400, detail=result.error)
 
-    return ResponseBuilder.success(data=result.model_dump(), message="OCR 텍스트 추출 완료")
-
-
+    return ResponseBuilder.success(
+        data=result.model_dump(), message="OCR 텍스트 추출 완료"
+    )
 
 
 @router.get("/languages")
@@ -100,9 +101,7 @@ async def get_supported_languages():
 
 
 @router.get("/health")
-async def health_check(
-    ocr_service: OCRService = Depends(get_ocr_service),
-):
+async def health_check():
     """헬스 체크"""
     return ResponseBuilder.success(
         data={"status": "healthy"}, message="OCR 서비스 정상"

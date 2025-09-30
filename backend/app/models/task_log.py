@@ -1,10 +1,7 @@
 # models/task_log.py
-from typing import Optional, Type
-from pydantic import BaseModel
-from sqlalchemy import Column, String, Integer, Text, DateTime, Index, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
-from app.schemas.task_log import TaskLogResponse
 from .base import Base
 
 
@@ -79,12 +76,3 @@ class TaskLog(Base):
 
     def __repr__(self):
         return f"<TaskLog(task_id={self.task_id}, name={self.task_name}, status={self.status})>"
-
-    def to_schema(
-        self, schema: Optional[Type[BaseModel]] = None
-    ) -> Optional[BaseModel]:
-        """Pydantic 스키마로 변환"""
-        schema = schema or TaskLogResponse
-        if not hasattr(schema, "from_orm"):
-            return None
-        return schema.from_orm(self)

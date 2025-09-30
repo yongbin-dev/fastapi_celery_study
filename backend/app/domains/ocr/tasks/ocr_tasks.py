@@ -1,7 +1,9 @@
 # app/domains/ocr/tasks/ocr_tasks.py
+from domains.ocr.schemas.response import OCRResultDTO
+
 from app.celery_app import celery_app
 from app.core.logging import get_logger
-from domains.ocr.schemas.response import OCRResultDTO
+
 from ..services.ocr_service import get_ocr_service
 
 logger = get_logger(__name__)

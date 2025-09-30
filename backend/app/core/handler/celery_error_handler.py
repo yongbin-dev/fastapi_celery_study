@@ -1,7 +1,8 @@
 # app/core/celery_error_handler.py
 
-from app.core.logging import get_logger
 from celery import Celery
+
+from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 

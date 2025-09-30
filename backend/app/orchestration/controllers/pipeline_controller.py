@@ -4,18 +4,21 @@
 
 여러 도메인을 조합한 워크플로우를 실행하고 관리합니다.
 """
+
 from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
+from orchestration.schemas.chain_execution import ChainExecutionResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.schemas import AIPipelineRequest, AIPipelineResponse
-from app.schemas.chain_execution import ChainExecutionResponse
+from app.core.logging import get_logger
+from app.orchestration.services import PipelineService, get_pipeline_service
 from app.schemas.common import ApiResponse
-from app.orchestration.services import get_pipeline_service, PipelineService
 from app.shared.redis_service import RedisService, get_redis_service
 from app.utils.response_builder import ResponseBuilder
-from app.core.logging import get_logger
+
+from ..schemas import AIPipelineRequest, AIPipelineResponse
 
 logger = get_logger(__name__)
 

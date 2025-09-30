@@ -1,14 +1,18 @@
 # app/domains/llm/tasks/llm_tasks.py
-from typing import Dict, Any
+from typing import Any, Dict
+
 from app.celery_app import celery_app
 from app.core.logging import get_logger
+
 from ..services.llm_model import LLMModel
 
 logger = get_logger(__name__)
 
 
 @celery_app.task(bind=True, name="llm.generate_text")
-def generate_text_task(self, prompt: str, model_name: str = "microsoft/DialoGPT-medium") -> Dict[str, Any]:
+def generate_text_task(
+    self, prompt: str, model_name: str = "microsoft/DialoGPT-medium"
+) -> Dict[str, Any]:
     """
     LLM 텍스트 생성 태스크
 

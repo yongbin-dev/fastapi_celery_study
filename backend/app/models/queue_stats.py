@@ -1,6 +1,8 @@
 # models/queue_stats.py
-from sqlalchemy import Column, String, Integer, Float, DateTime, Index
-from datetime import datetime, timedelta
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Float, Index, Integer, String
+
 from .base import Base
 
 

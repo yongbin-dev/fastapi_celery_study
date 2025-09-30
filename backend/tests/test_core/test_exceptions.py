@@ -3,14 +3,13 @@
 예외 처리 테스트
 """
 
-import pytest
 from app.core.exceptions import (
     BaseBusinessException,
-    ValidationError,
     NotFoundError,
     UnauthorizedError,
-    UserNotFoundException,
     UserAlreadyExistsException,
+    UserNotFoundException,
+    ValidationError,
 )
 
 

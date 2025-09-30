@@ -1,9 +1,11 @@
 # app/domains/ocr/services/ocr_service.py
-from app.shared.base_service import BaseService
 from typing import Optional
-from .ocr_model import get_ocr_model, OCRModel
+
 from app.core.logging import get_logger
+from app.shared.base_service import BaseService
+
 from ..schemas import OCRResultDTO
+from .ocr_model import OCRModel, get_ocr_model
 
 logger = get_logger(__name__)
 
@@ -43,13 +45,12 @@ class OCRService(BaseService):
         logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
         result = self.model.predict(image_data, confidence_threshold)
 
-        logger.info(f"OCR 실행 완료")
+        logger.info("OCR 실행 완료")
         return result
-
 
 
 ocr_service = OCRService()
 
 
-def get_ocr_service() :
+def get_ocr_service():
     return ocr_service

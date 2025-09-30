@@ -12,8 +12,8 @@ Celery 워커 시작 스크립트
 """
 
 import os
-import sys
 import subprocess
+import sys
 
 if __name__ == "__main__":
     # 현재 디렉토리를 Python 경로에 추가

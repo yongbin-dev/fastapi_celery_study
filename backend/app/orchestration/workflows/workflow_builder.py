@@ -4,8 +4,10 @@
 
 Celery의 다양한 워크플로우 패턴을 쉽게 구성할 수 있는 빌더 클래스
 """
+
+from typing import Any, Callable, Dict, List
+
 from celery import chain, chord, group
-from typing import List, Dict, Any, Callable
 
 
 class WorkflowBuilder:
@@ -73,8 +75,8 @@ class MultiDomainWorkflow:
 
         OCR → LLM → Vision 순서대로 실행
         """
-        from app.domains.ocr.tasks.ocr_tasks import extract_text_task
         from app.domains.llm.tasks.llm_tasks import generate_text_task
+        from app.domains.ocr.tasks.ocr_tasks import extract_text_task
 
         # 순차 실행
         sequential_pipeline = chain(

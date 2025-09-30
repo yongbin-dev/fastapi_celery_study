@@ -1,20 +1,23 @@
 # crud/chain_execution.py
 
-from typing import List, Optional
+from datetime import datetime
+from typing import Optional
+
+from orchestration.schemas.chain_execution import (
+    ChainExecutionCreate,
+    ChainExecutionUpdate,
+)
+from orchestration.schemas.enums import ProcessStatus
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_
-from datetime import datetime, timedelta
+
+from app.models.chain_execution import ChainExecution
 
 from .base import CRUDBase
-from app.models.chain_execution import ChainExecution
-from app.schemas.enums import ProcessStatus
-from app.schemas.chain_execution import ChainExecutionCreate, ChainExecutionUpdate
 
 
 class CRUDChainExecution(
     CRUDBase[ChainExecution, ChainExecutionCreate, ChainExecutionUpdate]
 ):
-
     #     """ChainExecution 모델용 CRUD 클래스"""
     #
     def get_by_chain_id(

@@ -1,6 +1,6 @@
 # models/worker_status.py
-from sqlalchemy import Column, String, Integer, DateTime, Index
-from datetime import datetime, timedelta
+from sqlalchemy import Column, DateTime, Index, Integer, String
+
 from .base import Base
 
 

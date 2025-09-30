@@ -1,17 +1,16 @@
 # crud/task_log.py
 
-from datetime import datetime, timedelta
-from typing import List, Optional
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, and_, func
-
-from .base import CRUDBase
-from app.models.task_log import TaskLog
+from datetime import datetime
+from typing import Optional
 
 # from app.schemas.enums import ProcessStatus  # 사용하지 않음
-
 # TaskLog 스키마가 존재한다면 import, 없다면 dict 사용
-from app.schemas.task_log import TaskLogCreate, TaskLogUpdate
+from orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
+from sqlalchemy.orm import Session
+
+from app.models.task_log import TaskLog
+
+from .base import CRUDBase
 
 
 class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ignore

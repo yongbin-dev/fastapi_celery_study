@@ -2,17 +2,16 @@
 
 import os
 from contextlib import asynccontextmanager
-import traceback
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.router import api_router
 from app.config import settings
-from app.core.database import close_db
+from app.core.database import close_db, init_db
 from app.core.handler.exceptions_handler import setup_exception_handlers
-from app.core.middleware import ResponseLogMiddleware, RequestLogMiddleware
+from app.core.middleware import ResponseLogMiddleware
+from app.core.router import api_router
 from app.utils.response_builder import ResponseBuilder
-from app.core.database import init_db
 
 
 # 애플리케이션 시작/종료 이벤트 처리
@@ -60,7 +59,7 @@ async def lifespan(app: FastAPI):
 
 
 # 로깅 초기화
-from .core.logging import get_logger
+from app.core.logging import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 

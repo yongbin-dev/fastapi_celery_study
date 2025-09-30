@@ -1,9 +1,10 @@
 # app/core/redis_client.py
 
-from app.config import settings
-
-from redis.asyncio import Redis, ConnectionPool
 from typing import Optional
+
+from redis.asyncio import ConnectionPool, Redis
+
+from app.config import settings
 
 
 class RedisClient:

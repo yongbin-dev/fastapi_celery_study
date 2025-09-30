@@ -1,6 +1,7 @@
 # app/domains/llm/schemas/response.py
-from pydantic import BaseModel, Field
 from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class LLMPredictResponse(BaseModel):

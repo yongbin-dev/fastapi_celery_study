@@ -1,9 +1,9 @@
 # celery_signals.py - 간소화된 버전 (데코레이터 사용으로 대부분 기능 제거)
 
 from celery.signals import (
+    heartbeat_sent,
     worker_ready,
     worker_shutdown,
-    heartbeat_sent,
 )
 
 from app.core.logging import get_logger
@@ -16,16 +16,20 @@ def get_worker_name(sender=None):
     """안전하게 워커 이름 가져오기"""
     if sender and hasattr(sender, "hostname"):
         return sender.hostname
-    elif sender and hasattr(sender, "consumer") and hasattr(sender.consumer, "hostname"):
+    elif (
+        sender and hasattr(sender, "consumer") and hasattr(sender.consumer, "hostname")
+    ):
         return sender.consumer.hostname
     elif sender and hasattr(sender, "request") and hasattr(sender.request, "hostname"):
         return sender.request.hostname
     else:
         import socket
+
         return f"celery@{socket.gethostname()}"
 
 
 # 워커 관련 신호 처리 (필수 신호만 유지)
+
 
 @worker_ready.connect
 def worker_ready_handler(sender=None, **kwargs):

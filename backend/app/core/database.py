@@ -1,17 +1,16 @@
 # app/core/database.py
 
-import logging
 import asyncio
+import logging
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
-
-from typing import cast
+from functools import lru_cache
+from typing import AsyncGenerator, Generator, cast
 
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import SQLAlchemyError, DisconnectionError
-from functools import lru_cache
+from sqlalchemy.exc import DisconnectionError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.config import settings
 from app.models.base import Base
 
@@ -50,7 +49,9 @@ class DatabaseManager:
 
         # 비동기 세션 팩토리
         self.AsyncSessionLocal = sessionmaker(
-            bind=self.async_engine, class_=AsyncSession, expire_on_commit=False  # type: ignore
+            bind=self.async_engine,  # type: ignore
+            class_=AsyncSession,
+            expire_on_commit=False,  # type: ignore
         )  # type: ignore
 
         # 동기 엔진 생성 (Celery signal용)
