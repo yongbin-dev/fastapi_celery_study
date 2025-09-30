@@ -6,12 +6,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api.v1.router import api_router
+from app.core.router import api_router
 from app.config import settings
-from .core.database import close_db
+from app.core.database import close_db
 from app.core.handler.exceptions_handler import setup_exception_handlers
-from app.core.middleware import ResponseLogMiddleware
-from .utils.response_builder import ResponseBuilder
+from app.core.middleware import ResponseLogMiddleware, RequestLogMiddleware
+from app.utils.response_builder import ResponseBuilder
 from app.core.database import init_db
 
 
@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI):
         logger.error("💥 DB 연결 없이는 애플리케이션을 시작할 수 없습니다. 종료합니다.")
         # DB 필수인 경우 애플리케이션 종료
         import sys
+
         sys.exit(1)
 
     yield  # 애플리케이션 실행
@@ -78,6 +79,10 @@ app = FastAPI(
 # 미들웨어 등록 (순서 중요: 역순으로 실행됨)
 def setup_middleware():
     """미들웨어 설정"""
+
+    # Request/Response 로깅 미들웨어
+    app.add_middleware(RequestLogMiddleware)
+    app.add_middleware(ResponseLogMiddleware)
 
     # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(

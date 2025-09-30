@@ -14,7 +14,7 @@ except ImportError:
 from app.schemas.enums import ProcessStatus
 from app.schemas.pipeline import StageResult
 from app.core.database import get_db_manager
-from app.api.v1.crud import (
+from app.repository.crud import (
     chain_execution as chain_execution_crud,
     task_log as task_log_crud,
 )

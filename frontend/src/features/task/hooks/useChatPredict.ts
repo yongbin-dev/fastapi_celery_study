@@ -6,7 +6,7 @@ import type { ChatPredictRequest, ChatPredictResponse } from '../types';
 const chatPredict = async (
   request: ChatPredictRequest
 ): Promise<ChatPredictResponse> => {
-  const response = await api.post(`/tasks/predict`, request, {
+  const response = await api.post(`/pipelines/predict`, request, {
     headers: {
       accept: 'application/json',
       'Content-Type': 'application/json',

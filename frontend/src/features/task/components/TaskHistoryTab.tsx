@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { TaskStatus, type TaskHistoryRequest } from '../types';
+import { type TaskHistoryRequest } from '../types';
 import { useHistoryTasks } from '../hooks';
 import type { ChainExecutionResponseDto } from '../types/pipeline';
 import { TaskGroup } from './history';

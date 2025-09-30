@@ -35,8 +35,8 @@ const Header: React.FC = () => {
               About
             </Link>
             <Link
-              to="/tasks"
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/tasks')
+              to="/pipelines"
+              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive('/pipelines')
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                 }`}

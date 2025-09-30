@@ -5,7 +5,7 @@ import { api } from '@/shared/utils/api';
 
 // 모델 리스트 조회 API
 const fetchModels = async (): Promise<ModelsResponse> => {
-  const response = await api.get(`/tasks/models`, {
+  const response = await api.get(`/pipelines/models`, {
     headers: {
       accept: 'application/json',
     },

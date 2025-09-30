@@ -14,7 +14,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(mkdir:*)",
-      "Bash(rmdir:*)"
+      "Bash(rmdir:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

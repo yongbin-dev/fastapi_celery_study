@@ -91,16 +91,16 @@ class LoggingManager:
         file_formatter = logging.Formatter(file_format, date_format)
 
         # 1. 전체 로그 파일 (회전 로그)
-        all_log_file = self.log_dir / "app.log"
-        file_handler = logging.handlers.RotatingFileHandler(
-            all_log_file,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=5,
-            encoding="utf-8",
-        )
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
+        # all_log_file = self.log_dir / "app.log"
+        # file_handler = logging.handlers.RotatingFileHandler(
+        #     all_log_file,
+        #     maxBytes=10 * 1024 * 1024,  # 10MB
+        #     backupCount=5,
+        #     encoding="utf-8",
+        # )
+        # file_handler.setLevel(logging.DEBUG)
+        # file_handler.setFormatter(file_formatter)
+        # root_logger.addHandler(file_handler)
 
         # 2. 에러 전용 로그 파일
         error_log_file = self.log_dir / "error.log"
@@ -141,7 +141,44 @@ class LoggingManager:
             celery_logger = logging.getLogger(logger_name)
             celery_logger.addHandler(celery_handler)
 
-        # 5. JSON 형식 로그 (구조화된 로그)
+        # 5. DB 전용 로그 파일 (파일에만 기록, 콘솔 출력 안 함)
+        db_log_file = self.log_dir / f"db_{today}.log"
+        db_handler = logging.FileHandler(db_log_file, encoding="utf-8")
+        db_handler.setLevel(logging.INFO)
+        db_handler.setFormatter(file_formatter)
+
+        # SQLAlchemy 로거들 설정
+        db_logger_names = [
+            "sqlalchemy.engine",
+            "sqlalchemy.pool",
+            "sqlalchemy.dialects",
+            "sqlalchemy.orm",
+        ]
+        for logger_name in db_logger_names:
+            db_logger = logging.getLogger(logger_name)
+            # 기존 핸들러 모두 제거
+            db_logger.handlers.clear()
+            # DB 파일 핸들러만 추가
+            db_logger.addHandler(db_handler)
+            # 상위 로거로 전파하지 않음 (콘솔 출력 방지)
+            db_logger.propagate = False
+
+        # 6. HTTP 요청/응답 로그 파일
+        http_log_file = self.log_dir / f"http_{today}.log"
+        http_handler = logging.FileHandler(http_log_file, encoding="utf-8")
+        http_handler.setLevel(logging.INFO)
+        http_handler.setFormatter(file_formatter)
+
+        # HTTP 로거들 설정
+        http_logger_names = [
+            "app.core.middleware.request_middleware",
+            "app.core.middleware.response_middleware",
+        ]
+        for logger_name in http_logger_names:
+            http_logger = logging.getLogger(logger_name)
+            http_logger.addHandler(http_handler)
+
+        # 7. JSON 형식 로그 (구조화된 로그)
         enable_json_logs = os.getenv("ENABLE_JSON_LOGS", "false").lower() == "true"
         if enable_json_logs:
             self._setup_json_handler(root_logger)
@@ -188,12 +225,19 @@ class LoggingManager:
         logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
         logging.getLogger("uvicorn.error").setLevel(logging.INFO)
 
-        # SQLAlchemy 로그 설정
-        db_echo = os.getenv("DB_ECHO", "false").lower() == "true"
-        if db_echo:
-            logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
-        else:
-            logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+        # SQLAlchemy 로그 설정 - 파일에만 기록, 콘솔 출력 안 함
+        # DB_ECHO 설정과 관계없이 항상 INFO 레벨로 파일에 기록
+        db_logger_names = [
+            "sqlalchemy.engine",
+            "sqlalchemy.pool",
+            "sqlalchemy.dialects",
+            "sqlalchemy.orm",
+        ]
+        for logger_name in db_logger_names:
+            db_logger = logging.getLogger(logger_name)
+            db_logger.setLevel(logging.INFO)
+            # 콘솔 출력 방지 - 파일에만 기록
+            db_logger.propagate = False
 
         # HTTP 요청 로그 조정
         logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -230,24 +274,6 @@ class LoggingManager:
             handler.addFilter(filter_class())
 
 
-class RequestContextFilter(logging.Filter):
-    """요청 컨텍스트 정보를 로그에 추가하는 필터"""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        # 여기서 요청 컨텍스트 정보를 추가할 수 있습니다
-        # 예: record.request_id = get_request_id()
-        return True
-
-
-class UserContextFilter(logging.Filter):
-    """사용자 컨텍스트 정보를 로그에 추가하는 필터"""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        # 여기서 사용자 정보를 추가할 수 있습니다
-        # 예: record.user_id = get_current_user_id()
-        return True
-
-
 # 전역 로깅 매니저 인스턴스
 logging_manager = LoggingManager()
 
@@ -256,56 +282,3 @@ logging_manager = LoggingManager()
 def get_logger(name: str) -> logging.Logger:
     """로거 인스턴스 가져오기"""
     return logging_manager.get_logger(name)
-
-
-# 로깅 데코레이터
-def log_function_call(
-    logger: Optional[logging.Logger] = None,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """함수 호출을 로깅하는 데코레이터"""
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        func_logger = logger or get_logger(func.__module__)
-
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            func_logger.debug(f"함수 호출 시작: {func.__name__}")
-            try:
-                result = func(*args, **kwargs)
-                func_logger.debug(f"함수 호출 완료: {func.__name__}")
-                return result
-            except Exception as e:
-                func_logger.error(f"함수 호출 오류: {func.__name__} - {str(e)}")
-                raise
-
-        return wrapper
-
-    return decorator
-
-
-def log_execution_time(
-    logger: Optional[logging.Logger] = None,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """함수 실행 시간을 로깅하는 데코레이터"""
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        func_logger = logger or get_logger(func.__module__)
-
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            start_time = time.time()
-            try:
-                result = func(*args, **kwargs)
-                execution_time = time.time() - start_time
-                func_logger.info(
-                    f"함수 실행 시간: {func.__name__} - {execution_time:.4f}초"
-                )
-                return result
-            except Exception as e:
-                execution_time = time.time() - start_time
-                func_logger.error(
-                    f"함수 실행 오류 (소요 시간: {execution_time:.4f}초): {func.__name__} - {str(e)}"
-                )
-                raise
-
-        return wrapper
-
-    return decorator
