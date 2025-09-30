@@ -2,6 +2,7 @@
 """
 도메인 간 공유 코드
 """
+
 from .base_model import BaseModel
 from .base_service import BaseService
 from .redis_service import RedisService, get_redis_service

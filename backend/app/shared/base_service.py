@@ -1,5 +1,5 @@
 # app/shared/base_service.py
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class BaseService:

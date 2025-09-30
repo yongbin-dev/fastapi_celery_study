@@ -1,6 +1,7 @@
 # app/domains/llm/services/llm_service.py
+from typing import Any, Dict
+
 from app.shared.base_service import BaseService
-from typing import Dict, Any
 
 
 class LLMService(BaseService):

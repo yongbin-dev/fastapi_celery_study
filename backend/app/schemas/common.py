@@ -1,8 +1,10 @@
 # app/schemas/common.py
 
+from typing import Any, Generic, Optional, TypeVar
+
 from pydantic import BaseModel
-from typing import TypeVar, Generic, Optional, Any
-from app.schemas.response import ResponseStatus, PaginationMeta
+
+from app.schemas.response import PaginationMeta
 
 T = TypeVar("T")
 

@@ -24,9 +24,11 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
                 body = await request.body()
                 if body:
                     request_body = json.loads(body.decode("utf-8"))
+
                     # body를 다시 읽을 수 있도록 설정
                     async def receive():
                         return {"type": "http.request", "body": body}
+
                     request._receive = receive
             except Exception:
                 request_body = body.decode("utf-8")[:200] if body else None
@@ -46,7 +48,11 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
 
         # Request body가 있으면 추가
         if request_body:
-            body_str = json.dumps(request_body, ensure_ascii=False)[:200] if isinstance(request_body, dict) else str(request_body)[:200]
+            body_str = (
+                json.dumps(request_body, ensure_ascii=False)[:200]
+                if isinstance(request_body, dict)
+                else str(request_body)[:200]
+            )
             log_msg += f" | Request: {body_str}"
 
         logger.info(log_msg)

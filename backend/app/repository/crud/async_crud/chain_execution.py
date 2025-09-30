@@ -1,16 +1,20 @@
 # crud/async_crud/chain_execution.py
 
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, desc, asc
-from sqlalchemy.orm import joinedload, selectinload, subqueryload
 from datetime import datetime, timedelta
+from typing import Optional
+
+from orchestration.schemas.chain_execution import (
+    ChainExecutionCreate,
+    ChainExecutionUpdate,
+)
+from orchestration.schemas.enums import ProcessStatus
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.models.chain_execution import ChainExecution
 
 from .base import AsyncCRUDBase
-from app.models.chain_execution import ChainExecution
-from app.models.task_log import TaskLog
-from app.schemas.enums import ProcessStatus
-from app.schemas.chain_execution import ChainExecutionCreate, ChainExecutionUpdate
 
 
 class AsyncCRUDChainExecution(
@@ -114,7 +118,7 @@ class AsyncCRUDChainExecution(
         *,
         days: int = 7,
         limit: int = 100,
-    ) -> List[ChainExecution]:
+    ) -> list[ChainExecution]:
         """TaskLog와 함께 여러 체인 실행 조회"""
         try:
             cutoff_date = datetime.now() - timedelta(days=days)

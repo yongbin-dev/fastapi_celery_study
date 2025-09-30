@@ -1,16 +1,18 @@
 # app/domains/llm/controllers/llm_controller.py
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
+
 from app.core.logging import get_logger
-from ..schemas import (
-    LLMPredictRequest,
-    LLMPredictResponse,
-    LLMChatRequest,
-    LLMChatResponse,
-)
-from ..tasks.llm_tasks import generate_text_task, chat_task
-from ..services import LLMModel, get_llm_model, LLMService, get_llm_service
 from app.schemas.common import ApiResponse
 from app.utils.response_builder import ResponseBuilder
+
+from ..schemas import (
+    LLMChatRequest,
+    LLMChatResponse,
+    LLMPredictRequest,
+    LLMPredictResponse,
+)
+from ..services import LLMModel, get_llm_model
+from ..tasks.llm_tasks import generate_text_task
 
 logger = get_logger(__name__)
 
@@ -33,7 +35,7 @@ async def ocr_healthy():
 
     return ResponseBuilder.success(
         data={"success"},
-        message=f"",
+        message="",
     )
 
 
@@ -43,7 +45,7 @@ async def get_available_models():
 
     return ResponseBuilder.success(
         data={"servers": OLLAMA_SERVERS, "available_models": AVAILABLE_MODELS},
-        message=f"",
+        message="",
     )
 
 

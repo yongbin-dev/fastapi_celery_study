@@ -1,10 +1,12 @@
 # app/domains/ocr/services/engines/factory.py
 from typing import Optional
+
+from app.core.logging import get_logger
+
 from .base import BaseOCREngine
 from .easyocr_engine import EasyOCREngine
-from .paddleocr_engine import PaddleOCREngine
 from .mock_engine import MockOCREngine
-from app.core.logging import get_logger
+from .paddleocr_engine import PaddleOCREngine
 
 logger = get_logger(__name__)
 

@@ -1,9 +1,9 @@
 # schemas/pipeline.py
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
+from orchestration.schemas.enums import ProcessStatus
 from pydantic import BaseModel, Field
-from datetime import datetime
-from app.schemas.enums import ProcessStatus
 
 
 class AIPipelineRequest(BaseModel):

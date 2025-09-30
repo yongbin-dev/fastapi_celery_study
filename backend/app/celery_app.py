@@ -2,7 +2,9 @@
 
 import os
 import time
+
 from celery import Celery
+
 from app.config import settings
 from app.core.logging import get_logger
 
@@ -23,6 +25,8 @@ except AttributeError:
 # 이 파일을 임포트하는 시점에 시그널 핸들러가 등록되도록 최상단으로 이동
 try:
     from app.core.celery import celery_signals
+
+    __all__ = ["celery_app", "celery_signals"]
 
     logger.info("✅ Celery signals 모듈 import 성공!")
 except ImportError as e:

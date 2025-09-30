@@ -1,20 +1,20 @@
 # tests/test_stress_chain.py
 
 import asyncio
-import os
+
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.config import settings
-from app.models.base import Base
-from app.api.v1.services.pipeline_service import PipelineService
-from app.api.v1.services.redis_service import RedisPipelineStatusManager
-from app.schemas.pipeline import AIPipelineRequest
 from app.api.v1.crud.async_crud.chain_execution import (
     chain_execution as chain_execution_crud,
 )
+from app.api.v1.services.pipeline_service import PipelineService
+from app.api.v1.services.redis_service import RedisPipelineStatusManager
+from app.config import settings
+from app.models.base import Base
+from app.schemas.pipeline import AIPipelineRequest
 
 # .env 파일의 DATABASE_URL을 사용하도록 설정
 ASYNC_SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL

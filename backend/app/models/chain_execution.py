@@ -1,15 +1,12 @@
-import uuid
-from typing import Optional, Type
 from datetime import datetime
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, Integer, DateTime, Index, Text, func
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy import Column, DateTime, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from app.schemas.task_log import TaskLogResponse
-from .base import Base
 from ..schemas.enums import ProcessStatus
+from .base import Base
 
 
 class ChainExecution(Base):

@@ -1,9 +1,9 @@
 # app/domains/llm/services/llm_model.py
-from app.shared.base_model import BaseModel
-
 # from transformers import AutoTokenizer, AutoModelForCausalLM
 # import torch
-from typing import Dict, Any
+from typing import Any, Dict
+
+from app.shared.base_model import BaseModel
 
 
 class LLMModel(BaseModel):

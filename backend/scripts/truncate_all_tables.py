@@ -19,11 +19,11 @@ DB 테이블 전체 데이터 truncate 스크립트
 - 개발 환경에서만 사용하세요.
 """
 
+import argparse
 import asyncio
 import sys
-import argparse
-from typing import List, Set
 from pathlib import Path
+from typing import List, Set
 
 # 프로젝트 루트를 sys.path에 추가
 project_root = Path(__file__).parent.parent
@@ -31,8 +31,9 @@ sys.path.insert(0, str(project_root))
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from app.core.database import get_db_manager
+
 from app.config import settings
+from app.core.database import get_db_manager
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

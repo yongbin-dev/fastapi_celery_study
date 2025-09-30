@@ -1,8 +1,7 @@
 # app/core/exceptions.py
 
 from abc import ABC
-from typing import Optional, Dict, Any
-from fastapi import HTTPException
+from typing import Any, Dict, Optional
 
 
 class BaseBusinessException(Exception, ABC):

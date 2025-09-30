@@ -2,8 +2,9 @@
 """
 OCR 도메인 Pydantic 스키마
 """
-from .response import OCRExtractResponse, OCRResultDTO, TextBoxDTO, OCRTextBox
+
 from .request import OCRRequestDTO
+from .response import OCRExtractResponse, OCRResultDTO, OCRTextBox, TextBoxDTO
 
 __all__ = [
     "OCRExtractResponse",

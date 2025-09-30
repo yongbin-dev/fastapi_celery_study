@@ -1,8 +1,10 @@
 # app/domains/ocr/services/engines/easyocr_engine.py
-from .base import BaseOCREngine
-from app.core.logging import get_logger
-from ...schemas import OCRResultDTO, TextBoxDTO
 import traceback
+
+from app.core.logging import get_logger
+
+from ...schemas import OCRResultDTO, TextBoxDTO
+from .base import BaseOCREngine
 
 logger = get_logger(__name__)
 
@@ -44,14 +46,11 @@ class EasyOCREngine(BaseOCREngine):
         """EasyOCR 예측"""
         if not self.is_loaded or self.model is None:
             return OCRResultDTO(
-                text_boxes=[],
-                full_text="",
-                status="failed",
-                error="Model not loaded"
+                text_boxes=[], full_text="", status="failed", error="Model not loaded"
             )
 
         try:
-            logger.info(f"EasyOCR 실행 시작")
+            logger.info("EasyOCR 실행 시작")
 
             # EasyOCR 실행
             result = self.model.readtext(image_data)
@@ -79,17 +78,12 @@ class EasyOCREngine(BaseOCREngine):
             logger.info(f"EasyOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
             return OCRResultDTO(
-                text_boxes=text_boxes,
-                full_text=full_text,
-                status="success"
+                text_boxes=text_boxes, full_text=full_text, status="success"
             )
 
         except Exception as e:
             logger.error(f"EasyOCR predict 실행 중 오류: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             return OCRResultDTO(
-                text_boxes=[],
-                full_text="",
-                status="failed",
-                error=str(e)
+                text_boxes=[], full_text="", status="failed", error=str(e)
             )

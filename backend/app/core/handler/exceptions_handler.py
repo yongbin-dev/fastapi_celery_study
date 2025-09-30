@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Request
+
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+import traceback
+
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import JSONResponse
+
 from app.core.exceptions import BaseBusinessException, BaseCeleryException
 from app.utils.response_builder import ResponseBuilder
-from starlette.responses import JSONResponse
-import traceback
 
 
 def setup_exception_handlers(app: FastAPI):

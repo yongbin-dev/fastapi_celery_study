@@ -1,15 +1,13 @@
 # app/services/redis_service.py
 
 import json
-import time
-from typing import Dict, Any, List, Optional
+from typing import Optional
+
 import redis
+from orchestration.schemas.stage import StageInfo
+
 from app.config import settings
 from app.core.logging import get_logger
-from app.schemas.pipeline import PipelineMetadata
-from app.schemas.enums import ProcessStatus
-from app.schemas.stage import StageInfo
-
 
 logger = get_logger(__name__)
 
