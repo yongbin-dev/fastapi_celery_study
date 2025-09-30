@@ -25,6 +25,7 @@ dependencies = [
     "httpx>=0.28.1",
     "psutil>=7.0.0",
     "python-json-logger>=2.0.7",
+    
 ]
 
 [project.optional-dependencies]
@@ -66,7 +67,7 @@ ocr = [
     "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
     "easyocr>=1.7.2",
-    "paddleocr>=3.2.0",
+    "paddlepaddle-gpu (>=2.6.2,<3.0.0)",
 ]
 
 vision = [
@@ -82,7 +83,7 @@ explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cuda"
-url = "https://download.pytorch.org/whl/cu118"
+url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 # ===== 코드 포맷팅 설정 =====
