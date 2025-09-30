@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "팀별 도메인 기반 FastAPI + Celery 마이크로서비스"
 authors = [{name = "albin", email = "ybkim@aipim.io"}]
 readme = "README.md"
-requires-python = ">=3.12,<4"
+requires-python = ">=3.12,<3.13"
 
 # ===== 공통 필수 의존성 =====
 dependencies = [
@@ -25,7 +25,6 @@ dependencies = [
     "httpx>=0.28.1",
     "psutil>=7.0.0",
     "python-json-logger>=2.0.7",
-    
 ]
 
 [project.optional-dependencies]
@@ -67,14 +66,10 @@ ocr = [
     "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
     "easyocr>=1.7.2",
-    "paddlepaddle-gpu (>=2.6.2,<3.0.0)",
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle-gpu>=2.6.2,<3.0.0",
 ]
 
-vision = [
-    "ultralytics>=8.1.0",
-    "opencv-python>=4.9.0",
-    "Pillow>=10.2.0",
-]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

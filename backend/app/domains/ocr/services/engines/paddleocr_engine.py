@@ -19,29 +19,39 @@ class PaddleOCREngine(BaseOCREngine):
     def load_model(self) -> None:
         """PaddleOCR 모델 로드"""
         try:
+            import os
             from paddleocr import PaddleOCR
+            import paddle
+
+            # WSL2 GPU 세그폴트 방지를 위한 환경 변수 설정
+            os.environ['FLAGS_use_mkldnn'] = '0'
+            os.environ['FLAGS_fraction_of_gpu_memory_to_use'] = '0.3'
+            os.environ['FLAGS_cudnn_deterministic'] = '1'
+            os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
             logger.info("PaddleOCR 모델 로딩 시작...")
+            logger.info(f"PaddlePaddle version: {paddle.__version__}")
+            logger.info(f"CUDA available: {paddle.device.is_compiled_with_cuda()}")
+
+            # GPU 사용 가능 여부 확인 - WSL2에서는 CPU 모드 강제
+            use_gpu = False  # WSL2에서 안정성을 위해 CPU 모드 사용
+            logger.info(f"Using GPU: {use_gpu} (WSL2 환경에서는 CPU 모드 권장)")
             logger.info("rect_model_dir: " + settings.OCR_REC)
             logger.info("dect_model_dir: " + settings.OCR_DET)
-            # PaddleOCR 생성
-            self.model = PaddleOCR(
-                # text_detection_model_name=settings.OCR_DET,
-                # text_recognition_model_name=settings.OCR_REC,
-                # device="gpu",
-                # use_doc_orientation_classify=False, # 通过 use_doc_orientation_classify 参数指定不使用文档方向分类模型
-                # use_doc_unwarping=False, # 通过 use_doc_unwarping 参数指定不使用文本图像矫正模型
-                # use_textline_orientation=False, # 通过 use_textline_orientation 参数指定不使用文本行方向分类模型
 
-                # text_recognition_model_dir=settings.OCR_REC,
-                # text_detection_model_dir=settings.OCR_DET,
-                # use_angle_cls=False, # 필요에 따라 설정
-                # use_cuda=True # GPU 사용 여부
-                # use_angle_cls=self.use_angle_cls,
-                # lang=self.lang,
-            )
+            # PaddleOCR 생성 (CPU 모드)
+            ocr_params = {
+                "use_angle_cls": self.use_angle_cls,
+                "lang": self.lang,
+                "use_gpu": use_gpu,
+                "enable_mkldnn": False,  # MKL-DNN 비활성화
+                "cpu_threads": 2,  # CPU 스레드 수
+                "show_log": True,
+            }
 
-            logger.info(f"PaddleOCR Model loaded (lang={self.lang})")
+            self.model = PaddleOCR(**ocr_params)
+
+            logger.info(f"PaddleOCR Model loaded (lang={self.lang}, GPU: {use_gpu})")
             self.is_loaded = True
 
         except Exception as e:
@@ -64,35 +74,34 @@ class PaddleOCREngine(BaseOCREngine):
             # PaddleOCR 실행
             result = self.model.ocr(img_np)
 
-            return result
             # 결과 파싱
-            # text_boxes = []
-            # if result and result[0]:
-            #     for line in result[0]:
-            #         bbox = line[0]
-            #         text = line[1][0]
-            #         confidence = line[1][1]
+            text_boxes = []
+            if result and result[0]:
+                for line in result[0]:
+                    bbox = line[0]
+                    text = line[1][0]
+                    confidence = line[1][1]
 
-            #         if confidence >= confidence_threshold:
-            #             # numpy 배열을 Python 리스트로 변환
-            #             bbox_list = [[float(x), float(y)] for x, y in bbox]
-            #             text_boxes.append(
-            #                 {
-            #                     "text": text,
-            #                     "confidence": float(confidence),
-            #                     "bbox": bbox_list,
-            #                 }
-            #             )
+                    if confidence >= confidence_threshold:
+                        # numpy 배열을 Python 리스트로 변환
+                        bbox_list = [[float(x), float(y)] for x, y in bbox]
+                        text_boxes.append(
+                            {
+                                "text": text,
+                                "confidence": float(confidence),
+                                "bbox": bbox_list,
+                            }
+                        )
 
-            # full_text = " ".join([box["text"] for box in text_boxes])
+            full_text = " ".join([box["text"] for box in text_boxes])
 
-            # logger.info(f"PaddleOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
+            logger.info(f"PaddleOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
-            # return {
-            #     "text_boxes": text_boxes,
-            #     "full_text": full_text,
-            #     "status": "success",
-            # }
+            return {
+                "text_boxes": text_boxes,
+                "full_text": full_text,
+                "status": "success",
+            }
 
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
