@@ -47,7 +47,7 @@ export const TaskPage: React.FC = () => {
     { id: 'management' as const, label: '태스크 관리' },
     { id: 'history' as const, label: '태스크 이력' },
     { id: 'model' as const, label: '모델 테스트' },
-    { id: 'etc' as const, label: '기타 테스트' }
+    // { id: 'etc' as const, label: '기타 테스트' }
   ];
 
   const renderTabContent = () => {
@@ -58,8 +58,10 @@ export const TaskPage: React.FC = () => {
         return <TaskHistoryTab />;
       case 'model':
         return <TaskModelsTab />;
-      case 'etc':
-        return <></>
+      // case 'etc':
+
+      //   return <OcrModelTab/>
+
       // return <TaskApiTab />;
       default:
         return null;
