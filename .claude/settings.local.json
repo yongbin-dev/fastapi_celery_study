@@ -29,7 +29,8 @@
       "Bash(uv run:*)",
       "Bash(python3:*)",
       "Bash(uv remove:*)",
-      "Bash(uv add:*)"
+      "Bash(uv add:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
