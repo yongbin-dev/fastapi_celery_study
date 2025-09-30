@@ -25,10 +25,6 @@ import sys
 from pathlib import Path
 from typing import List, Set
 
-# 프로젝트 루트를 sys.path에 추가
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -36,13 +32,18 @@ from app.config import settings
 from app.core.database import get_db_manager
 from app.core.logging import get_logger
 
+# 프로젝트 루트를 sys.path에 추가
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+
 logger = get_logger(__name__)
 
 
 class TableTruncator:
     """테이블 데이터 truncate를 담당하는 클래스"""
 
-    def __init__(self, exclude_tables: Set[str] = None, use_test_db: bool = False):
+    def __init__(self, exclude_tables: Set[str] , use_test_db: bool = False):
         # 데이터베이스 URL 설정
         if use_test_db:
             # 테스트 DB용 설정으로 데이터베이스 매니저 설정 오버라이드
@@ -183,16 +184,30 @@ async def main():
         """,
     )
 
-    parser.add_argument("--confirm", action="store_true", help="확인 프롬프트 없이 바로 실행")
+    parser.add_argument("--confirm",
+                        action="store_true",
+                        help="확인 프롬프트 없이 바로 실행")
 
-    parser.add_argument("--exclude", type=str, default="", help="제외할 테이블명 (쉼표로 구분)")
+    parser.add_argument("--exclude",
+                        type=str,
+                        default="",
+                        help="제외할 테이블명 (쉼표로 구분)"
+                        )
 
-    parser.add_argument("--dry-run", action="store_true", help="실제 실행하지 않고 삭제될 테이블만 출력")
+    parser.add_argument("--dry-run",
+                        action="store_true",
+                        help="실제 실행하지 않고 삭제될 테이블만 출력"
+                        )
 
-    parser.add_argument("--stats", action="store_true", help="각 테이블의 레코드 수만 출력")
+    parser.add_argument("--stats",
+                        action="store_true",
+                        help="각 테이블의 레코드 수만 출력"
+                        )
 
     parser.add_argument(
-        "--test-db", action="store_true", help="테스트 데이터베이스 사용 (TEST_DATABASE_URL)"
+        "--test-db",
+        action="store_true",
+        help="테스트 데이터베이스 사용 (TEST_DATABASE_URL)"
     )
 
     args = parser.parse_args()
@@ -277,7 +292,7 @@ async def main():
 
                 print(f"\n⚠️  총 {total_records:,}개의 레코드가 삭제됩니다!")
 
-            response = input("\n정말로 모든 테이블 데이터를 삭제하시겠습니까? (yes/no): ")
+            response = input("\n정말로 모든 테이블 데이터를 삭제하시겠습니까? (y/n):")
             if response.lower() not in ["yes", "y"]:
                 print("❌ 작업이 취소되었습니다.")
                 return
