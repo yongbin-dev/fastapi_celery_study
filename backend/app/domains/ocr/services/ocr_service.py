@@ -50,24 +50,21 @@ class OCRService(BaseService):
         Returns:
             추출된 텍스트 결과
         """
-        try:
-            # 모델 로드 (싱글톤)
-            if self.model is None:
-                self.model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
+        
+        # 모델 로드 (싱글톤)
+        if self.model is None:
+            self.model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
 
-            # OCR 실행
-            logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
-            result = self.model.predict(image_data, confidence_threshold)
+        # OCR 실행
+        logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
+        result = self.model.predict(image_data, confidence_threshold)
 
-            # 후처리
-            result = self.postprocess(result)
+        # 후처리
+        result = self.postprocess(result)
 
-            logger.info(f"OCR 실행 완료")
-            return 
+        logger.info(f"OCR 실행 완료")
+        return 
 
-        except Exception as e:
-            logger.error(f"OCR 실행 중 오류 발생: {str(e)}")
-            return {"error": str(e), "status": "failed"}
 
 
 ocr_service = OCRService()
