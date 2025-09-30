@@ -19,25 +19,18 @@ class PaddleOCREngine(BaseOCREngine):
     def load_model(self) -> None:
         """PaddleOCR 모델 로드"""
         try:
-            import os
             from paddleocr import PaddleOCR
-            import paddle
 
-            # WSL2 GPU 세그폴트 방지를 위한 환경 변수 설정
-            os.environ['FLAGS_use_mkldnn'] = '0'
-            os.environ['FLAGS_fraction_of_gpu_memory_to_use'] = '0.3'
-            os.environ['FLAGS_cudnn_deterministic'] = '1'
-            os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
-            logger.info("PaddleOCR 모델 로딩 시작...")
-            logger.info(f"PaddlePaddle version: {paddle.__version__}")
-            logger.info(f"CUDA available: {paddle.device.is_compiled_with_cuda()}")
+            # logger.info("PaddleOCR 모델 로딩 시작...")
+            # logger.info(f"PaddlePaddle version: {paddle.__version__}")
+            # logger.info(f"CUDA available: {paddle.device.is_compiled_with_cuda()}")
 
             # GPU 사용 가능 여부 확인 - WSL2에서는 CPU 모드 강제
             use_gpu = False  # WSL2에서 안정성을 위해 CPU 모드 사용
-            logger.info(f"Using GPU: {use_gpu} (WSL2 환경에서는 CPU 모드 권장)")
-            logger.info("rect_model_dir: " + settings.OCR_REC)
-            logger.info("dect_model_dir: " + settings.OCR_DET)
+            # logger.info(f"Using GPU: {use_gpu} (WSL2 환경에서는 CPU 모드 권장)")
+            # logger.info("rect_model_dir: " + settings.OCR_REC)
+            # logger.info("dect_model_dir: " + settings.OCR_DET)
 
             # PaddleOCR 생성 (CPU 모드)
             ocr_params = {
