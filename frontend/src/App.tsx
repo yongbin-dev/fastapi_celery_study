@@ -4,6 +4,8 @@ import HomePage from '@/pages/HomePage';
 import { Header } from '@/shared/components';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { OcrPage } from './features/ocr/pages';
+import ContactPage from './pages/ContactPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +27,8 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/pipelines" element={<TaskPage />} />
+              <Route path="/ocr" element={<OcrPage />} />
+              <Route path="/contact" element={<ContactPage />} />
             </Routes>
           </main>
         </div>
