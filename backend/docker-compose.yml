@@ -1,42 +1,30 @@
 version: "3.8"
 
 services:
-  # FastAPI 애플리케이션
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ${DOCKERFILE:-Dockerfile.cpu} # 기본 CPU, GPU 사용 시 환경변수 설정
     container_name: fastapi-app
     ports:
-      - "5050:5050"
+      - "35050:5050"
     environment:
-      - ENVIRONMENT=production
-      # Database (Docker 내부 포트는 5432)
-      # - DATABASE_URL=postgresql+asyncpg://sa:1@postgres-server:5432/study_db
-      # - TEST_DATABASE_URL=postgresql+asyncpg://sa:1@postgres-server:5432/postgres_test
-      - DB_ECHO=false
-      # Redis & Celery
-      # - REDIS_URL=redis://redis-server:6379/0
-      # - CELERY_BROKER_URL=redis://redis-server:6379/1
-      # - CELERY_RESULT_BACKEND=redis://redis-server:6379/2
-      # - REDIS_HOST=redis-server
-      # - REDIS_PORT=6379
-      # App
       - TZ=Asia/Seoul
       - HOST=0.0.0.0
       - PORT=5050
-      - LOG_LEVEL=INFO
     volumes:
-      - ./logs:/app/logs
       - ./app:/app/app
+      - ./logs:/app/logs
     restart: unless-stopped
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 networks:
   app-network:
