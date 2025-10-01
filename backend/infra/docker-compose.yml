@@ -24,7 +24,7 @@ services:
     ports:
       - "15432:5432"
     volumes:
-      - /Users/aipim/yb/python/fastapi_celery_study/postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sa -d study_db"]
       interval: 10s
@@ -32,6 +32,10 @@ services:
       retries: 5
     networks:
       - app-network
+
+volumes:
+  postgres_data:
+    driver: local
 
 networks:
   app-network:

@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile.cpu} # 기본 CPU, GPU 사용 시 환경변수 설정
+      dockerfile: Dockerfile.gpu # 기본 CPU, GPU 사용 시 환경변수 설정
     container_name: fastapi-app
     ports:
       - "35050:5050"
@@ -12,6 +12,12 @@ services:
       - TZ=Asia/Seoul
       - HOST=0.0.0.0
       - PORT=5050
+      - DATABASE_URL=postgresql+asyncpg://sa:1@postgres-server:5432/study_db
+      - REDIS_URL=redis://redis-server:6379/0
+      - CELERY_BROKER_URL=redis://redis-server:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis-server:6379/2
+      - LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda-11.8/targets/x86_64-linux/lib:/usr/lib/x86_64-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+      - CUDA_HOME=/usr/local/cuda-11.8
     volumes:
       - ./app:/app/app
       - ./logs:/app/logs

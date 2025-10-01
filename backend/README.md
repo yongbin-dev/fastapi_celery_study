@@ -106,10 +106,10 @@ uv sync --extra dev
 uv sync --extra prod
 
 # 여러 그룹 동시 설치
-uv sync --extra dev --extra llm --extra ocr-base --extra ocr-cpu
+uv sync --extra dev --extra llm --extra ocr --extra paddle-cpu
 
 # 운영 환경에서 LLM + OCR (GPU)
-uv sync --extra prod --extra llm --extra ocr-base --extra ocr-gpu
+uv sync --extra prod --extra llm --extra ocr --extra paddle-gpu
 ```
 
 ### 새 패키지 추가
@@ -124,3 +124,5 @@ uv add --dev pytest
 # 특정 그룹에 추가
 uv add --optional llm transformers
 ```
+
+  <!-- DOCKERFILE=Dockerfile.gpu docker-compose up --build -d app -->
