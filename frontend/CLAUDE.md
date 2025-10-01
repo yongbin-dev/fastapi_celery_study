@@ -33,12 +33,14 @@ src/
 ## 🛠️ 개발 명령어
 
 ### 핵심 개발
+
 - `npm run dev` - 개발 서버 시작
 - `npm run build` - 프로덕션 빌드
 - `npm run lint` - 코드 품질 검사
 - `npm run preview` - 빌드 결과 미리보기
 
 ### 코드 품질
+
 - ESLint + Prettier 설정 완료
 - TypeScript strict 모드 사용
 - Tailwind CSS로 스타일링
@@ -46,20 +48,24 @@ src/
 ## 📁 새로운 기능 추가 가이드
 
 ### 1. 폴더 생성
+
 ```bash
 mkdir -p src/features/[feature-name]/{components,hooks,pages,types}
 ```
 
 ### 2. 필수 파일 생성
+
 각 폴더마다 `index.ts` 파일 생성 후 적절한 export 설정
 
 ### 3. 기능별 구조
+
 - **components/**: 해당 기능 전용 컴포넌트
 - **hooks/**: 해당 기능 전용 비즈니스 로직
 - **pages/**: 해당 기능의 페이지들
 - **types/**: 해당 기능 타입 정의
 
 ### 4. Export 패턴
+
 ```typescript
 // src/features/[feature-name]/index.ts
 export * from './components';
@@ -73,6 +79,7 @@ export * from './types';
 ## 📦 Import/Export 규칙
 
 ### Import 우선순위
+
 ```typescript
 // 1. React & 외부 라이브러리
 import React, { useState } from 'react';
@@ -93,6 +100,7 @@ import { LocalComponent } from './LocalComponent';
 ```
 
 ### Export 패턴
+
 - **Named Export 우선 사용** (Tree shaking 최적화)
 - **Default Export**는 페이지 컴포넌트만
 - **Barrel Exports** (index.ts) 활용
@@ -102,6 +110,7 @@ import { LocalComponent } from './LocalComponent';
 ## 🎯 코딩 표준
 
 ### TypeScript 규칙
+
 ```typescript
 // ✅ Interface 사용 (객체 구조)
 interface User {
@@ -121,26 +130,28 @@ interface ButtonProps {
 ```
 
 ### React 패턴
+
 ```typescript
 // ✅ 표준 컴포넌트 구조
 export const Component: React.FC<Props> = ({ prop1, prop2 }) => {
   // 1. State
   const [state, setState] = useState('');
-  
+
   // 2. Effects
   useEffect(() => {
     // side effects
   }, []);
-  
+
   // 3. Handlers
   const handleClick = () => {};
-  
+
   // 4. Render
   return <div>{/* JSX */}</div>;
 };
 ```
 
 ### 네이밍 규칙
+
 - **컴포넌트**: PascalCase (`UserProfile.tsx`)
 - **Hooks**: camelCase + use 접두사 (`useUserAuth.ts`)
 - **페이지**: PascalCase + Page (`UserPage.tsx`)
@@ -152,19 +163,23 @@ export const Component: React.FC<Props> = ({ prop1, prop2 }) => {
 ## 🔄 의존성 관리 규칙
 
 ### ✅ 허용되는 의존성 방향
+
 - `features/[feature]` → `shared/*` ✅
 - `shared/hooks` → `shared/utils` ✅
 
 ### ❌ 금지되는 의존성 방향
+
 - `shared/*` → `features/*` ❌
 - `features/[feature-a]` → `features/[feature-b]` ❌
 
 ### 공통 요소 처리
+
 기능 간 공유가 필요한 경우 `shared/` 폴더로 추상화
 
 ## 🧪 개발 시 체크리스트
 
 ### 새 기능 개발 시
+
 - [ ] 적절한 폴더 구조 생성
 - [ ] TypeScript 타입 정의
 - [ ] 모든 index.ts 파일 작성
@@ -174,6 +189,7 @@ export const Component: React.FC<Props> = ({ prop1, prop2 }) => {
 - [ ] 로딩 상태 처리
 
 ### 코드 리뷰 시
+
 - [ ] 폴더 구조 확인
 - [ ] Import/Export 패턴 준수
 - [ ] 코딩 표준 준수
@@ -191,19 +207,20 @@ export const Component: React.FC<Props> = ({ prop1, prop2 }) => {
 ## 🚀 기술 스택
 
 ### Core
+
 - **React 19** + **TypeScript**
 - **Vite** (빌드 도구)
 - **Tailwind CSS** (스타일링)
 
 ### 상태 관리
+
 - **Zustand** (전역 상태)
 - **React Query** (서버 상태)
 
 ### 개발 도구
+
 - **ESLint** + **Prettier**
 - **React Router** (라우팅)
 - **Axios** (HTTP 클라이언트)
 
 ---
-
-💡 **중요**: 새로운 기능을 개발하기 전에 반드시 [문서](./docs/)를 참고하여 일관된 패턴을 유지하세요.

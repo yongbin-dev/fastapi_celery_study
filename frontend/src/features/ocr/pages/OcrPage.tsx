@@ -1,4 +1,4 @@
-import React, { useState, type ChangeEvent, useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState, type ChangeEvent } from 'react';
 
 import { useExtractText } from '../hooks/useOcr';
 
@@ -117,8 +117,10 @@ const OcrPage: React.FC = () => {
 
   return (
     <div className="h-full bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+
       <div className="w-full max-w-6xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden grid grid-cols-1 md:grid-cols-2">
         {/* Left Column: Upload & Preview */}
+
         <div className="p-8 border-r border-gray-200">
           <div className="flex flex-col h-full">
             <div className="mb-6">
