@@ -1,6 +1,9 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
 import traceback
 
+import cv2  # type: ignore
+import numpy as np  # type: ignore
+
 from app.config import settings
 from app.core.logging import get_logger
 
@@ -21,42 +24,41 @@ class PaddleOCREngine(BaseOCREngine):
 
         try:
             import paddle
-            print(
-                "CUDA 지원 여부:", paddle.device.is_compiled_with_cuda()
-            )  # True 여야 GPU 빌드
-            print("현재 디바이스:", paddle.get_device())  # gpu:0 기대
-            print("GPU 개수:", paddle.device.cuda.device_count())  # 1 이상이어야 함
             from paddleocr import PaddleOCR
-        except ImportError:
-            PaddleOCR = None
 
+            # GPU 환경 정보 로깅
+            logger.debug(f"CUDA 지원 여부: {paddle.device.is_compiled_with_cuda()}")
+            logger.debug(f"현재 디바이스: {paddle.get_device()}")
+            logger.debug(f"GPU 개수: {paddle.device.cuda.device_count()}")
 
-        if PaddleOCR is None:
-            logger.error("PaddleOCR 모듈이 설치되지 않았습니다.")
+        except ImportError as e:
+            logger.error(f"PaddleOCR 또는 Paddle 모듈을 불러올 수 없습니다: {e}")
             self.is_loaded = False
             return
 
         try:
+            logger.info("PaddleOCR 모델 로딩 시작...")
+
             ocr_params = {
-                "use_angle_cls": True,
-                "lang": "en",  # 다국어 모델 사용
+                "use_angle_cls": self.use_angle_cls,
+                "lang": "korean" if self.lang == "korean" else "en",
                 "det_model_dir": settings.OCR_DET,
                 "rec_model_dir": settings.OCR_REC,
+                "use_gpu": True,
+                "show_log": False,
             }
-            # self.model = PaddleOCR(**ocr_params)
-            self.model = PaddleOCR()
+
+            self.model = PaddleOCR(**ocr_params)
             self.is_loaded = True
+            logger.info(f"PaddleOCR 모델 로드 완료 (lang={ocr_params['lang']})")
 
         except Exception as e:
-            logger.error(f"Error loading PaddleOCR model: {e}")
+            logger.error(f"PaddleOCR 모델 로드 중 오류: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             self.is_loaded = False
 
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
         """PaddleOCR 예측"""
-        import cv2  # type: ignore
-        import numpy as np  # type: ignore
-
         if not self.is_loaded or self.model is None:
             return OCRResultDTO(
                 text_boxes=[], full_text="", status="failed", error="Model not loaded"

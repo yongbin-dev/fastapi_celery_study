@@ -87,97 +87,120 @@ class LoggingManager:
         # 외부 라이브러리 로깅 레벨 조정
         self._configure_external_loggers()
 
+    def _can_write_log_file(self, log_file: Path) -> bool:
+        """로그 파일에 쓰기 권한이 있는지 확인"""
+        try:
+            # 파일이 존재하면 쓰기 권한 확인
+            if log_file.exists():
+                # 테스트 쓰기 시도
+                with open(log_file, 'a', encoding='utf-8'):
+                    pass
+                return True
+            # 파일이 없으면 디렉토리 쓰기 권한 확인
+            else:
+                return os.access(log_file.parent, os.W_OK)
+        except (PermissionError, OSError):
+            return False
+
     def _setup_file_handlers(self, root_logger, file_format, date_format):
         """파일 핸들러들 설정"""
         file_formatter = logging.Formatter(file_format, date_format)
 
-        # 1. 전체 로그 파일 (회전 로그)
-        # all_log_file = self.log_dir / "app.log"
-        # file_handler = logging.handlers.RotatingFileHandler(
-        #     all_log_file,
-        #     maxBytes=10 * 1024 * 1024,  # 10MB
-        #     backupCount=5,
-        #     encoding="utf-8",
-        # )
-        # file_handler.setLevel(logging.DEBUG)
-        # file_handler.setFormatter(file_formatter)
-        # root_logger.addHandler(file_handler)
-
         # 2. 에러 전용 로그 파일
         error_log_file = self.log_dir / "error.log"
-        error_handler = logging.handlers.RotatingFileHandler(
-            error_log_file,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=10,
-            encoding="utf-8",
-        )
-        error_handler.setLevel(logging.ERROR)
-        error_handler.setFormatter(file_formatter)
-        root_logger.addHandler(error_handler)
+        if self._can_write_log_file(error_log_file):
+            try:
+                error_handler = logging.handlers.RotatingFileHandler(
+                    error_log_file,
+                    maxBytes=10 * 1024 * 1024,  # 10MB
+                    backupCount=10,
+                    encoding="utf-8",
+                )
+                error_handler.setLevel(logging.ERROR)
+                error_handler.setFormatter(file_formatter)
+                root_logger.addHandler(error_handler)
+            except Exception as e:
+                print(f"에러 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 3. 일별 로그 파일
         today = datetime.now().strftime("%Y-%m-%d")
         daily_log_file = self.log_dir / f"app_{today}.log"
-        daily_handler = logging.FileHandler(daily_log_file, encoding="utf-8")
-        daily_handler.setLevel(logging.INFO)
-        daily_handler.setFormatter(file_formatter)
-        root_logger.addHandler(daily_handler)
+        if self._can_write_log_file(daily_log_file):
+            try:
+                daily_handler = logging.FileHandler(daily_log_file, encoding="utf-8")
+                daily_handler.setLevel(logging.INFO)
+                daily_handler.setFormatter(file_formatter)
+                root_logger.addHandler(daily_handler)
+            except Exception as e:
+                print(f"일별 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 4. Celery 전용 로그 파일
         celery_log_file = self.log_dir / f"celery_{today}.log"
-        celery_handler = logging.FileHandler(celery_log_file, encoding="utf-8")
-        celery_handler.setLevel(logging.INFO)
-        celery_handler.setFormatter(file_formatter)
+        if self._can_write_log_file(celery_log_file):
+            try:
+                celery_handler = logging.FileHandler(celery_log_file, encoding="utf-8")
+                celery_handler.setLevel(logging.INFO)
+                celery_handler.setFormatter(file_formatter)
 
-        # Celery 로거들에만 이 핸들러 추가
-        celery_logger_names = [
-            "celery",
-            "celery.worker",
-            "celery.task",
-            "celery.beat",
-            "celery.app",
-            "celery.redirected",
-        ]
-        for logger_name in celery_logger_names:
-            celery_logger = logging.getLogger(logger_name)
-            celery_logger.addHandler(celery_handler)
+                # Celery 로거들에만 이 핸들러 추가
+                celery_logger_names = [
+                    "celery",
+                    "celery.worker",
+                    "celery.task",
+                    "celery.beat",
+                    "celery.app",
+                    "celery.redirected",
+                ]
+                for logger_name in celery_logger_names:
+                    celery_logger = logging.getLogger(logger_name)
+                    celery_logger.addHandler(celery_handler)
+            except Exception as e:
+                print(f"Celery 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 5. DB 전용 로그 파일 (파일에만 기록, 콘솔 출력 안 함)
         db_log_file = self.log_dir / f"db_{today}.log"
-        db_handler = logging.FileHandler(db_log_file, encoding="utf-8")
-        db_handler.setLevel(logging.INFO)
-        db_handler.setFormatter(file_formatter)
+        if self._can_write_log_file(db_log_file):
+            try:
+                db_handler = logging.FileHandler(db_log_file, encoding="utf-8")
+                db_handler.setLevel(logging.INFO)
+                db_handler.setFormatter(file_formatter)
 
-        # SQLAlchemy 로거들 설정
-        db_logger_names = [
-            "sqlalchemy.engine",
-            "sqlalchemy.pool",
-            "sqlalchemy.dialects",
-            "sqlalchemy.orm",
-        ]
-        for logger_name in db_logger_names:
-            db_logger = logging.getLogger(logger_name)
-            # 기존 핸들러 모두 제거
-            db_logger.handlers.clear()
-            # DB 파일 핸들러만 추가
-            db_logger.addHandler(db_handler)
-            # 상위 로거로 전파하지 않음 (콘솔 출력 방지)
-            db_logger.propagate = False
+                # SQLAlchemy 로거들 설정
+                db_logger_names = [
+                    "sqlalchemy.engine",
+                    "sqlalchemy.pool",
+                    "sqlalchemy.dialects",
+                    "sqlalchemy.orm",
+                ]
+                for logger_name in db_logger_names:
+                    db_logger = logging.getLogger(logger_name)
+                    # 기존 핸들러 모두 제거
+                    db_logger.handlers.clear()
+                    # DB 파일 핸들러만 추가
+                    db_logger.addHandler(db_handler)
+                    # 상위 로거로 전파하지 않음 (콘솔 출력 방지)
+                    db_logger.propagate = False
+            except Exception as e:
+                print(f"DB 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 6. HTTP 요청/응답 로그 파일
         http_log_file = self.log_dir / f"http_{today}.log"
-        http_handler = logging.FileHandler(http_log_file, encoding="utf-8")
-        http_handler.setLevel(logging.INFO)
-        http_handler.setFormatter(file_formatter)
+        if self._can_write_log_file(http_log_file):
+            try:
+                http_handler = logging.FileHandler(http_log_file, encoding="utf-8")
+                http_handler.setLevel(logging.INFO)
+                http_handler.setFormatter(file_formatter)
 
-        # HTTP 로거들 설정
-        http_logger_names = [
-            "app.core.middleware.request_middleware",
-            "app.core.middleware.response_middleware",
-        ]
-        for logger_name in http_logger_names:
-            http_logger = logging.getLogger(logger_name)
-            http_logger.addHandler(http_handler)
+                # HTTP 로거들 설정
+                http_logger_names = [
+                    "app.core.middleware.request_middleware",
+                    "app.core.middleware.response_middleware",
+                ]
+                for logger_name in http_logger_names:
+                    http_logger = logging.getLogger(logger_name)
+                    http_logger.addHandler(http_handler)
+            except Exception as e:
+                print(f"HTTP 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 7. JSON 형식 로그 (구조화된 로그)
         enable_json_logs = os.getenv("ENABLE_JSON_LOGS", "false").lower() == "true"
