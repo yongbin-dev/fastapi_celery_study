@@ -32,7 +32,7 @@ class EasyOCREngine(BaseOCREngine):
             lang_code = lang_map.get(self.lang, "ko")
 
             # EasyOCR Reader 생성
-            self.model = easyocr.Reader([lang_code, "en"], gpu=False)
+            self.model = easyocr.Reader([lang_code, "en"], gpu=True)
 
             logger.info(f"EasyOCR Model loaded (lang={lang_code})")
             self.is_loaded = True

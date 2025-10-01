@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:5050
+@baseUrl = http://192.168.0.122:35050
 
 ### 
 GET {{baseUrl}}/api/v1/common/ocr-images

@@ -1,6 +1,7 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
 import traceback
 
+from app.config import settings
 from app.core.logging import get_logger
 
 from ...schemas import OCRResultDTO, TextBoxDTO
@@ -17,30 +18,32 @@ class PaddleOCREngine(BaseOCREngine):
 
     def load_model(self) -> None:
         """PaddleOCR 모델 로드"""
+
         try:
+            import paddle
             from paddleocr import PaddleOCR
+        except ImportError:
+            PaddleOCR = None
 
-            # logger.info("PaddleOCR 모델 로딩 시작...")
-            # logger.info(f"PaddlePaddle version: {paddle.__version__}")
-            # logger.info(f"CUDA available: {paddle.device.is_compiled_with_cuda()}")
+        print(
+            "CUDA 지원 여부:", paddle.device.is_compiled_with_cuda()
+        )  # True 여야 GPU 빌드
+        print("현재 디바이스:", paddle.get_device())  # gpu:0 기대
+        print("GPU 개수:", paddle.device.cuda.device_count())  # 1 이상이어야 함
 
-            # GPU 사용 가능 여부 확인 - WSL2에서는 CPU 모드 강제
-            # use_gpu = False  # WSL2에서 안정성을 위해 CPU 모드 사용
-            # logger.info(f"Using GPU: {use_gpu} (WSL2 환경에서는 CPU 모드 권장)")
-            # logger.info("rect_model_dir: " + settings.OCR_REC)
-            # logger.info("dect_model_dir: " + settings.OCR_DET)
+        if PaddleOCR is None:
+            logger.error("PaddleOCR 모듈이 설치되지 않았습니다.")
+            self.is_loaded = False
+            return
 
-            # PaddleOCR 생성 (CPU 모드)
+        try:
             ocr_params = {
-                "use_angle_cls": self.use_angle_cls,
-                "lang": self.lang,
-                "enable_mkldnn": False,  # MKL-DNN 비활성화
-                "cpu_threads": 2,  # CPU 스레드 수
-                "show_log": True,
+                "use_angle_cls": True,
+                "lang": "en",  # 다국어 모델 사용
+                "det_model_dir": settings.OCR_DET,
+                "rec_model_dir": settings.OCR_REC,
             }
-
             self.model = PaddleOCR(**ocr_params)
-
             self.is_loaded = True
 
         except Exception as e:
