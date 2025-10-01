@@ -1,7 +1,7 @@
 # app/domains/ocr/schemas/response.py
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TextBoxDTO(BaseModel):
@@ -12,6 +12,7 @@ class TextBoxDTO(BaseModel):
     bbox: List[List[float]] = Field(
         ..., description="바운딩 박스 좌표 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]"
     )
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OCRResultDTO(BaseModel):
@@ -32,14 +33,21 @@ class OCRTextBox(BaseModel):
     text: str = Field(..., description="추출된 텍스트")
     confidence: float = Field(..., description="신뢰도 점수")
     bbox: List[List[float]] = Field(..., description="바운딩 박스 좌표")
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OCRExtractResponse(BaseModel):
     """OCR 텍스트 추출 응답 스키마"""
 
-    task_id: str = Field(..., description="Celery 태스크 ID")
+    chain_id: Optional[str] = Field(
+        ...,
+        description="Celery 태스크 ID",
+    )
     status: str = Field(..., description="태스크 상태")
+    image_path: Optional[str] = Field(default=None, description="전체 추출 텍스트")
+    error: Optional[str] = Field(default=None, description="에러")
     text_boxes: Optional[List[OCRTextBox]] = Field(
         default=None, description="추출된 텍스트 박스 목록"
     )
-    full_text: Optional[str] = Field(default=None, description="전체 추출 텍스트")
+
+    model_config = ConfigDict(from_attributes=True)

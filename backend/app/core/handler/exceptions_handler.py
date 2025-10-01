@@ -9,8 +9,10 @@ from app.utils.response_builder import ResponseBuilder
 
 logger = get_logger(__name__)
 
+
 def setup_exception_handlers(app: FastAPI):
     """예외 핸들러 설정"""
+
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         logger.error(f"에러 발생: {traceback.format_exc()}")
@@ -45,7 +47,7 @@ def setup_exception_handlers(app: FastAPI):
 
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
-        logger.error(f"에러 발생: {traceback.format_exc()}")
+        # logger.error(f"에러 발생: {traceback.format_exc()}")
         error_response = ResponseBuilder.error(
             message="서버 내부 오류가 발생했습니다", error_code="INTERNAL_SERVER_ERROR"
         )

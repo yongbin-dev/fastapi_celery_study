@@ -2,11 +2,29 @@
 
 ### 환경 설정
 
-- **개발 환경**: `uv sync --extra dev` - 개발 의존성 포함 설치
-- **운영 환경**: `uv sync --extra prod` - 운영 의존성 포함 설치
+#### 기본 설치
+
+- **개발 환경 (CPU)**: `uv sync --extra dev` - 개발 의존성 + OCR CPU 버전 포함
+- **운영 환경 (GPU)**: `uv sync --extra prod` - 운영 의존성 + OCR GPU 버전 포함
 - **LLM 도메인**: `uv sync --extra llm` - LLM 관련 의존성 설치
-- **OCR 도메인**: `uv sync --extra ocr` - OCR 관련 의존성 설치
 - **Vision 도메인**: `uv sync --extra vision` - Vision 관련 의존성 설치
+
+#### OCR 환경별 설치
+
+> **중요**: PaddleOCR과 EasyOCR은 환경(CPU/GPU)에 따라 다른 의존성이 필요합니다.
+
+- **개발 환경 (CPU)**:
+  - `uv sync --extra dev` - PaddlePaddle CPU 버전 포함
+  - 또는 개별 설치: `uv sync --extra ocr-base --extra ocr-cpu`
+
+- **운영 환경 (GPU)**:
+  - `uv sync --extra prod` - PaddlePaddle GPU 버전 포함
+  - 또는 개별 설치: `uv sync --extra ocr-base --extra ocr-gpu`
+
+- **OCR 기본 의존성만**: `uv sync --extra ocr-base` - OpenCV, Pillow 등
+
+#### Docker
+
 - **Docker**: `docker-compose up` - 모든 서비스 시작 (app, Redis, Celery worker, Flower)
 
 ### 개발
@@ -81,11 +99,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 기본 의존성만 설치
 uv sync
 
-# 개발 의존성 포함
+# 개발 환경 (CPU) - 권장
 uv sync --extra dev
 
+# 운영 환경 (GPU) - 권장
+uv sync --extra prod
+
 # 여러 그룹 동시 설치
-uv sync --extra dev --extra llm --extra ocr
+uv sync --extra dev --extra llm --extra ocr-base --extra ocr-cpu
+
+# 운영 환경에서 LLM + OCR (GPU)
+uv sync --extra prod --extra llm --extra ocr-base --extra ocr-gpu
 ```
 
 ### 새 패키지 추가

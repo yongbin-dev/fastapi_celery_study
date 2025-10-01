@@ -22,6 +22,7 @@ def extract_text_task(
 
     Args:
         image_data: 이미지 데이터 (bytes)
+        filename: 원본 파일명
         language: 추출할 언어
         confidence_threshold: 신뢰도 임계값
         use_angle_cls: 각도 분류 사용 여부
@@ -30,7 +31,8 @@ def extract_text_task(
         추출된 텍스트 결과
     """
     logger.info(
-        f"OCR 텍스트 추출 시작 - Task ID: {self.request.id}, Image Size: {len(image_data)} bytes"
+        f"OCR 텍스트 추출 시작 - Task ID: {self.request.id},"
+        "Image Size: {len(image_data)} bytes"
     )
 
     # Service를 통한 OCR 실행

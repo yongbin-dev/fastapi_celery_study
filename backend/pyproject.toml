@@ -38,6 +38,13 @@ dev = [
     "ipython>=8.19.0",
     "ipdb>=0.13.13",
     "aiosqlite>=0.21.0",
+    # OCR 의존성 (CPU 버전)
+    "opencv-python>=4.9.0",
+    "Pillow>=10.2.0",
+    "python-Levenshtein>=0.23.0",
+    "easyocr>=1.7.2",
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle>=2.6.2,<3.0.0",
 ]
 
 prod = [
@@ -45,6 +52,13 @@ prod = [
     "flower>=2.0.1",
     "sentry-sdk>=1.0.0",
     "cryptography>=41.0.7",
+    # OCR 의존성 (GPU 버전)
+    "opencv-python>=4.9.0",
+    "Pillow>=10.2.0",
+    "python-Levenshtein>=0.23.0",
+    "easyocr>=1.7.2",
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle-gpu>=2.6.2,<3.0.0",
 ]
 
 llm = [
@@ -59,10 +73,22 @@ llm = [
     "langchain-ollama>=0.3.8",
 ]
 
-ocr = [
+# 공통 OCR 의존성
+ocr-base = [
     "opencv-python>=4.9.0",
     "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
+]
+
+# CPU 환경용 (개발)
+ocr-cpu = [
+    "easyocr>=1.7.2",
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle>=2.6.2,<3.0.0",
+]
+
+# GPU 환경용 (운영)
+ocr-gpu = [
     "easyocr>=1.7.2",
     "paddleocr>=2.8.0,<3.0.0",
     "paddlepaddle-gpu>=2.6.2,<3.0.0",

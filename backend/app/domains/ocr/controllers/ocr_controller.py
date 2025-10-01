@@ -1,7 +1,10 @@
 # app/domains/ocr/controllers/ocr_controller.py
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.core.logging import get_logger
+from app.domains.common.services.common_service import CommonService, get_common_service
 from app.utils.response_builder import ResponseBuilder
 
 from ..services import OCRService, get_ocr_service
@@ -56,6 +59,8 @@ async def extract_text_sync(
     confidence_threshold: float = Form(0.5),
     use_angle_cls: bool = Form(True),
     ocr_service: OCRService = Depends(get_ocr_service),
+    common_service: CommonService = Depends(get_common_service),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     OCR 텍스트 추출 API (동기)
@@ -69,12 +74,19 @@ async def extract_text_sync(
     # 이미지 파일 읽기
     image_data = await image_file.read()
 
+    filename = image_file.filename or "unknown.png"
+    image_path = common_service.save_image(image_data, filename)
+
     # Service를 통한 동기 처리
     result = ocr_service.extract_text_from_image(
         image_data=image_data,
         language=language,
         confidence_threshold=confidence_threshold,
         use_angle_cls=use_angle_cls,
+    )
+
+    await common_service.save_ocr_execution_to_db(
+        db=db, image_path=image_path, ocr_result=result
     )
 
     if result.status == "failed":

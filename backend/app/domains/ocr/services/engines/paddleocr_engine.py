@@ -18,14 +18,14 @@ class PaddleOCREngine(BaseOCREngine):
     def load_model(self) -> None:
         """PaddleOCR 모델 로드"""
         try:
-            from paddleocr import PaddleOCR  # type: ignore
+            from paddleocr import PaddleOCR
 
             # logger.info("PaddleOCR 모델 로딩 시작...")
             # logger.info(f"PaddlePaddle version: {paddle.__version__}")
             # logger.info(f"CUDA available: {paddle.device.is_compiled_with_cuda()}")
 
             # GPU 사용 가능 여부 확인 - WSL2에서는 CPU 모드 강제
-            use_gpu = False  # WSL2에서 안정성을 위해 CPU 모드 사용
+            # use_gpu = False  # WSL2에서 안정성을 위해 CPU 모드 사용
             # logger.info(f"Using GPU: {use_gpu} (WSL2 환경에서는 CPU 모드 권장)")
             # logger.info("rect_model_dir: " + settings.OCR_REC)
             # logger.info("dect_model_dir: " + settings.OCR_DET)
@@ -34,7 +34,6 @@ class PaddleOCREngine(BaseOCREngine):
             ocr_params = {
                 "use_angle_cls": self.use_angle_cls,
                 "lang": self.lang,
-                "use_gpu": use_gpu,
                 "enable_mkldnn": False,  # MKL-DNN 비활성화
                 "cpu_threads": 2,  # CPU 스레드 수
                 "show_log": True,
@@ -42,7 +41,6 @@ class PaddleOCREngine(BaseOCREngine):
 
             self.model = PaddleOCR(**ocr_params)
 
-            logger.info(f"PaddleOCR Model loaded (lang={self.lang}, GPU: {use_gpu})")
             self.is_loaded = True
 
         except Exception as e:

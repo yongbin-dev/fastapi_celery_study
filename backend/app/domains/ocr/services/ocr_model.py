@@ -1,10 +1,9 @@
 # app/domains/ocr/services/ocr_model.py
 from typing import Optional
 
-from domains.ocr.services.engines.base import BaseOCREngine
-
 from app.config import settings
 from app.core.logging import get_logger
+from app.domains.ocr.services.engines.base import BaseOCREngine
 from app.shared.base_model import BaseModel
 
 from ..schemas import OCRResultDTO

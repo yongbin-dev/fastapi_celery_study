@@ -1,4 +1,5 @@
 import pkgutil
+import traceback
 from importlib import import_module
 
 from fastapi import APIRouter
@@ -24,6 +25,7 @@ for _, domain_name, _ in pkgutil.iter_modules(app.domains.__path__):
         )
         logger.info(f"✅ Loaded domain controller: {domain_name}")
     except (ImportError, AttributeError) as e:
+        logger.error(f"에러 발생: {traceback.format_exc()}")
         logger.warning(f"⚠️ No controller found for domain: {domain_name} - {e}")
 
 # 2. 오케스트레이션 컨트롤러 등록 (pipeline_controller)
