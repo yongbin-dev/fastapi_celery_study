@@ -55,7 +55,7 @@ async def test_run_1000_chains_concurrently(session_maker, num_chains):
     1. 명령행 옵션: pytest --num-chains=1000 tests/test_stress_chain.py::test_run_1000_chains_concurrently
     2. 환경변수: TEST_NUM_CHAINS=1000 pytest tests/test_stress_chain.py::test_run_1000_chains_concurrently
     3. 기본값: pytest tests/test_stress_chain.py::test_run_1000_chains_concurrently (100개)
-    """
+    """  # noqa: E501
     # given
     print(f"\n🚀 {num_chains}개의 체인으로 스트레스 테스트 시작")
     redis_manager = RedisService()

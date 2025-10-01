@@ -82,7 +82,7 @@ def setup_middleware():
 
     # Request/Response 로깅 미들웨어
     # app.add_middleware(RequestLogMiddleware)
-    app.add_middleware(ResponseLogMiddleware)
+    # app.add_middleware(ResponseLogMiddleware)
 
     # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(
