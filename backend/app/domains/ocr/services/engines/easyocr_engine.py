@@ -22,23 +22,38 @@ class EasyOCREngine(BaseOCREngine):
 
             logger.info("EasyOCR 모델 로딩 시작...")
 
-            # EasyOCR 언어 코드 매핑
+            # EasyOCR 언어 코드 매핑 (확장 가능)
             lang_map = {
                 "korean": "ko",
                 "english": "en",
                 "chinese": "ch_sim",
+                "chinese_traditional": "ch_tra",
                 "japanese": "ja",
+                "thai": "th",
+                "vietnamese": "vi",
+                "arabic": "ar",
+                "hindi": "hi",
+                "spanish": "es",
+                "french": "fr",
+                "german": "de",
+                "russian": "ru",
+                "portuguese": "pt",
             }
-            lang_code = lang_map.get(self.lang, "ko")
+            lang_code = lang_map.get(self.lang.lower(), "en")
+
+            # 다중 언어 설정 (기본 언어 + 영어)
+            languages = [lang_code]
+            if lang_code != "en":
+                languages.append("en")
 
             # EasyOCR Reader 생성
-            self.model = easyocr.Reader([lang_code, "en"], gpu=True)
+            self.model = easyocr.Reader(languages, gpu=True)
 
-            logger.info(f"EasyOCR Model loaded (lang={lang_code})")
+            logger.info(f"EasyOCR 모델 로드 완료 (lang={'+'.join(languages)})")
             self.is_loaded = True
 
         except Exception as e:
-            logger.error(f"Error loading EasyOCR model: {e}")
+            logger.error(f"EasyOCR 모델 로드 중 오류: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
             self.is_loaded = False
 
