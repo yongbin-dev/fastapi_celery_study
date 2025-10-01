@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.core.database import close_db, init_db
 from app.core.handler.exceptions_handler import setup_exception_handlers
-from app.core.middleware import ResponseLogMiddleware
 from app.core.router import api_router
 from app.utils.response_builder import ResponseBuilder
 

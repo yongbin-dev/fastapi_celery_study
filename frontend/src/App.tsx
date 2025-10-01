@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { OcrPage } from './features/ocr/pages';
 import ContactPage from './pages/ContactPage';
+import { OcrComparisonPage } from './features/ocr';
+import { analyzeSimilarity } from '@/features/ocr/utils/similarity';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +30,7 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/pipelines" element={<TaskPage />} />
               <Route path="/ocr" element={<OcrPage />} />
+              <Route path="/ocr-comparison" element={<OcrComparisonPage analyzeSimilarity={analyzeSimilarity} />} />
               <Route path="/contact" element={<ContactPage />} />
             </Routes>
           </main>

@@ -19,6 +19,9 @@ cache/
 temp/
 tmp/
 
+# 업로드된 이미지 파일
+images/
+
 ### Linux ###
 *~
 
@@ -293,3 +296,10 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/linux,macos,python,pycharm,windows,visualstudiocode.venv/
+
+### Custom Ignores ###
+# Serena CLI tool
+.serena/
+
+# Claude local settings
+*.local.json
