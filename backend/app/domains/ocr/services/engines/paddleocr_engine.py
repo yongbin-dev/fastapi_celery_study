@@ -21,15 +21,15 @@ class PaddleOCREngine(BaseOCREngine):
 
         try:
             import paddle
+            print(
+                "CUDA 지원 여부:", paddle.device.is_compiled_with_cuda()
+            )  # True 여야 GPU 빌드
+            print("현재 디바이스:", paddle.get_device())  # gpu:0 기대
+            print("GPU 개수:", paddle.device.cuda.device_count())  # 1 이상이어야 함
             from paddleocr import PaddleOCR
         except ImportError:
             PaddleOCR = None
 
-        print(
-            "CUDA 지원 여부:", paddle.device.is_compiled_with_cuda()
-        )  # True 여야 GPU 빌드
-        print("현재 디바이스:", paddle.get_device())  # gpu:0 기대
-        print("GPU 개수:", paddle.device.cuda.device_count())  # 1 이상이어야 함
 
         if PaddleOCR is None:
             logger.error("PaddleOCR 모듈이 설치되지 않았습니다.")
@@ -43,7 +43,8 @@ class PaddleOCREngine(BaseOCREngine):
                 "det_model_dir": settings.OCR_DET,
                 "rec_model_dir": settings.OCR_REC,
             }
-            self.model = PaddleOCR(**ocr_params)
+            # self.model = PaddleOCR(**ocr_params)
+            self.model = PaddleOCR()
             self.is_loaded = True
 
         except Exception as e:

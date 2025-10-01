@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.12.*"
 resolution-markers = [
     "sys_platform == 'win32'",
@@ -461,6 +461,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "redis" },
     { name = "sqlalchemy" },
+    { name = "superclaude" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -498,16 +499,6 @@ ocr-base = [
     { name = "pillow" },
     { name = "python-levenshtein" },
 ]
-ocr-cpu = [
-    { name = "easyocr" },
-    { name = "paddleocr" },
-    { name = "paddlepaddle" },
-]
-ocr-gpu = [
-    { name = "easyocr" },
-    { name = "paddleocr" },
-    { name = "paddlepaddle-gpu" },
-]
 prod = [
     { name = "cryptography" },
     { name = "easyocr" },
@@ -529,8 +520,6 @@ requires-dist = [
     { name = "celery", specifier = ">=5.5.3" },
     { name = "cryptography", marker = "extra == 'prod'", specifier = ">=41.0.7" },
     { name = "easyocr", marker = "extra == 'dev'", specifier = ">=1.7.2" },
-    { name = "easyocr", marker = "extra == 'ocr-cpu'", specifier = ">=1.7.2" },
-    { name = "easyocr", marker = "extra == 'ocr-gpu'", specifier = ">=1.7.2" },
     { name = "easyocr", marker = "extra == 'prod'", specifier = ">=1.7.2" },
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "flower", marker = "extra == 'prod'", specifier = ">=2.0.1" },
@@ -547,12 +536,8 @@ requires-dist = [
     { name = "opencv-python", marker = "extra == 'ocr-base'", specifier = ">=4.9.0" },
     { name = "opencv-python", marker = "extra == 'prod'", specifier = ">=4.9.0" },
     { name = "paddleocr", marker = "extra == 'dev'", specifier = ">=2.8.0,<3.0.0" },
-    { name = "paddleocr", marker = "extra == 'ocr-cpu'", specifier = ">=2.8.0,<3.0.0" },
-    { name = "paddleocr", marker = "extra == 'ocr-gpu'", specifier = ">=2.8.0,<3.0.0" },
     { name = "paddleocr", marker = "extra == 'prod'", specifier = ">=2.8.0,<3.0.0" },
     { name = "paddlepaddle", marker = "extra == 'dev'", specifier = ">=2.6.2,<3.0.0" },
-    { name = "paddlepaddle", marker = "extra == 'ocr-cpu'", specifier = ">=2.6.2,<3.0.0" },
-    { name = "paddlepaddle-gpu", marker = "extra == 'ocr-gpu'", specifier = ">=2.6.2,<3.0.0" },
     { name = "paddlepaddle-gpu", marker = "extra == 'prod'", specifier = ">=2.6.2,<3.0.0" },
     { name = "pillow", marker = "extra == 'dev'", specifier = ">=10.2.0" },
     { name = "pillow", marker = "extra == 'ocr-base'", specifier = ">=10.2.0" },
@@ -578,13 +563,14 @@ requires-dist = [
     { name = "sentencepiece", marker = "extra == 'llm'", specifier = ">=0.1.99" },
     { name = "sentry-sdk", marker = "extra == 'prod'", specifier = ">=1.0.0" },
     { name = "sqlalchemy", specifier = ">=2.0.43" },
+    { name = "superclaude", specifier = ">=4.1.5" },
     { name = "tokenizers", marker = "extra == 'llm'", specifier = ">=0.15.0" },
     { name = "torch", marker = "extra == 'llm'", specifier = ">=2.2.0" },
     { name = "torchvision", marker = "extra == 'llm'", specifier = ">=0.17.0" },
     { name = "transformers", marker = "extra == 'llm'", specifier = ">=4.40.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27.0" },
 ]
-provides-extras = ["dev", "prod", "llm", "ocr-base", "ocr-cpu", "ocr-gpu"]
+provides-extras = ["dev", "prod", "llm", "ocr-base"]
 
 [[package]]
 name = "filelock"
@@ -2340,6 +2326,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/96/de/67de3c0a01f3b645a1bb67d2249ec75735e16d6f937a30430ed2a5534fc8/stringzilla-4.0.14-cp312-cp312-win32.whl", hash = "sha256:8d2862eda70332c701912be4a3ca236cbeb584af6555ba2951e4af5527007dc3", size = 86119, upload-time = "2025-09-22T13:09:26.959Z" },
     { url = "https://files.pythonhosted.org/packages/00/f7/76148b86fd19412c04afa0180887b58932327d79f6dc8ed1bf4b4d3e5d10/stringzilla-4.0.14-cp312-cp312-win_amd64.whl", hash = "sha256:e74ed20aa34ac8c2ecbefce82fe197fa2679d74a24a137dea7b4491a4916dee4", size = 105838, upload-time = "2025-09-22T13:09:28.111Z" },
     { url = "https://files.pythonhosted.org/packages/1b/6c/de382a6fad4de3dd8e99957032be4cbde02c743ff7b5adaba3dac0771844/stringzilla-4.0.14-cp312-cp312-win_arm64.whl", hash = "sha256:d78b7d69d30f774e1c01be38c385010c7964fc6930a1b640fcac7620f7ae8804", size = 92586, upload-time = "2025-09-22T13:09:29.677Z" },
+]
+
+[[package]]
+name = "superclaude"
+version = "4.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/4d/68e3265d732dd8b9192d19cdbaab49f5db3d6cdb8a9e20969aab8a6bba2d/superclaude-4.1.5.tar.gz", hash = "sha256:871e3df68ab0877568060489c5968fd17c60979a1e22cc74a39f1d2c7ace2a0c", size = 365531, upload-time = "2025-09-26T14:09:04.034Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/ff/d2a8bb5eeb4410efa84a0731956bc4b771ba7f2349f85e78bbee58ef59f5/superclaude-4.1.5-py3-none-any.whl", hash = "sha256:926e2be57d5e5ee6c3937f16aa84331b29e95c263306edbf3e515e102df37d34", size = 237821, upload-time = "2025-09-26T14:09:02.916Z" },
 ]
 
 [[package]]

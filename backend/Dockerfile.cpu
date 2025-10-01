@@ -20,7 +20,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml uv.lock ./
 
 # 6. CPU 환경 패키지 설치 (dev 섹션)
-RUN uv sync --extra dev --no-cache
+RUN uv sync --extra dev
 
 # 7. 소스 코드 복사
 COPY . .
