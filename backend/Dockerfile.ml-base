@@ -1,3 +1,6 @@
+# Dockerfile.ml-base - ML 공통 베이스 이미지
+# torch + 기본 ML 라이브러리 포함
+
 # 1. Python 베이스 이미지 (슬림)
 FROM python:3.12-slim
 
@@ -16,28 +19,17 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # 4. 의존성 파일 복사
 COPY pyproject.toml uv.lock README.md ./
 
-# 5. 빌드 인수(ARG)
-ARG DOMAIN_EXTRA=dev
+# 5. 공통 의존성 + ML 베이스 설치 (캐시 활용)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra ml-base --no-dev
 
-# 6. 의존성 설치
-RUN uv sync --no-cache --extra ${DOMAIN_EXTRA}
-
-# 7. 소스 코드 복사
-COPY app ./app
-
-# 8. 환경 변수
+# 6. 환경 변수
 ENV PYTHONPATH=/app \
-    TZ=Asia/Seoul \
-    HOST=0.0.0.0 \
-    PORT=5050 \
-    FLAGS_use_gpu=False
+    TZ=Asia/Seoul 
 
-# 9. 포트 노출
+# 7. 포트 노출
 EXPOSE 5050
 
-# 10. Healthcheck (선택)
+# 8. 헬스체크
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD curl -f http://localhost:${PORT}/health || exit 1
-
-# 11. 컨테이너 시작
-CMD ["sh", "-c", "uv run uvicorn app.main:app --host ${HOST} --port ${PORT}"]

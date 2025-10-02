@@ -1,0 +1,19 @@
+# Dockerfile.llm - LLM 서비스 (ml-gpu-base 기반)
+# ml-gpu-base에 transformers + langchain 추가
+
+FROM backend-ml-gpu-base:latest
+
+WORKDIR /app
+
+# 1. 빌드 인수
+ARG DOMAIN_EXTRA=llm
+
+# 2. LLM 전용 의존성 설치 (캐시 활용)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra ${DOMAIN_EXTRA} --no-dev
+
+# 3. 소스 코드 복사
+COPY app ./app
+
+# 4. 컨테이너 시작
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host ${HOST} --port ${PORT}"]
