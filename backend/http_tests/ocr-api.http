@@ -1,7 +1,12 @@
-@baseUrl = http://localhost:5050
+@baseUrl = http://localhost:8000
 
 ### 모델 서비스 - 사용 가능한 모델 조회
-GET {{baseUrl}}/api/v1/common/images
+GET {{baseUrl}}/api/v1/ocr/languages
+
+###
+
+###
+GET {{baseUrl}}/api/v1/ocr-cpu/languages
 
 
 ###

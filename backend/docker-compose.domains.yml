@@ -13,6 +13,18 @@ x-common-env: &common-env
   networks:
     - app-network
 
+x-common-dev-env: &common-dev-env
+  env_file:
+    - .env.development
+  environment:
+    - ENVIRONMENT=development
+    - TZ=Asia/Seoul
+  # volumes:
+  #   - ./app:/app/app
+  restart: unless-stopped
+  networks:
+    - app-network
+
 # GPU 서비스용: 공통 설정 + GPU runtime
 x-gpu-service: &gpu-service
   <<: *common-env
@@ -54,10 +66,9 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=base
-      - ENVIRONMENT=production
 
   app-ocr-cpu:
-    <<: *common-env
+    <<: *common-dev-env
     build:
       context: .
       dockerfile: Dockerfile.ocr-cpu
@@ -73,7 +84,6 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=ocr
-      - ENVIRONMENT=production
     depends_on:
       - ml-base
 
@@ -94,7 +104,6 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=ocr
-      - ENVIRONMENT=production
     depends_on:
       - ml-gpu-base
 
@@ -115,7 +124,6 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=llm
-      - ENVIRONMENT=production
     depends_on:
       - ml-gpu-base
 

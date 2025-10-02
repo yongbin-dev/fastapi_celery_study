@@ -47,7 +47,7 @@ class EasyOCREngine(BaseOCREngine):
                 languages.append("en")
 
             # EasyOCR Reader 생성
-            self.model = easyocr.Reader(languages, gpu=True)
+            self.model = easyocr.Reader(languages)
 
             logger.info(f"EasyOCR 모델 로드 완료 (lang={'+'.join(languages)})")
             self.is_loaded = True
