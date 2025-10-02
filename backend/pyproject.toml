@@ -8,60 +8,51 @@ requires-python = ">=3.12,<3.13"
 
 # ===== 공통 필수 의존성 =====
 dependencies = [
-    "fastapi>=0.109.0",
-    "uvicorn[standard]>=0.27.0",
-    "python-multipart>=0.0.6",
-    "celery>=5.5.3",
-    "redis>=5.0.0",
-    "sqlalchemy>=2.0.43",
-    "alembic>=1.16.5",
-    "asyncpg>=0.30.0",
-    "psycopg2-binary>=2.9.10",
-    "psycopg>=3.2.10",
-    "greenlet>=3.2.4",
-    "pydantic>=2.11.9",
-    "pydantic-settings>=2.1.0",
-    "python-dotenv>=1.0.0",
-    "httpx>=0.28.1",
-    "psutil>=7.0.0",
-    "python-json-logger>=2.0.7",
-    "superclaude>=4.1.5",
-    "python-levenshtein>=0.27.1",
-    "scikit-learn>=1.7.2",
+    "fastapi>=0.109.0",              # 비동기 Python 웹 프레임워크 (REST API, 웹소켓 등 구현)
+    "uvicorn[standard]>=0.27.0",     # ASGI 서버 (FastAPI 실행용, 고성능/비동기 지원)
+    "python-multipart>=0.0.6",       # 멀티파트 폼 데이터(파일 업로드 등) 파싱 지원
+    "celery>=5.5.3",                 # 비동기 작업 큐 (백그라운드 태스크 처리)
+    "redis>=5.0.0",                  # 인메모리 데이터베이스/캐시, Celery 브로커/백엔드로도 사용
+    "sqlalchemy>=2.0.43",            # ORM (데이터베이스 모델링 및 쿼리 지원)
+    "alembic>=1.16.5",               # SQLAlchemy 기반 DB 마이그레이션 툴
+    "asyncpg>=0.30.0",               # PostgreSQL용 비동기 드라이버
+    "psycopg2-binary>=2.9.10",       # PostgreSQL용 동기 드라이버 (전통적, 안정적)
+    "psycopg>=3.2.10",               # PostgreSQL 최신 드라이버 (비동기 지원 가능)
+    "greenlet>=3.2.4",               # 동시성 라이브러리 (SQLAlchemy 비동기 내부 실행 시 필요)
+    "pydantic>=2.11.9",              # 데이터 검증 및 직렬화/역직렬화 (FastAPI 모델 정의에 사용)
+    "pydantic-settings>=2.1.0",      # 환경변수/설정 관리 (pydantic 기반 설정 클래스)
+    "python-dotenv>=1.0.0",          # .env 파일을 불러와 환경변수로 적용
+    "httpx>=0.28.1",                 # 비동기 HTTP 클라이언트 (API 호출 등)
+    "psutil>=7.0.0",                 # 시스템 리소스 모니터링 (CPU, 메모리, 프로세스 등)
+    "python-json-logger>=2.0.7",     # JSON 형태의 로깅 지원
+    "superclaude>=4.1.5",            # (특정 기능 확장 라이브러리로 보임 - 아마도 내부 도구 연동용)
+    "python-levenshtein>=0.27.1",    # 문자열 유사도 계산(편집거리 알고리즘)
+    "scikit-learn>=1.7.2",           # 머신러닝/통계 모델링 라이브러리
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.3",
-    "pytest-asyncio>=0.21.1",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.13.2",
-    "mypy>=1.8.0",
-    "pre-commit>=3.6.0",
-    "ipython>=8.19.0",
-    "ipdb>=0.13.13",
-    "aiosqlite>=0.21.0",
+    "pytest>=7.4.3",                 # 테스트 프레임워크
+    "pytest-asyncio>=0.21.1",        # asyncio 환경에서 pytest 지원
+    "pytest-cov>=4.1.0",             # 테스트 커버리지 측정
+    "ruff>=0.13.2",                  # Python 린터/포매터 (flake8 + isort 대체 가능)
+    "mypy>=1.8.0",                   # 정적 타입 체크
+    "pre-commit>=3.6.0",             # Git hook 관리 (자동 린트, 포맷팅, 테스트 실행)
+    "ipython>=8.19.0",               # 인터랙티브 파이썬 셸
+    "ipdb>=0.13.13",                 # 디버거 (pdb 확장판, IPython 통합)
+    "aiosqlite>=0.21.0",             # SQLite 비동기 드라이버 (테스트용 DB)
     # OCR 의존성 (CPU 버전)
-    "opencv-python>=4.9.0",
-    "Pillow>=10.2.0",
-    "python-Levenshtein>=0.23.0",
-    "easyocr>=1.7.2",
-    "paddleocr>=2.8.0,<3.0.0",
-    "paddlepaddle>=2.6.2,<3.0.0",
+    "opencv-python>=4.9.0",          # 이미지 처리(OpenCV 라이브러리)
+    "Pillow>=10.2.0",                # 이미지 처리(PIL 라이브러리 대체)
+    "python-Levenshtein>=0.23.0",    # 문자열 거리 계산 (OCR 후 텍스트 비교 등에 활용)
+    "easyocr>=1.7.2",                # PyTorch 기반 OCR 엔진
+    "paddleocr>=2.8.0,<3.0.0",       # PaddlePaddle 기반 OCR 라이브러리
+    "paddlepaddle>=2.6.2,<3.0.0",    # PaddleOCR 구동을 위한 딥러닝 프레임워크
 ]
 
 prod = [
     "gunicorn>=21.2.0",
     "flower>=2.0.1",
-    "sentry-sdk>=1.0.0",
-    "cryptography>=41.0.7",
-    # OCR 의존성 (GPU 버전)
-    "opencv-python>=4.9.0",
-    "Pillow>=10.2.0",
-    "python-Levenshtein>=0.23.0",
-    "easyocr>=1.7.2",
-    "paddleocr>=2.8.0,<3.0.0",
-    "paddlepaddle-gpu>=2.6.2,<3.0.0",
 ]
 
 
@@ -82,6 +73,14 @@ ocr-base = [
     "opencv-python>=4.9.0",
     "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
+]
+
+# OCR 도메인 의존성 (GPU 기반)
+ocr = [
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle-gpu>=2.6.2,<3.0.0",
+    "easyocr>=1.7.2",
+    "fastapi-celery-multi-domain[ocr-base]",
 ]
 
 
@@ -156,12 +155,10 @@ markers = [
     "domain_ocr: OCR 도메인 테스트",
 ]
 
-
 # ===== Build 설정 =====
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

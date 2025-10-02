@@ -7,33 +7,37 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git \
     libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 libgl1 \
-    python3-dev python3-pip \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. pip 업그레이드
-RUN pip install --upgrade pip
-
-# 4. Hatch/UV 설치
+# 3. UV 설치
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# 5. 의존성 파일 복사
-COPY pyproject.toml uv.lock ./
+# 4. 의존성 파일 복사
+COPY pyproject.toml uv.lock README.md ./
 
-# 6. CPU 환경 패키지 설치 (dev 섹션)
-RUN uv sync --extra dev
+# 5. 빌드 인수(ARG)
+ARG DOMAIN_EXTRA=dev
+
+# 6. 의존성 설치
+RUN uv sync --no-cache --extra ${DOMAIN_EXTRA}
 
 # 7. 소스 코드 복사
-COPY . .
+COPY app ./app
 
 # 8. 환경 변수
-ENV PYTHONPATH=/app
-ENV TZ=Asia/Seoul
-ENV HOST=0.0.0.0
-ENV PORT=5050
-ENV FLAGS_use_gpu=False
+ENV PYTHONPATH=/app \
+    TZ=Asia/Seoul \
+    HOST=0.0.0.0 \
+    PORT=5050 \
+    FLAGS_use_gpu=False
 
 # 9. 포트 노출
 EXPOSE 5050
 
-# 10. 컨테이너 시작
-CMD ["sh", "-c", "uv run uvicorn app.main:app --host 0.0.0.0 --port 5050"]
+# 10. Healthcheck (선택)
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/health || exit 1
+
+# 11. 컨테이너 시작
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host ${HOST} --port ${PORT}"]
