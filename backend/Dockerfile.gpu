@@ -23,10 +23,13 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # 5. 의존성 파일 복사
 COPY pyproject.toml uv.lock README.md ./
 
-# 6. GPU 환경 패키지 설치 (prod 섹션)
-RUN uv sync --extra prod --no-dev
+# 6. 빌드 인수(ARG) 추가
+ARG DOMAIN_EXTRA=prod
 
-# 7. 소스 코드 복사
+# 7. GPU 환경 패키지 설치 (지정된 extra 사용)
+RUN uv sync --no-cache --extra ${DOMAIN_EXTRA} --no-dev
+
+# 8. 소스 코드 복사
 COPY . .
 
 # 8. 환경 변수

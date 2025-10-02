@@ -4,6 +4,10 @@ from typing import List
 
 from pydantic_settings import BaseSettings
 
+from app.core.logging import get_logger  # noqa: E402
+
+logger = get_logger(__name__)
+
 
 # 환경에 따른 .env 파일 결정
 def get_env_file():
@@ -99,6 +103,8 @@ class Settings(BaseSettings):
     OCR_ENGINE: str = "easyocr"
     OCR_DET: str = ""
     OCR_REC: str = ""
+
+    logger.info("📡 환경 : " + environment)
 
 
 # 전역 설정 객체
