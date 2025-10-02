@@ -8,52 +8,10 @@ from app.domains.common.services.common_service import CommonService, get_common
 from app.utils.response_builder import ResponseBuilder
 
 from ..services import OCRService, get_ocr_service
-from .comparison_controller import router as comparison_router
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ocr", tags=["OCR"])
-
-# 비교 라우터 포함
-router.include_router(comparison_router)
-
-
-# @router.post("/extract", response_model=ApiResponse[OCRExtractResponse])
-# async def extract_text(
-#     image_file: UploadFile = File(...),
-#     language: str = Form("korean"),
-#     confidence_threshold: float = Form(0.5),
-#     use_angle_cls: bool = Form(True),
-# ):
-#     """
-#     OCR 텍스트 추출 API (비동기)
-
-#     - **image_file**: 이미지 파일 (multipart/form-data)
-#     - **language**: 추출할 언어 (기본값: korean)
-#     - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
-#     - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
-#     """
-#     try:
-#         # 이미지 파일 읽기
-#         image_data = await image_file.read()
-
-#         # Celery Task로 비동기 처리
-#         task = extract_text_task.delay(
-#             image_data=image_data,
-#             language=language,
-#             confidence_threshold=confidence_threshold,
-#             use_angle_cls=use_angle_cls,
-#         )
-
-#         response = OCRExtractResponse(task_id=task.id, status="PENDING")
-
-#         return ResponseBuilder.success(
-#             data=response, message="OCR 텍스트 추출 태스크가 시작되었습니다"
-#         )
-
-#     except Exception as e:
-#         logger.error(f"OCR 텍스트 추출 API 오류: {str(e)}")
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/extract/sync")

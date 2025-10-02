@@ -80,9 +80,7 @@ async def compare_ocr_results(
 
     except ValueError as e:
         logger.warning(f"OCR 비교 요청 오류: {str(e)}")
-        return ResponseBuilder.error(
-            message=str(e), error_code="NOT_FOUND"
-        )
+        return ResponseBuilder.error(message=str(e), error_code="NOT_FOUND")
 
     except Exception as e:
         logger.error(f"OCR 비교 중 오류 발생: {str(e)}", exc_info=True)
