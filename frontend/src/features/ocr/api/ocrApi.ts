@@ -26,7 +26,7 @@ export const ocrApi = {
     }
 
     const response = await api.post<OcrResponse>(
-      '/ocr/extract/sync',
+      '/ocr-cpu/extract/sync',
       formData,
       {
         headers: {
