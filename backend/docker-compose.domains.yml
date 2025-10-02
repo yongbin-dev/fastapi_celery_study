@@ -46,8 +46,8 @@ services:
       args:
         - DOMAIN_EXTRA=prod # 기본 프로덕션 의존성만 설치
     container_name: fastapi-app-base
-    ports:
-      - "35050:5050"
+    # ports:
+    #   - "35050:5050"
     volumes:
       - ./app:/app/app
       - ./logs/base:/app/logs
@@ -65,8 +65,8 @@ services:
         - DOMAIN_EXTRA=ocr-cpu
     image: backend-app-ocr-cpu:latest
     container_name: fastapi-app-ocr-cpu
-    ports:
-      - "35052:5050"
+    # ports:
+    #   - "35052:5050"
     volumes:
       - ./app:/app/app
       - ./logs/ocr-cpu:/app/logs
@@ -86,8 +86,8 @@ services:
         - DOMAIN_EXTRA=ocr-gpu
     image: backend-app-ocr-gpu:latest
     container_name: fastapi-app-ocr-gpu
-    ports:
-      - "35053:5050"
+    # ports:
+    #   - "35053:5050"
     volumes:
       - ./app:/app/app
       - ./logs/ocr-gpu:/app/logs
@@ -107,8 +107,8 @@ services:
         - DOMAIN_EXTRA=llm
     image: backend-app-llm:latest
     container_name: fastapi-app-llm
-    ports:
-      - "35051:5050"
+    # ports:
+    #   - "35051:5050"
     volumes:
       - ./app:/app/app
       - ./logs/llm:/app/logs
@@ -118,6 +118,24 @@ services:
       - ENVIRONMENT=production
     depends_on:
       - ml-gpu-base
+
+  # ==================== API Gateway ====================
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - app-base
+      - app-ocr-cpu
+      - app-ocr-gpu
+      - app-llm
+    restart: unless-stopped
+    networks:
+      - app-network
 
 networks:
   app-network:
