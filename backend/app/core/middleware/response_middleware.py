@@ -1,9 +1,10 @@
 import json
-import time
 from typing import Callable
 
 from fastapi import Request, Response
+from starlette.background import BackgroundTask
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 from app.core.logging import get_logger
 
@@ -11,60 +12,49 @@ logger = get_logger(__name__)
 
 
 class ResponseLogMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        start_time = time.time()
+    def __init__(self, app: ASGIApp):
+        super().__init__(app)
 
-        # call_next 호출하여 response 얻기
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
 
-        duration = time.time() - start_time
-
-        # Response body 읽기
+        # 응답 본문을 읽기 위한 준비
         response_body = b""
-        if hasattr(response, "body"):
-            # 일반 Response의 경우
-            response_body = response.body
-        elif hasattr(response, "body_iterator"):
-            # StreamingResponse의 경우
-            chunks = []
-            async for chunk in response.body_iterator:
-                chunks.append(chunk)
-            response_body = b"".join(chunks)
+        async for chunk in response.body_iterator:
+            response_body += chunk
 
-        # Response body를 문자열로 변환하여 로깅
-        response_log = None
-        if response_body:
-            try:
-                response_text = response_body.decode("utf-8")
-                # JSON인 경우 파싱해서 로깅
-                content_type = response.headers.get("content-type", "")
-                if "application/json" in content_type:
-                    response_data = json.loads(response_text)
-                    response_log = json.dumps(response_data, ensure_ascii=False)[:500]
-                else:
-                    response_log = response_text[:500]
-            except Exception:
-                response_log = f"[binary data: {len(response_body)} bytes]"
+        # 로그 메시지 생성 및 전송을 백그라운드 작업으로 처리
+        task = BackgroundTask(self.log_response, response, response_body)
 
-        # 로그 메시지 생성
-        log_msg = (
-            f"{request.method} {request.url.path} | "
-            f"Status: {response.status_code} | "
-            f"Duration: {duration * 1000:.2f}ms"
+        # 원본 응답 스트림이 소진되었으므로, 읽어둔 본문으로 새로운 응답을 생성하여 반환
+        return Response(
+            content=response_body,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.media_type,
+            background=task,
         )
 
-        if response_log:
-            log_msg += f" | Response: {response_log}"
+    async def log_response(self, response: Response, response_body: bytes):
+        """응답 정보를 로깅하는 함수"""
+        log_message = f"Response | Status: {response.status_code}"
 
-        logger.info(log_msg)
-
-        # Response 반환 (body 재구성)
+        # 응답 본문 로깅
+        body_str = ""
         if response_body:
-            return Response(
-                content=response_body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.media_type,
-            )
+            # content-type이 json이면 예쁘게 출력, 아니면 텍스트로 처리
+            if "application/json" in response.headers.get("content-type", ""):
+                try:
+                    body_json = json.loads(response_body.decode("utf-8"))
+                    body_str = json.dumps(body_json, ensure_ascii=False, indent=2)
+                except json.JSONDecodeError:
+                    body_str = response_body.decode("utf-8", errors="ignore")
+            else:
+                body_str = response_body.decode("utf-8", errors="ignore")
 
-        return response
+            # 로그가 너무 길어지는 것을 방지하기 위해 500자로 제한
+            log_message += f"\n--- Response Body ---\n{body_str[:300]}"
+            if len(body_str) > 500:
+                log_message += "\n... (truncated)"
+
+        logger.info(log_message)

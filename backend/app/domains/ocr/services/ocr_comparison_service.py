@@ -11,11 +11,10 @@ from app.domains.ocr.schemas.similarity import (
     SimilarityResult,
     TextComparison,
 )
-from app.models import OCRExecution
-from app.repository.crud.async_crud.ocr_execution import ocr_execution_crud
-
 from app.domains.ocr.services.similarity.string_similarity import StringSimilarity
 from app.domains.ocr.services.similarity.token_similarity import TokenSimilarity
+from app.models import OCRExecution
+from app.repository.crud.async_crud.ocr_execution import ocr_execution_crud
 
 logger = get_logger(__name__)
 
@@ -103,9 +102,7 @@ class OCRComparisonService:
         # 메트릭 객체 생성
         metrics = SimilarityMetrics(**metrics_dict)
 
-        logger.info(
-            f"OCR 결과 비교 완료: overall_similarity={overall_similarity:.4f}"
-        )
+        logger.info(f"OCR 결과 비교 완료: overall_similarity={overall_similarity:.4f}")
 
         return SimilarityResult(
             overall_similarity=overall_similarity,
