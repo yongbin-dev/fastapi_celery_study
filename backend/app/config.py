@@ -17,7 +17,7 @@ def get_env_file():
 
 class Settings(BaseSettings):
     # 환경 설정
-    environment: str = "development"
+    ENVIRONMENT: str = "development"  # 대문자로 변경하여 환경변수와 매칭
 
     # API 설정
     API_V1_STR: str = "/api/v1"
@@ -104,8 +104,9 @@ class Settings(BaseSettings):
     OCR_DET: str = ""
     OCR_REC: str = ""
 
-    logger.info("📡 환경 : " + environment)
-
 
 # 전역 설정 객체
 settings = Settings()
+
+# 환경 로깅
+logger.info(f"📡 환경: {settings.ENVIRONMENT}")
