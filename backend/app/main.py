@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.core.database import close_db, init_db
 from app.core.handler.exceptions_handler import setup_exception_handlers
+from app.core.middleware.request_middleware import RequestLogMiddleware
+from app.core.middleware.response_middleware import ResponseLogMiddleware
 from app.core.router import api_router
 from app.utils.response_builder import ResponseBuilder
 
@@ -79,10 +81,9 @@ app = FastAPI(
 def setup_middleware():
     """미들웨어 설정"""
 
+    app.add_middleware(ResponseLogMiddleware)
     # Request/Response 로깅 미들웨어
-    # app.add_middleware(RequestLogMiddleware)
-    # app.add_middleware(ResponseLogMiddleware)
-
+    app.add_middleware(RequestLogMiddleware)
     # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(
         CORSMiddleware,
