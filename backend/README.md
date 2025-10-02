@@ -26,6 +26,8 @@
 #### Docker
 
 - **Docker**: `docker-compose up` - 모든 서비스 시작 (app, Redis, Celery worker, Flower)
+- **도메인별 빌드**: [Quick Start 가이드](./docs/QUICK_START.md) 참고
+- **베이스 이미지 전략**: [상세 문서](./docs/DOCKER_BASE_IMAGE_STRATEGY.md) 참고
 
 ### 개발
 
