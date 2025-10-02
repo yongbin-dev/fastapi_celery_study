@@ -79,10 +79,9 @@ class TokenSimilarity(BaseSimilarity):
             # TF-IDF 벡터화
             vectorizer = TfidfVectorizer()
             tfidf_matrix = vectorizer.fit_transform([text1, text2])
-
-            # Cosine 유사도
-            cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-            metrics["cosine_similarity"] = float(cosine_sim)
+            result = cosine_similarity(tfidf_matrix)
+            cosine_sim = float(result[0, 1])
+            metrics["cosine_similarity"] = cosine_sim
 
         except ImportError:
             logger.warning(

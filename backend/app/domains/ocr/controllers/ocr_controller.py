@@ -8,10 +8,14 @@ from app.domains.common.services.common_service import CommonService, get_common
 from app.utils.response_builder import ResponseBuilder
 
 from ..services import OCRService, get_ocr_service
+from .comparison_controller import router as comparison_router
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/ocr", tags=["OCR"])
+
+# 비교 라우터 포함
+router.include_router(comparison_router)
 
 
 # @router.post("/extract", response_model=ApiResponse[OCRExtractResponse])
