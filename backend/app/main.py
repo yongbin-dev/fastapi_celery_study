@@ -28,11 +28,7 @@ async def lifespan(app: FastAPI):
     time.tzset()  # Unix/Linux에서 타임존 설정 적용
 
     logger.info("🚀 FastAPI 애플리케이션 시작")
-    logger.info("🕐 타임존 설정: Asia/Seoul")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
-    logger.info(f"🌐 서버: http://{settings.HOST}:{settings.PORT}")
-    logger.info(f"📚 API 문서: http://{settings.HOST}:{settings.PORT}/docs")
-    logger.info(f"🌐 CORS Origins: {settings.BACKEND_CORS_ORIGINS}")
 
     # 데이터베이스 초기화 (선택사항)
     try:

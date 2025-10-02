@@ -179,7 +179,7 @@ async def init_db() -> None:
                 await conn.execute(text("SELECT 1"))
                 logger.info("🔗 데이터베이스 연결 테스트 성공")
 
-                if settings.environment == "development":
+                if settings.ENVIRONMENT == "development":
                     logger.info("개발 환경: 데이터베이스 테이블 생성 중...")
                     # await conn.run_sync(Base.metadata.drop_all)
                     await conn.run_sync(Base.metadata.create_all)
