@@ -1,7 +1,45 @@
 version: "3.8"
 
+# ==================== 공통 설정 템플릿 ====================
+x-common-env: &common-env
+  env_file:
+    - .env.production
+  environment:
+    - TZ=Asia/Seoul
+    - ENVIRONMENT=production
+  # volumes:
+  #   - ./app:/app/app
+  restart: unless-stopped
+  networks:
+    - app-network
+
+# GPU 서비스용: 공통 설정 + GPU runtime
+x-gpu-service: &gpu-service
+  <<: *common-env
+  runtime: nvidia
+
 services:
+  # ==================== 베이스 이미지 ====================
+  ml-base:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml-base
+    image: backend-ml-base:latest
+    container_name: ml-base-builder
+    command: /bin/true # 빌드만 하고 실행하지 않음
+
+  ml-gpu-base:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml-gpu-base
+    image: backend-ml-gpu-base:latest
+    container_name: ml-gpu-base-builder
+    command: /bin/true # 빌드만 하고 실행하지 않음
+    runtime: nvidia
+
+  # ==================== 서비스 컨테이너 ====================
   app-base:
+    <<: *common-env
     build:
       context: .
       dockerfile: Dockerfile.cpu
@@ -10,64 +48,76 @@ services:
     container_name: fastapi-app-base
     ports:
       - "35050:5050"
+    volumes:
+      - ./app:/app/app
+      - ./logs/base:/app/logs
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=base
       - ENVIRONMENT=production
-    volumes:
-      - ./app:/app/app
-      - ./logs:/app/logs
-    restart: unless-stopped
-    networks:
-      - app-network
 
-  app-llm:
+  app-ocr-cpu:
+    <<: *common-env
     build:
       context: .
-      dockerfile: Dockerfile.gpu
+      dockerfile: Dockerfile.ocr-cpu
       args:
-        - DOMAIN_EXTRA=llm # LLM 관련 의존성 추가 설치
-    container_name: fastapi-app-llm
-    ports:
-      - "35051:5050"
-    environment:
-      - TZ=Asia/Seoul
-      - DOMAIN=llm
-      - DATABASE_URL=postgresql+asyncpg://sa:1@postgres-server:5432/study_db
-      - REDIS_URL=redis://redis-server:6379/0
-      - CELERY_BROKER_URL=redis://redis-server:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis-server:6379/2
-    volumes:
-      - ./app:/app/app
-      - ./logs:/app/logs
-    restart: unless-stopped
-    networks:
-      - app-network
-    runtime: nvidia
-
-  app-ocr:
-    build:
-      context: .
-      dockerfile: Dockerfile.gpu
-      args:
-        - DOMAIN_EXTRA=ocr # OCR 관련 의존성 추가 설치
-    container_name: fastapi-app-ocr
+        - DOMAIN_EXTRA=ocr-cpu
+    image: backend-app-ocr-cpu:latest
+    container_name: fastapi-app-ocr-cpu
     ports:
       - "35052:5050"
+    volumes:
+      - ./app:/app/app
+      - ./logs/ocr-cpu:/app/logs
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=ocr
-      - DATABASE_URL=postgresql+asyncpg://sa:1@postgres-server:5432/study_db
-      - REDIS_URL=redis://redis-server:6379/0
-      - CELERY_BROKER_URL=redis://redis-server:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis-server:6379/2
+      - ENVIRONMENT=production
+    depends_on:
+      - ml-base
+
+  app-ocr-gpu:
+    <<: *gpu-service
+    build:
+      context: .
+      dockerfile: Dockerfile.ocr-gpu
+      args:
+        - DOMAIN_EXTRA=ocr-gpu
+    image: backend-app-ocr-gpu:latest
+    container_name: fastapi-app-ocr-gpu
+    ports:
+      - "35053:5050"
     volumes:
       - ./app:/app/app
-      - ./logs:/app/logs
-    restart: unless-stopped
-    networks:
-      - app-network
-    runtime: nvidia
+      - ./logs/ocr-gpu:/app/logs
+    environment:
+      - TZ=Asia/Seoul
+      - DOMAIN=ocr
+      - ENVIRONMENT=production
+    depends_on:
+      - ml-gpu-base
+
+  app-llm:
+    <<: *gpu-service
+    build:
+      context: .
+      dockerfile: Dockerfile.llm
+      args:
+        - DOMAIN_EXTRA=llm
+    image: backend-app-llm:latest
+    container_name: fastapi-app-llm
+    ports:
+      - "35051:5050"
+    volumes:
+      - ./app:/app/app
+      - ./logs/llm:/app/logs
+    environment:
+      - TZ=Asia/Seoul
+      - DOMAIN=llm
+      - ENVIRONMENT=production
+    depends_on:
+      - ml-gpu-base
 
 networks:
   app-network:
