@@ -55,10 +55,19 @@ prod = [
     "flower>=2.0.1",
 ]
 
-
-llm = [
+# ML 공통 베이스 (torch + 기본 라이브러리)
+ml-base = [
     "torch>=2.2.0",
     "torchvision>=0.17.0",
+    "opencv-python>=4.9.0",
+    "Pillow>=10.2.0",
+    "numpy>=2.0.0",
+    "scipy>=1.13.0",
+    "scikit-learn>=1.7.2",
+    "scikit-image>=0.25.0",
+]
+
+llm = [
     "transformers>=4.40.0",
     "tokenizers>=0.15.0",
     "sentencepiece>=0.1.99",
@@ -66,21 +75,35 @@ llm = [
     "huggingface-hub>=0.23.0",
     "langchain>=0.3.0",
     "langchain-ollama>=0.3.8",
+    "fastapi-celery-multi-domain[ml-base]",
 ]
 
 # 공통 OCR 의존성
 ocr-base = [
-    "opencv-python>=4.9.0",
-    "Pillow>=10.2.0",
     "python-Levenshtein>=0.23.0",
 ]
 
-# OCR 도메인 의존성 (GPU 기반)
-ocr = [
+# OCR CPU 버전 (경량화)
+ocr-cpu = [
     "paddleocr>=2.8.0,<3.0.0",
-    "paddlepaddle-gpu>=2.6.2,<3.0.0",
+    "paddlepaddle>=2.6.2,<3.0.0",  # CPU 버전 (GPU 버전보다 훨씬 가벼움)
     "easyocr>=1.7.2",
+    "fastapi-celery-multi-domain[ml-base]",
     "fastapi-celery-multi-domain[ocr-base]",
+]
+
+# OCR GPU 버전
+ocr-gpu = [
+    "paddleocr>=2.8.0,<3.0.0",
+    "paddlepaddle-gpu>=2.6.2,<3.0.0",  # GPU 버전
+    "easyocr>=1.7.2",
+    "fastapi-celery-multi-domain[ml-base]",
+    "fastapi-celery-multi-domain[ocr-base]",
+]
+
+# 하위 호환성 유지 (기본은 GPU)
+ocr = [
+    "fastapi-celery-multi-domain[ocr-gpu]",
 ]
 
 
