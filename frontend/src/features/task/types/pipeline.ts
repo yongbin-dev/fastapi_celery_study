@@ -8,7 +8,7 @@ export interface Task {
   result: string;
   error: string | null;
   started_at: string | null;
-  completed_at: string;
+  finished_at: string;
   retries: number;
   chain_execution_id: number;
   created_at: string;

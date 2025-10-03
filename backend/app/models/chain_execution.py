@@ -49,8 +49,8 @@ class ChainExecution(Base):
     failed_tasks = Column(Integer, default=0, nullable=False, comment="실패한 작업 수")
 
     # 타임스탬프
-    started_at = Column(DateTime(timezone=True), nullable=True, comment="시작 시간")
-    finished_at = Column(DateTime(timezone=True), nullable=True, comment="완료 시간")
+    started_at = Column(DateTime, nullable=True, comment="시작 시간")
+    finished_at = Column(DateTime, nullable=True, comment="완료 시간")
 
     # 메타 정보
     initiated_by = Column(String(100), nullable=True, comment="시작한 사용자/시스템")
@@ -64,12 +64,12 @@ class ChainExecution(Base):
         back_populates="chain_execution",
         foreign_keys="TaskLog.chain_execution_id",
         cascade="all, delete-orphan",
-        order_by="TaskLog.created_at",
+        order_by="TaskLog.started_at",
     )
 
     # 인덱스 정의
     __table_args__ = (
-        Index("idx_chain_status_created", "status", "created_at"),
+        Index("idx_chain_status_started", "status", "started_at"),
         Index("idx_chain_name_status", "chain_name", "status"),
     )
 

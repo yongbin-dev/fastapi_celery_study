@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useCancelPipeline, usePipelineStatus, useStartPipeline } from '../hooks';
+import { formatDate } from '@/shared/utils';
 
 interface TaskManagementTabProps {
 }
@@ -136,9 +137,9 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-blue-50 rounded">
               <p className="text-sm text-blue-700"><strong>Chain ID:</strong> {pipelineStatus.chain_id}</p>
               <p className="text-sm text-blue-700"><strong>Chain Name:</strong> {pipelineStatus.chain_name}</p>
-              <p className="text-sm text-blue-700"><strong>Created At:</strong> {new Date(pipelineStatus.created_at).toLocaleString()}</p>
-              <p className="text-sm text-blue-700"><strong>Started At:</strong> {new Date(pipelineStatus.started_at).toLocaleString()}</p>
-              <p className="text-sm text-blue-700"><strong>Finished At:</strong> {pipelineStatus.finished_at ? new Date(pipelineStatus.finished_at).toLocaleString() : 'N/A'}</p>
+              <p className="text-sm text-blue-700"><strong>Created At:</strong> {formatDate(pipelineStatus.created_at)}</p>
+              <p className="text-sm text-blue-700"><strong>Started At:</strong> {formatDate(pipelineStatus.started_at)}</p>
+              <p className="text-sm text-blue-700"><strong>Finished At:</strong> {formatDate(pipelineStatus.finished_at)}</p>
               <p className="text-sm text-blue-700"><strong>Initiated By:</strong> {pipelineStatus.initiated_by}</p>
             </div>
 
@@ -178,7 +179,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
                   </div>
                   <div className="ml-6 space-y-1 text-xs text-gray-600">
                     <p><strong>Task ID:</strong> {task.task_id}</p>
-                    <p><strong>Completed At:</strong> {new Date(task.completed_at).toLocaleString()}</p>
+                    <p><strong>Completed At:</strong> {formatDate(task.finished_at)}</p>
                     <details>
                       <summary className="cursor-pointer">Args</summary>
                       <div className="text-xs text-gray-600 overflow-x-auto">

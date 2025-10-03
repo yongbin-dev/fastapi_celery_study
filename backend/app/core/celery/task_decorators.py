@@ -10,15 +10,13 @@ try:
 except ImportError:
     from typing_extensions import ParamSpec
 
-from app.core.database import get_db_manager
 from app.core.logging import get_logger
+from app.core.supabase import get_supabase_sync
 from app.orchestration.schemas.enums import ProcessStatus
 from app.orchestration.schemas.pipeline import StageResult
-from app.repository.crud import (
-    chain_execution as chain_execution_crud,
-)
-from app.repository.crud import (
-    task_log as task_log_crud,
+from app.repository.crud.supabase_crud import (
+    supabase_chain_execution_sync,
+    supabase_task_log,
 )
 
 logger = get_logger(__name__)
@@ -29,16 +27,18 @@ T = TypeVar("T")
 
 
 def _handle_chain_execution(
-    session, chain_id: str, is_pipeline: bool, task_name: str
+    client, chain_id: str, is_pipeline: bool, task_name: str
 ) -> Optional[int]:
     """ChainExecution 처리 헬퍼"""
     try:
-        chain_exec = chain_execution_crud.get_by_chain_id(session, chain_id=chain_id)
+        chain_exec = supabase_chain_execution_sync.get_by_chain_id(
+            client, chain_id=chain_id
+        )
 
         if not chain_exec and is_pipeline:
             # Pipeline task인 경우 ChainExecution 자동 생성
-            chain_exec = chain_execution_crud.create_chain_execution(
-                session,
+            chain_exec = supabase_chain_execution_sync.create_chain_execution(
+                client,
                 chain_id=chain_id,
                 chain_name="pipeline_workflow",
                 total_tasks=4,
@@ -48,13 +48,13 @@ def _handle_chain_execution(
 
         if chain_exec:
             # 상태를 RUNNING으로 업데이트
-            if str(chain_exec.status) != "RUNNING":
-                chain_execution_crud.update_status(
-                    session, chain_execution=chain_exec, status=ProcessStatus.RUNNING
+            if chain_exec.get("status") != ProcessStatus.RUNNING.value:
+                supabase_chain_execution_sync.update_status(
+                    client, chain_id=chain_id, status=ProcessStatus.RUNNING
                 )
                 logger.info(f"ChainExecution 상태 업데이트: {chain_id} -> RUNNING")
 
-            return chain_exec.id  # type: ignore
+            return chain_exec.get("id")
 
         return None
 
@@ -63,21 +63,19 @@ def _handle_chain_execution(
         return None
 
 
-def _update_chain_progress(session, chain_execution_id: int, success: bool):
+def _update_chain_progress(client, chain_id: str, success: bool):
     """ChainExecution 진행률 업데이트 헬퍼"""
     try:
-        chain_exec = chain_execution_crud.get(session, id=chain_execution_id)
-        if chain_exec:
-            if success:
-                chain_execution_crud.increment_completed_tasks(
-                    session, chain_execution=chain_exec
-                )
-                logger.info(f"ChainExecution 완료 작업 증가: {chain_exec.chain_id}")
-            else:
-                chain_execution_crud.increment_failed_tasks(
-                    session, chain_execution=chain_exec
-                )
-                logger.info(f"ChainExecution 실패 작업 증가: {chain_exec.chain_id}")
+        if success:
+            supabase_chain_execution_sync.increment_completed_tasks(
+                client, chain_id=chain_id
+            )
+            logger.info(f"ChainExecution 완료 작업 증가: {chain_id}")
+        else:
+            supabase_chain_execution_sync.increment_failed_tasks(
+                client, chain_id=chain_id
+            )
+            logger.info(f"ChainExecution 실패 작업 증가: {chain_id}")
     except Exception as e:
         logger.error(f"ChainExecution 진행률 업데이트 오류: {e}", exc_info=True)
 
@@ -118,87 +116,77 @@ def task_logger(auto_chain: bool = False, is_pipeline: bool = False):
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
-            # TaskLog 처리
-            with get_db_manager().get_sync_session() as session:
-                if not session:
-                    logger.error("DB 세션 생성 실패")
-                    raise RuntimeError("DB 세션 생성 실패")
+            # Supabase 클라이언트 가져오기
+            client = get_supabase_sync()
 
-                try:
-                    # ChainExecution 처리
-                    chain_execution_id = None
-                    if chain_id and auto_chain:
-                        chain_execution_id = _handle_chain_execution(
-                            session, chain_id, is_pipeline, task_name
-                        )
-
-                    # TaskLog 생성
-                    task_log = task_log_crud.create_task_log(
-                        session,
-                        task_id=task_id,
-                        task_name=task_name,
-                        status="STARTED",
-                        args=json.dumps(args, ensure_ascii=False) if args else None,
-                        kwargs=(
-                            json.dumps(kwargs, ensure_ascii=False) if kwargs else None
-                        ),
-                        chain_execution_id=chain_execution_id,
+            try:
+                # ChainExecution 처리
+                chain_execution_id = None
+                if chain_id and auto_chain:
+                    chain_execution_id = _handle_chain_execution(
+                        client, chain_id, is_pipeline, task_name
                     )
 
-                    logger.info(f"TaskLog 생성: {task_id} (chain: {chain_id})")
+                # TaskLog 생성
+                task_log = supabase_task_log.create_task_log(
+                    client,
+                    task_id=task_id,
+                    task_name=task_name,
+                    status="STARTED",
+                    args=json.dumps(args, ensure_ascii=False) if args else None,
+                    kwargs=(json.dumps(kwargs, ensure_ascii=False) if kwargs else None),
+                    chain_execution_id=chain_execution_id,
+                )
+                task_log_id = task_log.get("id")
+                if not task_log_id:
+                    raise ValueError("TaskLog ID를 가져올 수 없습니다")
 
-                    # 실제 함수 실행
-                    start_time = time.time()
-                    try:
-                        result = func(self, *args, **kwargs)  # type: ignore
+                logger.info(f"TaskLog 생성: {task_id} (chain: {chain_id})")
 
-                        # 성공 처리
-                        execution_time = time.time() - start_time
-                        task_log_crud.update_status(
-                            session,
-                            task_log=task_log,
-                            status="SUCCESS",
-                            result=(
-                                json.dumps(result, ensure_ascii=False)
-                                if result
-                                else None
-                            ),
-                        )
+                # 실제 함수 실행
+                start_time = time.time()
+                try:
+                    result = func(self, *args, **kwargs)  # type: ignore
 
-                        # ChainExecution 진행률 업데이트
-                        if chain_execution_id and is_pipeline:
-                            _update_chain_progress(
-                                session, chain_execution_id, success=True
-                            )
+                    # 성공 처리
+                    execution_time = time.time() - start_time
+                    supabase_task_log.update_status(
+                        client,
+                        task_log_id=task_log_id,
+                        status="SUCCESS",
+                        result=(
+                            json.dumps(result, ensure_ascii=False) if result else None
+                        ),
+                    )
 
-                        logger.info(f"Task 성공: {task_id} ({execution_time:.2f}s)")
-                        return result
+                    # ChainExecution 진행률 업데이트
+                    if chain_id and is_pipeline:
+                        _update_chain_progress(client, chain_id, success=True)
 
-                    except Exception as e:
-                        # 실패 처리
-                        execution_time = time.time() - start_time
-                        task_log_crud.update_status(
-                            session,
-                            task_log=task_log,
-                            status="FAILURE",
-                            error=str(e),
-                        )
-
-                        # ChainExecution 실패 카운트 업데이트
-                        if chain_execution_id and is_pipeline:
-                            _update_chain_progress(
-                                session, chain_execution_id, success=False
-                            )
-
-                        logger.error(
-                            f"Task 실패: {task_id} ({execution_time:.2f}s) - {e}"
-                        )
-                        raise
+                    logger.info(f"Task 성공: {task_id} ({execution_time:.2f}s)")
+                    return result
 
                 except Exception as e:
-                    logger.error(f"TaskLog 처리 오류: {e}", exc_info=True)
-                    # TaskLog 처리 실패해도 원본 함수는 실행
-                    return func(self, *args, **kwargs)  # type: ignore
+                    # 실패 처리
+                    execution_time = time.time() - start_time
+                    supabase_task_log.update_status(
+                        client,
+                        task_log_id=task_id,
+                        status="FAILURE",
+                        error=str(e),
+                    )
+
+                    # ChainExecution 실패 카운트 업데이트
+                    if chain_id and is_pipeline:
+                        _update_chain_progress(client, chain_id, success=False)
+
+                    logger.error(f"Task 실패: {task_id} ({execution_time:.2f}s) - {e}")
+                    raise
+
+            except Exception as e:
+                logger.error(f"TaskLog 처리 오류: {e}", exc_info=True)
+                # TaskLog 처리 실패해도 원본 함수는 실행
+                return func(self, *args, **kwargs)  # type: ignore
 
         return wrapper
 

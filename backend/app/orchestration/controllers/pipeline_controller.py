@@ -8,9 +8,9 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
 
-from app.core.database import get_db
+from app.core.supabase import get_supabase_async
 from app.core.logging import get_logger
 from app.orchestration.schemas.chain_execution import ChainExecutionResponse
 from app.orchestration.services import PipelineService, get_pipeline_service
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/pipelines", tags=["Pipelines"])
 @router.get("/history", response_model=ApiResponse[list[ChainExecutionResponse]])
 async def get_pipeline_history(
     service: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
+    db: Client = Depends(get_supabase_async),
     hours: Optional[int] = Query(
         1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168
     ),
@@ -58,7 +58,7 @@ async def create_ai_pipeline(
     request: AIPipelineRequest,
     service: PipelineService = Depends(get_pipeline_service),
     redis_service: RedisService = Depends(get_redis_service),
-    db: AsyncSession = Depends(get_db),
+    db: Client = Depends(get_supabase_async),
 ) -> ApiResponse[AIPipelineResponse]:
     """
     AI 처리 파이프라인 시작
@@ -86,7 +86,7 @@ async def create_ai_pipeline(
 async def get_pipeline_tasks(
     chain_id: str,
     service: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
+    db: Client = Depends(get_supabase_async),
 ) -> ApiResponse[ChainExecutionResponse]:
     """
     파이프라인 태스크 목록 조회

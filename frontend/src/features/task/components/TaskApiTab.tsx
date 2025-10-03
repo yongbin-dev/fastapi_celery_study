@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/utils/api';
+import { formatDate } from '@/shared/utils';
 
 interface UserCreateRequest {
   email: string;
@@ -242,7 +243,7 @@ export const TaskApiTab: React.FC = () => {
                     {response.success ? '✅ 성공' : '❌ 실패'}
                   </span>
                   <span className="ml-auto text-sm text-gray-500">
-                    {new Date(response.timestamp).toLocaleString()}
+                    {formatDate(response.timestamp)}
                   </span>
                 </div>
               </div>
@@ -345,7 +346,7 @@ export const TaskApiTab: React.FC = () => {
                         </p>
                       )}
                       <p className="text-xs text-gray-400 mt-2">
-                        가입일: {new Date(user.created_at).toLocaleDateString()}
+                        가입일: {formatDate(user.created_at)}
                       </p>
                     </div>
                   </div>

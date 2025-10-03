@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { ChainExecutionResponseDto, Task } from '../../types/pipeline';
+import { formatDate } from '@/shared/utils';
 
 interface TaskGroupProps {
   pipeline: ChainExecutionResponseDto;
@@ -18,18 +19,6 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
       REVOKED: 'bg-gray-100 text-gray-800'
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
   };
 
   const toggleCollapse = () => {
@@ -105,7 +94,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
                   </span>
                 </div>
                 <div className="text-sm text-gray-500">
-                  {formatDate(task.completed_at)}
+                  {formatDate(task.finished_at)}
                 </div>
               </div>
 

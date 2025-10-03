@@ -15,13 +15,13 @@ def setup_exception_handlers(app: FastAPI):
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-        logger.error(f"에러 발생: {traceback.format_exc()}")
 
         logger.error(
             f"🔴 HTTP Exception | "
             f"Path: {request.url.path} | "
             f"Status: {exc.status_code} | "
-            f"Detail: {exc.detail}"
+            f"Detail: {exc.detail} | "
+            f"Traceback: {traceback.format_exc()}"
         )
 
         # 상태 코드별 에러 코드 매핑
