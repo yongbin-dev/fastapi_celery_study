@@ -118,7 +118,7 @@ async def root():
 
 
 @app.get("/health", tags=["Health"])
-async def health_check():
+async def health_check2():
     """헬스체크 엔드포인트"""
     return ResponseBuilder.success(
         data={

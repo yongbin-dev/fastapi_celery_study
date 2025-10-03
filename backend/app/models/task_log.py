@@ -45,7 +45,7 @@ class TaskLog(Base):
 
     # 시간 추적
     started_at = Column(DateTime, index=True, comment="작업 시작 시간")
-    completed_at = Column(DateTime, comment="작업 완료 시간")
+    finished_at = Column(DateTime, comment="작업 완료 시간")
 
     # 재시도 정보
     retries = Column(Integer, default=0, comment="재시도 횟수")

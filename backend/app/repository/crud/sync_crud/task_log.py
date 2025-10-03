@@ -73,7 +73,7 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
         #         return (
         #             db.query(TaskLog)
         #             .filter(TaskLog.status.in_(["SUCCESS", "FAILURE", "REVOKED"]))  # type: ignore
-        #             .order_by(desc(TaskLog.completed_at))
+        #             .order_by(desc(TaskLog.finished_at))
         #             .offset(skip)
         #             .limit(limit)
         #             .all()
@@ -149,11 +149,8 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
             task_log.started_at = datetime.now()  # type: ignore
 
         # 완료 시간 설정
-        if (
-            status in ["SUCCESS", "FAILURE", "REVOKED"]
-            and task_log.completed_at is None
-        ):
-            task_log.completed_at = datetime.now()  # type: ignore
+        if status in ["SUCCESS", "FAILURE", "REVOKED"] and task_log.finished_at is None:
+            task_log.finished_at = datetime.now()  # type: ignore
 
         db.add(task_log)
         db.commit()
@@ -229,13 +226,13 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
 #             db.query(
 #                 func.count(TaskLog.id).label("total_count"),
 #                 func.avg(
-#                     func.extract("epoch", TaskLog.completed_at - TaskLog.started_at)
+#                     func.extract("epoch", TaskLog.finished_at - TaskLog.started_at)
 #                 ).label("avg_duration"),
 #                 func.min(
-#                     func.extract("epoch", TaskLog.completed_at - TaskLog.started_at)
+#                     func.extract("epoch", TaskLog.finished_at - TaskLog.started_at)
 #                 ).label("min_duration"),
 #                 func.max(
-#                     func.extract("epoch", TaskLog.completed_at - TaskLog.started_at)
+#                     func.extract("epoch", TaskLog.finished_at - TaskLog.started_at)
 #                 ).label("max_duration"),
 #             )
 #             .filter(
@@ -243,7 +240,7 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
 #                     TaskLog.task_name == task_name,
 #                     TaskLog.status == "SUCCESS",
 #                     TaskLog.started_at.isnot(None),
-#                     TaskLog.completed_at.isnot(None),
+#                     TaskLog.finished_at.isnot(None),
 #                 )
 #             )
 #             .first()
@@ -265,7 +262,7 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
 #             db.query(TaskLog)
 #             .filter(
 #                 and_(
-#                     TaskLog.completed_at < cleanup_date,
+#                     TaskLog.finished_at < cleanup_date,
 #                     TaskLog.status.in_(["SUCCESS", "FAILURE", "REVOKED"]),  # type: ignore
 #                 )
 #             )

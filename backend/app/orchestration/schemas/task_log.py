@@ -35,7 +35,7 @@ class TaskLogUpdate(BaseModel):
     result: Optional[str] = Field(None, description="작업 실행 결과 (JSON 형식)")
     error: Optional[str] = Field(None, description="에러 메시지")
     started_at: Optional[datetime] = Field(None, description="작업 시작 시간")
-    completed_at: Optional[datetime] = Field(None, description="작업 완료 시간")
+    finished_at: Optional[datetime] = Field(None, description="작업 완료 시간")
     retries: Optional[int] = Field(None, description="재시도 횟수")
     chain_execution_id: Optional[int] = Field(None, description="소속된 체인 실행 ID")
 
@@ -46,7 +46,7 @@ class TaskLogResponse(TaskLogBase):
     id: int
     task_id: str
     started_at: datetime = Field(default_factory=datetime.now)
-    completed_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

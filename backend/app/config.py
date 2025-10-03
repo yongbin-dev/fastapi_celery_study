@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Database 설정
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
     TEST_DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
+
+    NEXT_PUBLIC_SUPABASE_URL: str = ""
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: str = ""
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
     DB_POOL_SIZE: int = 20  # 데이터베이스 연결 풀 크기
     DB_MAX_OVERFLOW: int = 0  # 추가 연결 허용 개수

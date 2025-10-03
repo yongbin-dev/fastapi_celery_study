@@ -37,6 +37,7 @@ class DatabaseManager:
     def __init__(self):
         # 비동기 엔진 생성
         database_url = settings.DATABASE_URL
+
         self.async_engine: AsyncEngine = create_async_engine(
             database_url,
             future=True,
