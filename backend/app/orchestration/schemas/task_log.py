@@ -45,10 +45,8 @@ class TaskLogResponse(TaskLogBase):
 
     id: int
     task_id: str
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    created_at: datetime
-    updated_at: Optional[datetime]
+    started_at: datetime = Field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
