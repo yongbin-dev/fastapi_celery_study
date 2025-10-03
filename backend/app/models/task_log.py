@@ -68,7 +68,6 @@ class TaskLog(Base):
 
     # 인덱스 정의
     __table_args__ = (
-        Index("idx_task_logs_status_created", "status", "created_at"),
         Index("idx_task_logs_name_status", "task_name", "status"),
         Index("idx_task_logs_started_at_desc", started_at.desc()),
         Index("idx_task_logs_chain_execution", "chain_execution_id", "status"),
