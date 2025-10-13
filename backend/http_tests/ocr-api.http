@@ -6,7 +6,14 @@ GET {{baseUrl}}/api/v1/ocr/languages
 ###
 
 ###
-GET {{baseUrl}}/api/v1/ocr-cpu/languages
+GET {{baseUrl}}/api/v1/pipeline/history
+
+
+###
+
+
+###
+GET {{baseUrl}}/api/v1/version
 
 
 ###

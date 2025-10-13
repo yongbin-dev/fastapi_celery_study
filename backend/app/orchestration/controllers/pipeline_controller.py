@@ -22,7 +22,7 @@ from ..schemas import AIPipelineRequest, AIPipelineResponse
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/pipelines", tags=["Pipelines"])
+router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
 
 
 @router.get("/history", response_model=ApiResponse[list[ChainExecutionResponse]])

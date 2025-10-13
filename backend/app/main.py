@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.core.database import close_db, init_db
 from app.core.handler.exceptions_handler import setup_exception_handlers
 from app.core.middleware.request_middleware import RequestLogMiddleware
 from app.core.middleware.response_middleware import ResponseLogMiddleware
@@ -32,7 +31,7 @@ async def lifespan(app: FastAPI):
 
     # 데이터베이스 초기화 (선택사항)
     try:
-        await init_db()
+        # await init_db()
         logger.info("✅ 데이터베이스 연결 초기화 완료")
     except Exception as e:
         logger.error(f"❌ 데이터베이스 연결 실패: {e}")
@@ -49,7 +48,7 @@ async def lifespan(app: FastAPI):
 
     # 데이터베이스 연결 종료
     try:
-        await close_db()
+        # await close_db()
         logger.info("✅ 데이터베이스 연결 종료 완료")
     except Exception as e:
         logger.error(f"❌ 데이터베이스 지우연결 종료 실패: {e}")

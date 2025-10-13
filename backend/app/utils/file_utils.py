@@ -1,17 +1,28 @@
 # app/utils/file_utils.py
 """파일 처리 유틸리티"""
+
 import os
-import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
+from fastapi import File
+from supabase import Client, create_client
+
+from app.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+# Supabase 클라이언트 초기화
+supabase: Client = create_client(
+    settings.NEXT_PUBLIC_SUPABASE_URL,
+    settings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+)
 
-def save_uploaded_image(image_data: bytes, filename: str) -> str:
+BUCKET_NAME = "my-bucket"
+
+
+def save_uploaded_image(file: File, filename: str) -> str:
     """
     업로드된 이미지를 저장하고 경로를 반환합니다.
 
@@ -23,28 +34,43 @@ def save_uploaded_image(image_data: bytes, filename: str) -> str:
         str: 저장된 파일의 상대 경로 (images/YYYYMMDD/uuid_filename.ext)
     """
     try:
+        contents = await file.read()
+
+        response = supabase.storage.from_(BUCKET_NAME).upload(
+            path=f"uploads/{file.filename}",
+            file=contents,
+            file_options={"content-type": file.content_type},
+        )
+
+        logger.info(f"superbase : {response}")
+
+        # Public URL 가져오기
+        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
+            f"uploads/{file.filename}"
+        )
+
+        return {"response": response, "public_url": public_url}
         # 기본 저장 디렉토리
-        base_dir = Path("images")
 
-        # 날짜별 서브디렉토리 생성 (YYYYMMDD)
-        date_str = datetime.now().strftime("%Y%m%d")
-        save_dir = base_dir / date_str
-        save_dir.mkdir(parents=True, exist_ok=True)
+        # base_dir = Path("images")
 
-        # 파일명 생성 (UUID + 원본 파일명)
-        file_ext = Path(filename).suffix
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = save_dir / unique_filename
+        # # 날짜별 서브디렉토리 생성 (YYYYMMDD)
+        # date_str = datetime.now().strftime("%Y%m%d")
+        # save_dir = base_dir / date_str
+        # save_dir.mkdir(parents=True, exist_ok=True)
 
-        # 파일 저장
-        with open(file_path, "wb") as f:
-            f.write(image_data)
+        # # 파일명 생성 (UUID + 원본 파일명)
+        # file_ext = Path(filename).suffix
+        # unique_filename = f"{uuid.uuid4()}{file_ext}"
+        # file_path = save_dir / unique_filename
 
-        # 상대 경로 반환
-        relative_path = str(file_path)
-        logger.info(f"이미지 저장 완료: {relative_path}")
+        # # 파일 저장
+        # with open(file_path, "wb") as f:
+        #     f.write(image_data)
 
-        return relative_path
+        # # 상대 경로 반환
+        # relative_path = str(file_path)
+        # logger.info(f"이미지 저장 완료: {relative_path}")
 
     except Exception as e:
         logger.error(f"이미지 저장 실패: {str(e)}")

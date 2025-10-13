@@ -3,6 +3,7 @@
 
 from typing import Optional
 
+from fastapi import File
 from supabase import Client
 
 from app.core.logging import get_logger
@@ -23,7 +24,27 @@ logger = get_logger(__name__)
 class CommonService(BaseService):
     """공통 서비스 클래스"""
 
-    def save_image(self, image_data: bytes, filename: str) -> str:
+    def load_image(self):
+        pass
+        # create client and sign in
+        # retrieve the current user's session for authentication
+
+        #     f"{settings.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable",
+        #     headers={"Authorization": f"Bearer {access_token}", "x-upsert": "true"},
+        # )
+        # uploader = my_client.uploader(
+        #     file_stream=file,
+        #     chunk_size=(6 * 1024 * 1024),
+        #     metadata={
+        #         "bucketName": bucket_name,
+        #         "objectName": file_name,
+        #         "contentType": "image/png",
+        #         "cacheControl": "3600",
+        #     },
+        # )
+        # uploader.upload()
+
+    def save_image(self, image_data: File, filename: str) -> str:
         """
         이미지 파일을 저장합니다.
 

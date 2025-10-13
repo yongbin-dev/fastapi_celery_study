@@ -1,5 +1,5 @@
 # app/domains/ocr/controllers/ocr_controller.py
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from supabase import Client
 
 from app.core.logging import get_logger
@@ -34,29 +34,28 @@ async def extract_text_sync(
     """
 
     # 이미지 파일 읽기
-    image_data = await image_file.read()
+    # image_data = await image_file.read()
 
-    filename = image_file.filename or "unknown.png"
-    image_path = common_service.save_image(image_data, filename)
+    # filename = image_file.filename or "unknown.png"
+    # image_path = common_service.save_image(image_file, filename)
 
-    # Service를 통한 동기 처리
-    result = ocr_service.extract_text_from_image(
-        image_data=image_data,
-        language=language,
-        confidence_threshold=confidence_threshold,
-        use_angle_cls=use_angle_cls,
-    )
+    # # Service를 통한 동기 처리
+    # result = ocr_service.extract_text_from_image(
+    #     image_data=image_data,
+    #     language=language,
+    #     confidence_threshold=confidence_threshold,
+    #     use_angle_cls=use_angle_cls,
+    # )
 
-    await common_service.save_ocr_execution_to_db(
-        db=db, image_path=image_path, ocr_result=result
-    )
+    # logger.info(image_path)
+    # # await common_service.save_ocr_execution_to_db(
+    # #     db=db, image_path=image_path, ocr_result=result
+    # # )
 
-    if result.status == "failed":
-        raise HTTPException(status_code=400, detail=result.error)
+    # # if result.status == "failed":
+    # #     raise HTTPException(status_code=400, detail=result.error)
 
-    return ResponseBuilder.success(
-        data=result.model_dump(), message="OCR 텍스트 추출 완료"
-    )
+    return ResponseBuilder.success(data="", message="OCR 텍스트 추출 완료")
 
 
 @router.get("/languages")
