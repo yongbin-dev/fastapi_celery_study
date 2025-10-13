@@ -1,16 +1,19 @@
 # app/domains/common/services/common_service.py
 """공통 서비스 - 파일 저장 및 DB 저장 로직"""
+
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
 
 from app.core.logging import get_logger
 from app.domains.ocr.schemas import OCRResultDTO
 from app.domains.ocr.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
 from app.domains.ocr.schemas.response import OCRExtractResponse
 from app.models import OCRExecution
-from app.repository.crud.async_crud.ocr_execution import ocr_execution_crud
-from app.repository.crud.async_crud.ocr_text_box import ocr_text_box_crud
+from app.repository.crud.supabase_crud import ocr_execution_crud
+
+# from app.repository.crud.async_crud.ocr_execution import ocr_execution_crud
+# from app.repository.crud.async_crud.ocr_text_box import ocr_text_box_crud
 from app.shared.base_service import BaseService
 from app.utils.file_utils import save_uploaded_image
 
@@ -40,17 +43,17 @@ class CommonService(BaseService):
             logger.error(f"이미지 저장 실패: {str(e)}")
             raise
 
-    async def get_ocr_list(self, db: AsyncSession) -> list[OCRExtractResponse]:
+    async def get_ocr_list(self, db: Client) -> list[OCRExtractResponse]:
         ocr_executions = await ocr_execution_crud.get_all(db)
         return [OCRExtractResponse.model_validate(oer) for oer in ocr_executions]
 
-    async def get_image_by_id(self, db: AsyncSession, id: int) -> OCRExtractResponse:
-        ocr_execution = await ocr_execution_crud.get(db, id)
+    async def get_image_by_id(self, db: Client, id: int) -> OCRExtractResponse:
+        ocr_execution = await ocr_execution_crud.get_by_id(db, id)
         return OCRExtractResponse.model_validate(ocr_execution)
 
     async def save_ocr_execution_to_db(
         self,
-        db: AsyncSession,
+        db: Client,
         image_path: str,
         ocr_result: OCRResultDTO,
         chain_id: Optional[str] = None,
@@ -82,12 +85,12 @@ class CommonService(BaseService):
         # OCRTextBox 생성
         for box in ocr_result.text_boxes:
             text_box_data = OCRTextBoxCreate(
-                ocr_execution_id=db_ocr_execution.id,  # type: ignore
+                ocr_execution_id=db_ocr_execution.id,
                 text=box.text,
                 confidence=box.confidence,
                 bbox=box.bbox,
             )
-            await ocr_text_box_crud.create(db=db, obj_in=text_box_data)
+            await ocr_execution_crud.create(db=db, obj_in=text_box_data)
 
         logger.info(f"OCR 실행 정보 DB 저장 완료: ID={db_ocr_execution.id}")
         return db_ocr_execution

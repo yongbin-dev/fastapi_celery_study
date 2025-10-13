@@ -1,9 +1,9 @@
 # app/domains/ocr/controllers/ocr_controller.py
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
 
-from app.core.database import get_db
 from app.core.logging import get_logger
+from app.core.supabase import get_supabase_async
 from app.domains.common.services.common_service import CommonService, get_common_service
 from app.utils.response_builder import ResponseBuilder
 
@@ -22,7 +22,7 @@ async def extract_text_sync(
     use_angle_cls: bool = Form(True),
     ocr_service: OCRService = Depends(get_ocr_service),
     common_service: CommonService = Depends(get_common_service),
-    db: AsyncSession = Depends(get_db),
+    db: Client = Depends(get_supabase_async),
 ):
     """
     OCR 텍스트 추출 API (동기)

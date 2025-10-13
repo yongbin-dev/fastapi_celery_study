@@ -93,7 +93,7 @@ class LoggingManager:
             # 파일이 존재하면 쓰기 권한 확인
             if log_file.exists():
                 # 테스트 쓰기 시도
-                with open(log_file, 'a', encoding='utf-8'):
+                with open(log_file, "a", encoding="utf-8"):
                     pass
                 return True
             # 파일이 없으면 디렉토리 쓰기 권한 확인

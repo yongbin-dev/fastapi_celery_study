@@ -81,12 +81,7 @@ class SupabaseCRUDBase(Generic[CreateSchemaType, UpdateSchemaType]):
         """레코드 업데이트"""
         try:
             data = obj_in.model_dump(exclude_unset=True)
-            response = (
-                client.table(self.table_name)
-                .update(data)
-                .eq("id", id)
-                .execute()
-            )
+            response = client.table(self.table_name).update(data).eq("id", id).execute()
 
             if response.data and len(response.data) > 0:
                 return response.data[0]
@@ -107,13 +102,10 @@ class SupabaseCRUDBase(Generic[CreateSchemaType, UpdateSchemaType]):
     async def exists(self, client: Client, *, id: int) -> bool:
         """레코드 존재 여부 확인"""
         try:
-            response = (
-                client.table(self.table_name)
-                .select("id")
-                .eq("id", id)
-                .execute()
-            )
+            response = client.table(self.table_name).select("id").eq("id", id).execute()
             return response.data is not None and len(response.data) > 0
         except Exception as e:
-            logger.error(f"Error checking existence of record {id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error checking existence of record {id}: {str(e)}", exc_info=True
+            )
             raise

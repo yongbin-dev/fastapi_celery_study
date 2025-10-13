@@ -4,19 +4,19 @@
 from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
 
 from app.domains.ocr.schemas.ocr_db import OCRTextBoxCreate
 from app.models import OCRTextBox
-from app.repository.crud.async_crud.base import AsyncCRUDBase
+from app.repository.crud.supabase_crud.base import SupabaseCRUDBase
 
 
 class AsyncCRUDOCRTextBox(
-    AsyncCRUDBase[OCRTextBox, OCRTextBoxCreate, OCRTextBoxCreate]
+    SupabaseCRUDBase[OCRTextBox, OCRTextBoxCreate, OCRTextBoxCreate]
 ):
     """OCR 결과 비동기 CRUD 클래스"""
 
-    async def get_all(self, db: AsyncSession) -> Optional[list[OCRTextBox]]:
+    async def get_all(self, db: Client) -> Optional[list[OCRTextBox]]:
         stmt = select(OCRTextBox)
         result = await db.execute(stmt)
         return list(result.scalars().all())

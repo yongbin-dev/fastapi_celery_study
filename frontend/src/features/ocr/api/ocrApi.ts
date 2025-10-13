@@ -14,7 +14,7 @@ export const ocrApi = {
     formData.append('image_file', data.image_file);
     if (data.language) {
       formData.append('language', data.language);
-    };
+    }
     if (data.confidence_threshold) {
       formData.append(
         'confidence_threshold',
@@ -26,7 +26,7 @@ export const ocrApi = {
     }
 
     const response = await api.post<OcrResponse>(
-      '/ocr-cpu/extract/sync',
+      '/ocr/extract/sync',
       formData,
       {
         headers: {

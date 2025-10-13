@@ -69,15 +69,13 @@ class SupabaseCRUDChainExecutionSync:
 
             if response.data and len(response.data) > 0:
                 logger.info(
-                    f"ChainExecution created with chain_id: {chain_id}, id: {response.data[0].get('id')}"
+                    f"ChainExecution created with chain_id: {chain_id}, id: {response.data[0].get('id')}"  # noqa: E501
                 )
                 return response.data[0]
 
             raise ValueError("Failed to create chain execution")
         except Exception as e:
-            logger.error(
-                f"Error creating chain execution: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error creating chain execution: {str(e)}", exc_info=True)
             raise
 
     def increment_completed_tasks(

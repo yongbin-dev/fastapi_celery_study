@@ -45,7 +45,9 @@ class SupabaseCRUDTaskLog:
             response = client.table(self.table_name).insert(data).execute()
 
             if response.data and len(response.data) > 0:
-                logger.info(f"TaskLog created: task_id={task_id}, id={response.data[0].get('id')}")
+                logger.info(
+                    f"TaskLog created: task_id={task_id}, id={response.data[0].get('id')}"  # noqa: E501
+                )  # noqa: E501
                 return response.data[0]
 
             raise ValueError("Failed to create task log")
@@ -129,7 +131,7 @@ class SupabaseCRUDTaskLog:
             return response.data
         except Exception as e:
             logger.error(
-                f"Error getting task logs by chain_execution_id {chain_execution_id}: {str(e)}",
+                f"Error getting task logs by chain_execution_id {chain_execution_id}: {str(e)}",  # noqa: E501
                 exc_info=True,
             )
             raise

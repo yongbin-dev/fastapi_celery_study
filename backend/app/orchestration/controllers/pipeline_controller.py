@@ -10,8 +10,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from supabase import Client
 
-from app.core.supabase import get_supabase_async
 from app.core.logging import get_logger
+from app.core.supabase import get_supabase_async
 from app.orchestration.schemas.chain_execution import ChainExecutionResponse
 from app.orchestration.services import PipelineService, get_pipeline_service
 from app.schemas.common import ApiResponse

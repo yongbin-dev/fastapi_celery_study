@@ -6,9 +6,7 @@ Supabase 통합 테스트
     pytest tests/test_supabase_integration.py -v
 """
 
-import asyncio
 import uuid
-from datetime import datetime
 
 import pytest
 from supabase import create_client
@@ -22,8 +20,7 @@ from app.repository.crud.supabase_crud import supabase_chain_execution
 def supabase_client():
     """Supabase 클라이언트 픽스처"""
     client = create_client(
-        settings.NEXT_PUBLIC_SUPABASE_URL,
-        settings.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        settings.NEXT_PUBLIC_SUPABASE_URL, settings.NEXT_PUBLIC_SUPABASE_ANON_KEY
     )
     return client
 
@@ -43,7 +40,7 @@ async def test_create_chain_execution(supabase_client, sample_chain_id):
         chain_name="test_pipeline",
         total_tasks=3,
         initiated_by="test_user",
-        input_data={"test": "data"}
+        input_data={"test": "data"},
     )
 
     assert chain_execution is not None
@@ -62,13 +59,12 @@ async def test_get_by_chain_id(supabase_client, sample_chain_id):
         supabase_client,
         chain_id=sample_chain_id,
         chain_name="test_pipeline",
-        total_tasks=3
+        total_tasks=3,
     )
 
     # 조회
     result = await supabase_chain_execution.get_by_chain_id(
-        supabase_client,
-        chain_id=sample_chain_id
+        supabase_client, chain_id=sample_chain_id
     )
 
     assert result is not None
@@ -83,13 +79,12 @@ async def test_increment_completed_tasks(supabase_client, sample_chain_id):
         supabase_client,
         chain_id=sample_chain_id,
         chain_name="test_pipeline",
-        total_tasks=3
+        total_tasks=3,
     )
 
     # 완료 작업 수 증가
     updated = await supabase_chain_execution.increment_completed_tasks(
-        supabase_client,
-        chain_id=sample_chain_id
+        supabase_client, chain_id=sample_chain_id
     )
 
     assert updated is not None
@@ -104,13 +99,12 @@ async def test_increment_failed_tasks(supabase_client, sample_chain_id):
         supabase_client,
         chain_id=sample_chain_id,
         chain_name="test_pipeline",
-        total_tasks=3
+        total_tasks=3,
     )
 
     # 실패 작업 수 증가
     updated = await supabase_chain_execution.increment_failed_tasks(
-        supabase_client,
-        chain_id=sample_chain_id
+        supabase_client, chain_id=sample_chain_id
     )
 
     assert updated is not None
@@ -125,14 +119,12 @@ async def test_update_status(supabase_client, sample_chain_id):
         supabase_client,
         chain_id=sample_chain_id,
         chain_name="test_pipeline",
-        total_tasks=3
+        total_tasks=3,
     )
 
     # 상태 업데이트
     updated = await supabase_chain_execution.update_status(
-        supabase_client,
-        chain_id=sample_chain_id,
-        status=ProcessStatus.STARTED
+        supabase_client, chain_id=sample_chain_id, status=ProcessStatus.STARTED
     )
 
     assert updated is not None
@@ -149,28 +141,24 @@ async def test_complete_workflow(supabase_client, sample_chain_id):
         chain_id=sample_chain_id,
         chain_name="complete_workflow_test",
         total_tasks=3,
-        initiated_by="test_system"
+        initiated_by="test_system",
     )
     assert chain.get("status") == ProcessStatus.PENDING.value
 
     # 2. 시작 상태로 변경
     await supabase_chain_execution.update_status(
-        supabase_client,
-        chain_id=sample_chain_id,
-        status=ProcessStatus.STARTED
+        supabase_client, chain_id=sample_chain_id, status=ProcessStatus.STARTED
     )
 
     # 3. 작업 완료 (3개)
     for i in range(3):
         await supabase_chain_execution.increment_completed_tasks(
-            supabase_client,
-            chain_id=sample_chain_id
+            supabase_client, chain_id=sample_chain_id
         )
 
     # 4. 최종 확인
     final = await supabase_chain_execution.get_by_chain_id(
-        supabase_client,
-        chain_id=sample_chain_id
+        supabase_client, chain_id=sample_chain_id
     )
 
     assert final.get("completed_tasks") == 3
@@ -189,7 +177,7 @@ async def test_get_all_chain_executions(supabase_client):
             supabase_client,
             chain_id=chain_id,
             chain_name=f"test_pipeline_{chain_id}",
-            total_tasks=2
+            total_tasks=2,
         )
 
     # 전체 조회
@@ -205,8 +193,7 @@ async def test_error_handling(supabase_client):
     """에러 처리 테스트"""
     # 존재하지 않는 chain_id 조회
     result = await supabase_chain_execution.get_by_chain_id(
-        supabase_client,
-        chain_id="non-existent-chain-id"
+        supabase_client, chain_id="non-existent-chain-id"
     )
 
     assert result is None

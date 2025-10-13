@@ -6,20 +6,30 @@
   // Pylance 설정
   "python.analysis.autoImportCompletions": true,
   // "python.analysis.autoSearchPaths": true,
-  "python.analysis.diagnosticMode": "workspace",
-  // "python.analysis.useLibraryCodeForTypes": true,
-  // "python.analysis.extraPaths": [
-  //   "${workspaceFolder}/app"
-  // ],
+  // "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/app"],
 
   // 포매팅 설정
   "[python]": {
-    // "editor.defaultFormatter": "ms-python.black-formatter",
+    // 1. 기본 포맷터를 'ruff'로 지정합니다.
+    "editor.defaultFormatter": "charliermarsh.ruff",
+
+    // 2. 파일을 저장할 때마다 자동으로 포맷팅을 실행합니다.
     "editor.formatOnSave": true,
+
+    // 3. 저장 시 추가적인 코드 액션을 실행합니다.
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+      // 3a. 수정 가능한 모든 린트 오류를 자동으로 수정합니다.
+      "source.fixAll.ruff": "always",
+      // 3b. isort 규칙에 따라 임포트 구문을 자동으로 정렬합니다.
+      "source.organizeImports.ruff": "always"
     }
   },
+
+  // 4. ruff가 프로젝트의 가상 환경을 올바르게 인식하도록 인터프리터 경로를 지정합니다.
+  //    이렇게 하면 ruff가 설치된 패키지를 정확히 인지하고 'import' 관련 오류를 줄일 수 있습니다.
+  "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"],
 
   // // 파일 제외 설정
   "files.exclude": {
@@ -40,7 +50,5 @@
   // Python 테스트 설정
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": [
-    "tests"
-  ]
+  "python.testing.pytestArgs": ["tests"]
 }

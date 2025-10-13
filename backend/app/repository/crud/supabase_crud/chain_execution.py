@@ -77,15 +77,13 @@ class SupabaseCRUDChainExecution(
 
             if response.data and len(response.data) > 0:
                 logger.info(
-                    f"ChainExecution created with chain_id: {chain_id}, id: {response.data[0].get('id')}"
+                    f"ChainExecution created with chain_id: {chain_id}, id: {response.data[0].get('id')}"  # noqa: E501
                 )
                 return response.data[0]
 
             raise ValueError("Failed to create chain execution")
         except Exception as e:
-            logger.error(
-                f"Error creating chain execution: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error creating chain execution: {str(e)}", exc_info=True)
             raise
 
     async def increment_completed_tasks(
@@ -217,7 +215,7 @@ class SupabaseCRUDChainExecution(
             return None
         except Exception as e:
             logger.error(
-                f"Error getting chain execution with task logs for chain_id {chain_id}: {str(e)}",
+                f"Error getting chain execution with task logs for chain_id {chain_id}: {str(e)}",  # noqa: E501
                 exc_info=True,
             )
             raise
@@ -251,17 +249,13 @@ class SupabaseCRUDChainExecution(
             )
             raise
 
-    async def get_all_chain_executions(
-        self, client: Client
-    ) -> List[Dict[str, Any]]:
+    async def get_all_chain_executions(self, client: Client) -> List[Dict[str, Any]]:
         """모든 체인 실행 조회"""
         try:
             response = client.table(self.table_name).select("*").execute()
             return response.data
         except Exception as e:
-            logger.error(
-                f"Error getting all chain executions: {str(e)}", exc_info=True
-            )
+            logger.error(f"Error getting all chain executions: {str(e)}", exc_info=True)
             raise
 
 

@@ -8,26 +8,26 @@ requires-python = ">=3.12,<3.13"
 
 # ===== 공통 필수 의존성 =====
 dependencies = [
-    "fastapi>=0.109.0",              # 비동기 Python 웹 프레임워크 (REST API, 웹소켓 등 구현)
-    "uvicorn[standard]>=0.27.0",     # ASGI 서버 (FastAPI 실행용, 고성능/비동기 지원)
-    "python-multipart>=0.0.6",       # 멀티파트 폼 데이터(파일 업로드 등) 파싱 지원
-    "celery>=5.5.3",                 # 비동기 작업 큐 (백그라운드 태스크 처리)
-    "redis>=5.0.0",                  # 인메모리 데이터베이스/캐시, Celery 브로커/백엔드로도 사용
-    "sqlalchemy>=2.0.43",            # ORM (데이터베이스 모델링 및 쿼리 지원)
-    "alembic>=1.16.5",               # SQLAlchemy 기반 DB 마이그레이션 툴
-    "asyncpg>=0.30.0",               # PostgreSQL용 비동기 드라이버
-    "psycopg2-binary>=2.9.10",       # PostgreSQL용 동기 드라이버 (전통적, 안정적)
-    "psycopg>=3.2.10",               # PostgreSQL 최신 드라이버 (비동기 지원 가능)
-    "greenlet>=3.2.4",               # 동시성 라이브러리 (SQLAlchemy 비동기 내부 실행 시 필요)
-    "pydantic>=2.11.9",              # 데이터 검증 및 직렬화/역직렬화 (FastAPI 모델 정의에 사용)
-    "pydantic-settings>=2.1.0",      # 환경변수/설정 관리 (pydantic 기반 설정 클래스)
-    "python-dotenv>=1.0.0",          # .env 파일을 불러와 환경변수로 적용
-    "httpx>=0.28.1",                 # 비동기 HTTP 클라이언트 (API 호출 등)
-    "psutil>=7.0.0",                 # 시스템 리소스 모니터링 (CPU, 메모리, 프로세스 등)
-    "python-json-logger>=2.0.7",     # JSON 형태의 로깅 지원
-    "superclaude>=4.1.5",            # (특정 기능 확장 라이브러리로 보임 - 아마도 내부 도구 연동용)
-    "python-levenshtein>=0.27.1",    # 문자열 유사도 계산(편집거리 알고리즘)
-    "scikit-learn>=1.7.2",           # 머신러닝/통계 모델링 라이브러리
+    "fastapi>=0.109.0", # 비동기 Python 웹 프레임워크 (REST API, 웹소켓 등 구현)
+    "uvicorn[standard]>=0.27.0", # ASGI 서버 (FastAPI 실행용, 고성능/비동기 지원)
+    "python-multipart>=0.0.6", # 멀티파트 폼 데이터(파일 업로드 등) 파싱 지원
+    "celery>=5.5.3", # 비동기 작업 큐 (백그라운드 태스크 처리)
+    "redis>=5.0.0", # 인메모리 데이터베이스/캐시, Celery 브로커/백엔드로도 사용
+    "sqlalchemy>=2.0.43", # ORM (데이터베이스 모델링 및 쿼리 지원)
+    "alembic>=1.16.5", # SQLAlchemy 기반 DB 마이그레이션 툴
+    "asyncpg>=0.30.0", # PostgreSQL용 비동기 드라이버
+    "psycopg2-binary>=2.9.10", # PostgreSQL용 동기 드라이버 (전통적, 안정적)
+    "psycopg>=3.2.10", # PostgreSQL 최신 드라이버 (비동기 지원 가능)
+    "greenlet>=3.2.4", # 동시성 라이브러리 (SQLAlchemy 비동기 내부 실행 시 필요)
+    "pydantic>=2.11.9", # 데이터 검증 및 직렬화/역직렬화 (FastAPI 모델 정의에 사용)
+    "pydantic-settings>=2.1.0", # 환경변수/설정 관리 (pydantic 기반 설정 클래스)
+    "python-dotenv>=1.0.0", # .env 파일을 불러와 환경변수로 적용
+    "httpx>=0.28.1", # 비동기 HTTP 클라이언트 (API 호출 등)
+    "psutil>=7.0.0", # 시스템 리소스 모니터링 (CPU, 메모리, 프로세스 등)
+    "python-json-logger>=2.0.7", # JSON 형태의 로깅 지원
+    "python-levenshtein>=0.27.1", # 문자열 유사도 계산(편집거리 알고리즘)
+    "scikit-learn>=1.7.2", # 머신러닝/통계 모델링 라이브러리
+    "supabase>=2.22.0",
 ]
 
 [project.optional-dependencies]
