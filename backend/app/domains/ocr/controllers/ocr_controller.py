@@ -1,9 +1,9 @@
 # app/domains/ocr/controllers/ocr_controller.py
 from fastapi import APIRouter, Depends, File, Form, UploadFile
-from supabase import Client
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.core.logging import get_logger
-from app.core.supabase import get_supabase_async
 from app.domains.common.services.common_service import CommonService, get_common_service
 from app.utils.response_builder import ResponseBuilder
 
@@ -22,7 +22,7 @@ async def extract_text_sync(
     use_angle_cls: bool = Form(True),
     ocr_service: OCRService = Depends(get_ocr_service),
     common_service: CommonService = Depends(get_common_service),
-    db: Client = Depends(get_supabase_async),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     OCR 텍스트 추출 API (동기)
@@ -36,24 +36,9 @@ async def extract_text_sync(
     # 이미지 파일 읽기
     # image_data = await image_file.read()
 
-    # filename = image_file.filename or "unknown.png"
-    # image_path = common_service.save_image(image_file, filename)
-
-    # # Service를 통한 동기 처리
-    # result = ocr_service.extract_text_from_image(
-    #     image_data=image_data,
-    #     language=language,
-    #     confidence_threshold=confidence_threshold,
-    #     use_angle_cls=use_angle_cls,
-    # )
-
-    # logger.info(image_path)
-    # # await common_service.save_ocr_execution_to_db(
-    # #     db=db, image_path=image_path, ocr_result=result
-    # # )
-
-    # # if result.status == "failed":
-    # #     raise HTTPException(status_code=400, detail=result.error)
+    filename = image_file.filename or "unknown.png"
+    image_path = await common_service.save_image(image_file, filename)
+    logger.info(image_path)
 
     return ResponseBuilder.success(data="", message="OCR 텍스트 추출 완료")
 

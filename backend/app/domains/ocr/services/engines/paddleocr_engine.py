@@ -1,6 +1,4 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
-import traceback
-
 import cv2  # type: ignore
 import numpy as np  # type: ignore
 
@@ -54,7 +52,6 @@ class PaddleOCREngine(BaseOCREngine):
 
         except Exception as e:
             logger.error(f"PaddleOCR 모델 로드 중 오류: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
             self.is_loaded = False
 
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
@@ -103,7 +100,6 @@ class PaddleOCREngine(BaseOCREngine):
 
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
             return OCRResultDTO(
                 text_boxes=[], full_text="", status="failed", error=str(e)
             )

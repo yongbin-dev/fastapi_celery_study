@@ -164,9 +164,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             else:
                 logger.error(f"데이터베이스 연결 최대 재시도 횟수 초과: {str(e)}")
                 raise
-        except Exception as e:
-            logger.error(f"예기치 못한 데이터베이스 에러: {str(e)}")
-            raise
 
 
 # 초기화 및 종료 함수

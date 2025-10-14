@@ -15,7 +15,7 @@ api_router = APIRouter()
 
 # 1. 환경 변수에서 현재 도메인 가져오기
 current_domain = os.getenv("DOMAIN", "base")
-allowed_domains = {"base", current_domain}
+allowed_domains = {"base", "ocr", current_domain}
 logger.info(
     f"🚀 Current domain context: {current_domain}. Allowed domains: {allowed_domains}"
 )

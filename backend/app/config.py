@@ -54,6 +54,7 @@ class Settings(BaseSettings):
 
     NEXT_PUBLIC_SUPABASE_URL: str = ""
     NEXT_PUBLIC_SUPABASE_ANON_KEY: str = ""
+    SUPABASE_STORAGE_BUCKET: str = "uploads"  # Supabase Storage 버킷 이름
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
     DB_POOL_SIZE: int = 20  # 데이터베이스 연결 풀 크기
     DB_MAX_OVERFLOW: int = 0  # 추가 연결 허용 개수

@@ -9,13 +9,11 @@ import uuid
 from typing import Dict, List, Optional
 
 from fastapi import HTTPException
-from supabase import Client
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.orchestration.pipelines.ai_pipeline import create_ai_processing_pipeline
-from app.repository.crud.supabase_crud import (
-    supabase_chain_execution as supabase_chain_execution_crud,
-)
+from app.repository.crud.async_crud import chain_execution as crud_chain_execution
 from app.shared.redis_service import RedisService
 
 from ..schemas import AIPipelineRequest, AIPipelineResponse, ChainExecutionResponse
@@ -43,17 +41,17 @@ class PipelineService:
 
     async def get_pipeline_history(
         self,
-        db: Client,
+        db: AsyncSession,
         hours: Optional[int] = None,
         status: Optional[str] = None,
         task_name: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> List[ChainExecutionResponse]:
-        """파이프라인 히스토리 조회 - Supabase 기반"""
+        """파이프라인 히스토리 조회 -  기반"""
         hours_value = hours or 1
         limit_value = limit or 100
 
-        chain_executions = await supabase_chain_execution_crud.get_multi_with_task_logs(
+        chain_executions = await crud_chain_execution.get_multi_with_task_logs(
             db, days=hours_value // 24 + 1, limit=limit_value
         )
 
@@ -61,7 +59,7 @@ class PipelineService:
 
     async def create_ai_pipeline(
         self,
-        db: Client,
+        db: AsyncSession,
         redis_service: RedisService,
         request: AIPipelineRequest,
     ) -> AIPipelineResponse:
@@ -77,68 +75,53 @@ class PipelineService:
             "callback_url": request.callback_url,
         }
 
-        try:
-            chain_id = str(uuid.uuid4())
+        chain_id = str(uuid.uuid4())
 
-            # 1. Supabase에 ChainExecution 레코드 생성
-            chain_execution = (
-                await supabase_chain_execution_crud.create_chain_execution(
-                    db,
-                    chain_id=chain_id,
-                    chain_name="ai_processing_pipeline",
-                    total_tasks=4,  # 4단계 파이프라인
-                    initiated_by=getattr(request, "user_id", "system"),
-                    input_data=input_data,
-                )
-            )
+        chain_execution = await crud_chain_execution.create_chain_execution(
+            db,
+            chain_id=chain_id,
+            chain_name="ai_processing_pipeline",
+            total_tasks=4,  # 4단계 파이프라인
+            initiated_by=getattr(request, "user_id", "system"),
+            input_data=input_data,
+        )
 
-            logger.info(
-                f"ChainExecution created with ID: {chain_execution.get('id')}, chain_id: {chain_execution.get('chain_id')}"
-            )
+        # 2. Redis에 스테이지 정보 초기화
+        chain_id_str = str(chain_execution.chain_id)
+        stages_initialized = redis_service.initialize_pipeline_stages(chain_id_str)
 
-            # 2. Redis에 스테이지 정보 초기화
-            chain_id_str = str(chain_execution.get("chain_id"))
-            stages_initialized = redis_service.initialize_pipeline_stages(chain_id_str)
-
-            if not stages_initialized:
-                # Supabase는 자동 롤백이 없으므로 에러만 로깅
-                logger.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
-                raise HTTPException(
-                    status_code=500, detail="파이프라인 스테이지 초기화에 실패했습니다"
-                )
-
-            # 3. 파이프라인 워크플로우 생성 및 실행
-            pipeline_chain = create_ai_processing_pipeline(chain_id_str, input_data)
-            pipeline_chain.apply_async()
-
-            # 4. 체인 실행 시작 상태로 업데이트
-            await supabase_chain_execution_crud.update_status(
-                db, chain_id=chain_id_str, status=ProcessStatus.STARTED
-            )
-
-            return AIPipelineResponse(
-                pipeline_id=chain_id_str,
-                status="STARTED",
-                message="AI 처리 파이프라인이 시작되었습니다",
-                estimated_duration=20,
-            )
-
-        except Exception as e:
-            logger.error(
-                f"파이프라인 생성 중 예상치 못한 에러 발생: {str(e)}", exc_info=True
-            )
+        if not stages_initialized:
+            # 는 자동 롤백이 없으므로 에러만 로깅
+            logger.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
             raise HTTPException(
-                status_code=500,
-                detail="AI 파이프라인 시작 중 내부 서버 오류가 발생했습니다",
+                status_code=500, detail="파이프라인 스테이지 초기화에 실패했습니다"
             )
+
+        # 3. 파이프라인 워크플로우 생성 및 실행
+        pipeline_chain = create_ai_processing_pipeline(chain_id_str, input_data)
+        pipeline_chain.apply_async()
+
+        # 4. 체인 실행 시작 상태로 업데이트
+        await crud_chain_execution.update_status(
+            db,
+            chain_execution=chain_execution,
+            status=ProcessStatus.STARTED,
+        )
+
+        return AIPipelineResponse(
+            pipeline_id=chain_id_str,
+            status="STARTED",
+            message="AI 처리 파이프라인이 시작되었습니다",
+            estimated_duration=20,
+        )
 
     async def get_pipeline_tasks(
-        self, db: Client, chain_id: str
+        self, db: AsyncSession, chain_id: str
     ) -> ChainExecutionResponse:
-        """파이프라인 전체 태스크 목록 조회 - Supabase 기반"""
+        """파이프라인 전체 태스크 목록 조회 -  기반"""
         self._validate_chain_id(chain_id)
 
-        chain_execution = await supabase_chain_execution_crud.get_with_task_logs(
+        chain_execution = await crud_chain_execution.get_with_task_logs(
             db, chain_id=chain_id
         )
 

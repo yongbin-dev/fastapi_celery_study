@@ -19,4 +19,4 @@ class ApiResponse(BaseModel, Generic[T]):
     meta: Optional[PaginationMeta] = None
     data: Any
     error_code: Optional[str] = None
-    details: Optional[dict[str, Any]] = None
+    details: Optional[Any] = None  # Any 타입으로 변경 (str, dict 모두 허용)

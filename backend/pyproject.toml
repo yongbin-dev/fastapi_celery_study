@@ -28,6 +28,7 @@ dependencies = [
     "python-levenshtein>=0.27.1", # 문자열 유사도 계산(편집거리 알고리즘)
     "scikit-learn>=1.7.2", # 머신러닝/통계 모델링 라이브러리
     "supabase>=2.22.0",
+    "types-requests>=2.32.4.20250913",
 ]
 
 [project.optional-dependencies]

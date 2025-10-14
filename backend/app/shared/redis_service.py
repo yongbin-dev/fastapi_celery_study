@@ -77,9 +77,6 @@ class RedisService:
             ttl = getattr(settings, "PIPELINE_TTL", 3600)
             redis_client.setex(chain_id, ttl, json.dumps(stages_info))
 
-            logger.info(
-                f"Pipeline {chain_id}: 전체 스테이지 정보 초기화 완료 ({len(stages)}단계)"
-            )
             return True
 
         except Exception as e:

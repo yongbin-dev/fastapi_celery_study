@@ -88,8 +88,8 @@ celery_app.conf.update(
     # 재시도 설정
     task_reject_on_worker_lost=True,
     # 로깅 설정 - 공통 로깅 시스템과 통합
-    worker_log_format="%(asctime)s | %(levelname)-8s | %(name)s | %(funcName)s:%(lineno)d | %(message)s",
-    worker_task_log_format="%(asctime)s | %(levelname)-8s | %(name)s | [%(task_name)s(%(task_id)s)] | %(message)s",
+    worker_log_format="%(asctime)s | %(levelname)-8s | %(name)s | %(funcName)s:%(lineno)d | %(message)s",  # noqa: E501
+    worker_task_log_format="%(asctime)s | %(levelname)-8s | %(name)s | [%(task_name)s(%(task_id)s)] | %(message)s",  # noqa: E501
     worker_hijack_root_logger=False,  # 루트 로거를 hijack하지 않고 공통 시스템 사용
     # 워커 프로세스 정보 로깅 - 공통 시스템과 일치하도록 설정
     worker_log_color=False,  # 컬러는 공통 시스템에서 처리

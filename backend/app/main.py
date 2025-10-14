@@ -7,7 +7,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.core.handler.exceptions_handler import setup_exception_handlers
+from app.core.database import close_db, init_db
+from app.core.handler.exceptions_handler import (  # noqa: E402
+    general_exception_handler,
+)
 from app.core.middleware.request_middleware import RequestLogMiddleware
 from app.core.middleware.response_middleware import ResponseLogMiddleware
 from app.core.router import api_router
@@ -31,12 +34,11 @@ async def lifespan(app: FastAPI):
 
     # 데이터베이스 초기화 (선택사항)
     try:
-        # await init_db()
+        await init_db()
         logger.info("✅ 데이터베이스 연결 초기화 완료")
     except Exception as e:
         logger.error(f"❌ 데이터베이스 연결 실패: {e}")
         logger.error("💥 DB 연결 없이는 애플리케이션을 시작할 수 없습니다. 종료합니다.")
-        # DB 필수인 경우 애플리케이션 종료
         import sys
 
         sys.exit(1)
@@ -48,7 +50,7 @@ async def lifespan(app: FastAPI):
 
     # 데이터베이스 연결 종료
     try:
-        # await close_db()
+        await close_db()
         logger.info("✅ 데이터베이스 연결 종료 완료")
     except Exception as e:
         logger.error(f"❌ 데이터베이스 지우연결 종료 실패: {e}")
@@ -59,8 +61,7 @@ from app.core.logging import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
-# FastAPI 앱 생성
-
+# FastAPI 앱 생성 (exception handlers 미리 등록)
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -69,6 +70,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
+    exception_handlers={
+        Exception: general_exception_handler,
+    },
 )
 
 
@@ -76,8 +80,8 @@ app = FastAPI(
 def setup_middleware():
     """미들웨어 설정"""
 
+    # 로깅 미들웨어 활성화
     app.add_middleware(ResponseLogMiddleware)
-    # Request/Response 로깅 미들웨어
     app.add_middleware(RequestLogMiddleware)
     # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(
@@ -146,7 +150,6 @@ async def get_version():
 def create_application() -> FastAPI:
     """애플리케이션 생성 및 설정"""
     setup_middleware()
-    setup_exception_handlers(app)
     setup_routers()
     logger.info("🎉 FastAPI 애플리케이션 설정 완료")
     return app

@@ -1,5 +1,5 @@
 # models/task_log.py
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -36,12 +36,12 @@ class TaskLog(Base):
     )
 
     # 작업 파라미터
-    args = Column(Text, comment="작업 위치 인자 (JSON 형식)")
-    kwargs = Column(Text, comment="작업 키워드 인자 (JSON 형식)")
+    # args = Column(Text, comment="작업 위치 인자 (JSON 형식)")
+    # kwargs = Column(Text, comment="작업 키워드 인자 (JSON 형식)")
 
     # 결과 및 에러
-    result = Column(Text, comment="작업 실행 결과 (JSON 형식)")
-    error = Column(Text, comment="에러 메시지")
+    # result = Column(Text, comment="작업 실행 결과 (JSON 형식)")
+    error = Column(String(512), comment="에러 메시지")
 
     # 시간 추적
     started_at = Column(DateTime, index=True, comment="작업 시작 시간")
@@ -72,6 +72,3 @@ class TaskLog(Base):
         Index("idx_task_logs_started_at_desc", started_at.desc()),
         Index("idx_task_logs_chain_execution", "chain_execution_id", "status"),
     )
-
-    def __repr__(self):
-        return f"<TaskLog(task_id={self.task_id}, name={self.task_name}, status={self.status})>"

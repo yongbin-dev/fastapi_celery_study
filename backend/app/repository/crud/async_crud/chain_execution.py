@@ -99,18 +99,14 @@ class AsyncCRUDChainExecution(
         self, db: AsyncSession, *, chain_id: str
     ) -> Optional[ChainExecution]:
         """TaskLog와 함께 체인 실행 조회 (Spring의 fetch join과 유사)"""
-        try:
-            stmt = (
-                select(ChainExecution)
-                .options(selectinload(ChainExecution.task_logs))
-                .where(ChainExecution.chain_id == chain_id)
-                .order_by(desc(ChainExecution.created_at))
-            )
-            result = await db.execute(stmt)
-            return result.scalar_one_or_none()
-        except Exception as e:
-            await db.rollback()
-            raise e
+        stmt = (
+            select(ChainExecution)
+            .options(selectinload(ChainExecution.task_logs))
+            .where(ChainExecution.chain_id == chain_id)
+            .order_by(desc(ChainExecution.created_at))
+        )
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def get_multi_with_task_logs(
         self,
@@ -120,22 +116,41 @@ class AsyncCRUDChainExecution(
         limit: int = 100,
     ) -> list[ChainExecution]:
         """TaskLog와 함께 여러 체인 실행 조회"""
-        try:
-            cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = datetime.now() - timedelta(days=days)
 
-            stmt = (
-                select(ChainExecution)
-                .options(selectinload(ChainExecution.task_logs))
-                .where(ChainExecution.created_at > cutoff_date)
-                .order_by(desc(ChainExecution.created_at))
-                .limit(limit)
-            )  # type: ignore
+        stmt = (
+            select(ChainExecution)
+            .options(selectinload(ChainExecution.task_logs))
+            .where(ChainExecution.created_at > cutoff_date)
+            .order_by(desc(ChainExecution.created_at))
+            .limit(limit)
+        )
 
-            result = await db.execute(stmt)
-            return list(result.scalars().all())
-        except Exception as e:
-            await db.rollback()
-            raise e
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def update_status(
+        self,
+        db: AsyncSession,
+        *,
+        chain_execution: ChainExecution,
+        status: ProcessStatus,
+    ) -> ChainExecution:
+        """체인 실행 상태 업데이트"""
+        chain_execution.status = status
+        if status == ProcessStatus.STARTED.value:
+            chain_execution.started_at = datetime.now()
+        elif status in [
+            ProcessStatus.SUCCESS.value,
+            ProcessStatus.FAILURE.value,
+            ProcessStatus.REVOKED.value,
+        ]:
+            chain_execution.finished_at = datetime.now()
+
+        db.add(chain_execution)
+        await db.commit()
+        await db.refresh(chain_execution)
+        return chain_execution
 
 
 # 인스턴스 생성

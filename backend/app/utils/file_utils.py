@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Tuple
 
-from fastapi import File
+from fastapi import UploadFile
 from supabase import Client, create_client
 
 from app.config import settings
@@ -13,68 +13,90 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Supabase 클라이언트 초기화
+# Supabase 클라이언트 초기화 (Service Role Key 사용 시 권한 문제 해결)
 supabase: Client = create_client(
     settings.NEXT_PUBLIC_SUPABASE_URL,
     settings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    # 권한 문제가 있다면 Service Role Key 사용:
+    # settings.SUPABASE_SERVICE_ROLE_KEY,
 )
 
-BUCKET_NAME = "my-bucket"
+# 환경 변수에서 버킷 이름 가져오기
+BUCKET_NAME = "yb_test_storage"
 
 
-def save_uploaded_image(file: File, filename: str) -> str:
+async def save_uploaded_image(file: UploadFile, filename: str):
     """
-    업로드된 이미지를 저장하고 경로를 반환합니다.
+    업로드된 이미지를 Supabase Storage에 저장하고 URL을 반환합니다.
 
     Args:
-        image_data: 이미지 바이너리 데이터
-        filename: 원본 파일명
+        file: 업로드된 파일 객체
+        filename: 저장할 파일명
 
     Returns:
-        str: 저장된 파일의 상대 경로 (images/YYYYMMDD/uuid_filename.ext)
+        dict: 업로드 응답과 public URL
+
+    Raises:
+        Exception: Storage 업로드 실패 시
     """
     try:
         contents = await file.read()
 
+        # filename 파라미터를 사용하여 업로드
         response = supabase.storage.from_(BUCKET_NAME).upload(
-            path=f"uploads/{file.filename}",
+            path=f"uploads/{filename}",
             file=contents,
-            file_options={"content-type": file.content_type},
+            file_options={
+                "content-type": str(file.content_type or "application/octet-stream")
+            },
         )
 
-        logger.info(f"superbase : {response}")
+        logger.info(f"✅ Supabase 업로드 성공: {filename}")
 
         # Public URL 가져오기
         public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
-            f"uploads/{file.filename}"
+            f"uploads/{filename}"
         )
 
         return {"response": response, "public_url": public_url}
-        # 기본 저장 디렉토리
-
-        # base_dir = Path("images")
-
-        # # 날짜별 서브디렉토리 생성 (YYYYMMDD)
-        # date_str = datetime.now().strftime("%Y%m%d")
-        # save_dir = base_dir / date_str
-        # save_dir.mkdir(parents=True, exist_ok=True)
-
-        # # 파일명 생성 (UUID + 원본 파일명)
-        # file_ext = Path(filename).suffix
-        # unique_filename = f"{uuid.uuid4()}{file_ext}"
-        # file_path = save_dir / unique_filename
-
-        # # 파일 저장
-        # with open(file_path, "wb") as f:
-        #     f.write(image_data)
-
-        # # 상대 경로 반환
-        # relative_path = str(file_path)
-        # logger.info(f"이미지 저장 완료: {relative_path}")
 
     except Exception as e:
-        logger.error(f"이미지 저장 실패: {str(e)}")
-        raise
+        error_msg = str(e)
+        logger.error("❌ Supabase Storage 업로드 실패 ")
+
+        # RLS 정책 위반인 경우
+        if "row-level security policy" in error_msg.lower():
+            raise Exception(
+                "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
+                "Storage 버킷에 대한 INSERT 권한이 필요합니다."
+            )
+        # 버킷이 없는 경우
+        elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+            raise Exception(f"Storage 버킷 '{BUCKET_NAME}'을 찾을 수 없습니다.")
+        # 기타 에러
+        else:
+            raise Exception(f"파일 업로드 실패: {error_msg}")
+    # 기본 저장 디렉토리
+
+    # base_dir = Path("images")
+
+    # # 날짜별 서브디렉토리 생성 (YYYYMMDD)
+    # date_str = datetime.now().strftime("%Y%m%d")
+    # save_dir = base_dir / date_str
+    # save_dir.mkdir(parents=True, exist_ok=True)
+
+    # # 파일명 생성 (UUID + 원본 파일명)
+    # file_ext = Path(filename).suffix
+    # unique_filename = f"{uuid.uuid4()}{file_ext}"
+    # file_path = save_dir / unique_filename
+
+    # # 파일 저장
+    # with open(file_path, "wb") as f:
+    #     f.write(image_data)
+
+    # # 상대 경로 반환
+    # relative_path = str(file_path)
+    # logger.info(f"이미지 저장 완료: {relative_path}")
 
 
 def get_file_size_mb(file_path: str) -> float:

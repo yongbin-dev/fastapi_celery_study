@@ -1,6 +1,4 @@
 # app/domains/ocr/services/engines/easyocr_engine.py
-import traceback
-
 from app.core.logging import get_logger
 
 from ...schemas import OCRResultDTO, TextBoxDTO
@@ -54,7 +52,6 @@ class EasyOCREngine(BaseOCREngine):
 
         except Exception as e:
             logger.error(f"EasyOCR 모델 로드 중 오류: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
             self.is_loaded = False
 
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
@@ -98,7 +95,6 @@ class EasyOCREngine(BaseOCREngine):
 
         except Exception as e:
             logger.error(f"EasyOCR predict 실행 중 오류: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
             return OCRResultDTO(
                 text_boxes=[], full_text="", status="failed", error=str(e)
             )

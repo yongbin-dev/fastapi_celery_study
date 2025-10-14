@@ -16,24 +16,29 @@ class ResponseLogMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
 
-        # 응답 본문을 읽기 위한 준비
-        response_body = b""
-        async for chunk in response.body_iterator:
-            response_body += chunk
+            # 응답 본문을 읽기 위한 준비
+            response_body = b""
+            async for chunk in response.body_iterator:
+                response_body += chunk
 
-        # 로그 메시지 생성 및 전송을 백그라운드 작업으로 처리
-        task = BackgroundTask(self.log_response, response, response_body)
+            # 로그 메시지 생성 및 전송을 백그라운드 작업으로 처리
+            task = BackgroundTask(self.log_response, response, response_body)
 
-        # 원본 응답 스트림이 소진되었으므로, 읽어둔 본문으로 새로운 응답을 생성하여 반환
-        return Response(
-            content=response_body,
-            status_code=response.status_code,
-            headers=dict(response.headers),
-            media_type=response.media_type,
-            background=task,
-        )
+            # 원본 응답 스트림이 소진되었으므로, 읽어둔 본문으로 새로운 응답을 생성하여 반환
+            return Response(
+                content=response_body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type,
+                background=task,
+            )
+        except Exception as e:
+            # 미들웨어에서 예외가 발생하면 그냥 재발생시켜서 exception handler가 처리하도록 함
+            logger.error(f"ResponseLogMiddleware 에러: {e}")
+            raise
 
     async def log_response(self, response: Response, response_body: bytes):
         """응답 정보를 로깅하는 함수"""

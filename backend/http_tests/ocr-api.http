@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:8000
+@baseUrl = http://localhost:5050
 
 ### 모델 서비스 - 사용 가능한 모델 조회
 GET {{baseUrl}}/api/v1/ocr/languages
@@ -18,7 +18,7 @@ GET {{baseUrl}}/api/v1/version
 
 ###
 
-#  curl -X POST "http://localhost:5050/api/v1/ocr/extract/sync" \
-#     -H "Content-Type: application/json" \
-#     -d '{"image_path": "/Users/aipim/yb/python/models/images/page_0029.png"}'
+ curl -X POST "http://localhost:5050/api/v1/ocr/extract/sync" \
+    -H "Content-Type: application/json" \
+    -d '{"image_path": "/Users/aipim/yb/python/models/images/page_0029.png"}'
     

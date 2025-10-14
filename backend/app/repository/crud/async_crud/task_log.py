@@ -28,4 +28,4 @@ class AsyncCRUDTaskLog(AsyncCRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):
 
 
 # 인스턴스 생성
-task_log = AsyncCRUDTaskLog(TaskLog)
+task_log_crud = AsyncCRUDTaskLog(TaskLog)
