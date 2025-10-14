@@ -37,4 +37,9 @@ export const ocrApi = {
     );
     return response.data;
   },
+
+  getOcrResults: async (): Promise<OcrResponse[]> => {
+    const response = await api.get<OcrResponse[]>('/ocr/results');
+    return response.data;
+  },
 };

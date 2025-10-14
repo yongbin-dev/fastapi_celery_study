@@ -1,4 +1,4 @@
-export type { TextBox, OcrResponse } from './ocr';
+export type { TextBox, OcrResponse, OcrResultItem, OcrListResponse } from './ocr';
 export type {
   ImageSlot,
   SimilarityResult,
