@@ -74,7 +74,11 @@ class ChainExecution(Base):
     )
 
     def __repr__(self):
-        return f"<ChainExecution(id={self.id}, chain_name={self.chain_name}, status={self.status})>"
+        return (
+            f"<ChainExecution(id={self.id}"
+            ",chain_name={self.chain_name}"
+            ",status={self.status})>"
+        )  # noqa: E501
 
     def increment_completed_tasks(self):
         """완료된 작업 수 증가"""

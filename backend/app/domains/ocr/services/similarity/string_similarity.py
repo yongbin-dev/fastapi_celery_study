@@ -66,7 +66,8 @@ class StringSimilarity(BaseSimilarity):
         except ImportError:
             logger.warning(
                 "python-Levenshtein 패키지가 설치되지 않았습니다. "
-                "고급 문자열 유사도 측정을 사용하려면 설치하세요: pip install python-Levenshtein"
+                "고급 문자열 유사도 측정을 사용하려면 설치하세요: "
+                "pip install python-Levenshtein"
             )
 
         return metrics
