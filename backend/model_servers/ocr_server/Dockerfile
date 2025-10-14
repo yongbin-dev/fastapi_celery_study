@@ -4,8 +4,6 @@ FROM backend-ml-gpu-base:latest
 WORKDIR /app
 
 # 기존 앱 코드 복사 (모델 로직 재사용)
-COPY app ./app
-
 # 모델 서버 코드 복사
 COPY model_servers/ocr_server /model_server
 
