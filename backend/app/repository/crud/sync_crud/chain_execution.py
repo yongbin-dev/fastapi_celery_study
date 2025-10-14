@@ -5,12 +5,12 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.chain_execution import ChainExecution
-from app.orchestration.schemas.chain_execution import (
+from app.domains.common.schemas.chain_execution import (
     ChainExecutionCreate,
     ChainExecutionUpdate,
 )
-from app.orchestration.schemas.enums import ProcessStatus
+from app.domains.common.schemas.enums import ProcessStatus
+from app.models.chain_execution import ChainExecution
 
 from .base import CRUDBase
 

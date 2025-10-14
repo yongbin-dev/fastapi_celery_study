@@ -5,8 +5,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.domains.common.schemas.task_log import TaskLogCreate, TaskLogUpdate
 from app.models.task_log import TaskLog
-from app.orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 
 from .base import CRUDBase
 

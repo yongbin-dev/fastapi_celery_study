@@ -3,10 +3,10 @@ from typing import Optional
 
 from app.config import settings
 from app.core.logging import get_logger
-from app.domains.ocr.services.engines.base import BaseOCREngine
+from app.domains.ocr.schemas import OCRResultDTO
 from app.shared.base_model import BaseModel
+from model_servers.ocr_server.engines.base import BaseOCREngine
 
-from ..schemas import OCRResultDTO
 from .engines import OCREngineFactory
 
 logger = get_logger(__name__)

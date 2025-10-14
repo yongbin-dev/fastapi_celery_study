@@ -66,46 +66,50 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOMAIN=base
-
-  app-ocr-cpu:
-    <<: *common-dev-env
-    build:
-      context: .
-      dockerfile: Dockerfile.ocr-cpu
-      args:
-        - DOMAIN_EXTRA=ocr-cpu
-    image: backend-app-ocr-cpu:latest
-    container_name: fastapi-app-ocr-cpu
-    # ports:
-    #   - "35052:5050"
-    volumes:
-      - ./app:/app/app
-      - ./logs/ocr-cpu:/app/logs
-    environment:
-      - TZ=Asia/Seoul
-      - DOMAIN=ocr
+      - OCR_MODEL_SERVER_URL=http://ocr-model-server:8001
     depends_on:
-      - ml-base
+      - ocr-model-server
 
-  app-ocr-gpu:
-    <<: *gpu-service
-    build:
-      context: .
-      dockerfile: Dockerfile.ocr-gpu
-      args:
-        - DOMAIN_EXTRA=ocr-gpu
-    image: backend-app-ocr-gpu:latest
-    container_name: fastapi-app-ocr-gpu
-    # ports:
-    #   - "35053:5050"
-    volumes:
-      - ./app:/app/app
-      - ./logs/ocr-gpu:/app/logs
-    environment:
-      - TZ=Asia/Seoul
-      - DOMAIN=ocr
-    depends_on:
-      - ml-gpu-base
+  # ==================== 이전 OCR 컨테이너 (모델 서버로 대체) ====================
+  # app-ocr-cpu:
+  #   <<: *common-dev-env
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.ocr-cpu
+  #     args:
+  #       - DOMAIN_EXTRA=ocr-cpu
+  #   image: backend-app-ocr-cpu:latest
+  #   container_name: fastapi-app-ocr-cpu
+  #   # ports:
+  #   #   - "35052:5050"
+  #   volumes:
+  #     - ./app:/app/app
+  #     - ./logs/ocr-cpu:/app/logs
+  #   environment:
+  #     - TZ=Asia/Seoul
+  #     - DOMAIN=ocr
+  #   depends_on:
+  #     - ml-base
+
+  # app-ocr-gpu:
+  #   <<: *gpu-service
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.ocr-gpu
+  #     args:
+  #       - DOMAIN_EXTRA=ocr-gpu
+  #   image: backend-app-ocr-gpu:latest
+  #   container_name: fastapi-app-ocr-gpu
+  #   # ports:
+  #   #   - "35053:5050"
+  #   volumes:
+  #     - ./app:/app/app
+  #     - ./logs/ocr-gpu:/app/logs
+  #   environment:
+  #     - TZ=Asia/Seoul
+  #     - DOMAIN=ocr
+  #   depends_on:
+  #     - ml-gpu-base
 
   app-llm:
     <<: *gpu-service
@@ -126,6 +130,31 @@ services:
       - DOMAIN=llm
     depends_on:
       - ml-gpu-base
+
+  # ==================== 모델 서버 ====================
+  ocr-model-server:
+    <<: *gpu-service
+    build:
+      context: .
+      dockerfile: model_servers/ocr_server/Dockerfile
+    image: backend-ocr-model-server:latest
+    container_name: ocr-model-server
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./app:/app/app
+      - ./logs/ocr-model:/logs
+      - ~/.paddleocr:/root/.paddleocr  # 모델 캐시
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - TZ=Asia/Seoul
+    depends_on:
+      - ml-gpu-base
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # ==================== API Gateway ====================
   # nginx-gateway:
@@ -155,8 +184,9 @@ services:
       - ./logs/nginx:/var/log/nginx
     depends_on:
       - app-base
-      - app-ocr-cpu
-      # - app-ocr-gpu
+      - ocr-model-server
+      # - app-ocr-cpu  # 모델 서버로 대체
+      # - app-ocr-gpu  # 모델 서버로 대체
       # - app-llm
     restart: unless-stopped
     networks:

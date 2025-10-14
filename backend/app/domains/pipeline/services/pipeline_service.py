@@ -12,12 +12,15 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
-from app.orchestration.pipelines.ai_pipeline import create_ai_processing_pipeline
+from app.domains.common.schemas import (
+    AIPipelineRequest,
+    AIPipelineResponse,
+    ChainExecutionResponse,
+)
+from app.domains.common.schemas.enums import ProcessStatus
+from app.domains.pipeline.pipelines.ai_pipeline import create_ai_processing_pipeline
 from app.repository.crud.async_crud import chain_execution_crud
 from app.shared.redis_service import RedisService
-
-from ..schemas import AIPipelineRequest, AIPipelineResponse, ChainExecutionResponse
-from ..schemas.enums import ProcessStatus
 
 logger = get_logger(__name__)
 

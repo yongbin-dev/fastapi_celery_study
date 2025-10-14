@@ -9,7 +9,7 @@ from app.core.celery.task_decorators import (
     task_logger,
 )
 from app.core.logging import get_logger
-from app.orchestration.schemas.enums import ProcessStatus
+from app.domains.common.schemas.enums import ProcessStatus
 from app.shared.config.pipeline_config import STAGES
 
 logger = get_logger(__name__)

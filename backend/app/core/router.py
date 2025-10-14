@@ -42,14 +42,3 @@ for _, domain_name, _ in pkgutil.iter_modules(app.domains.__path__):
             f"⏭️ Skipping domain controller: {domain_name} (not in allowed list)"
         )
 
-
-# 3. 오케스트레이션 컨트롤러 등록 (pipeline_controller) - 모든 도메인에 공통으로 필요 시
-try:
-    from app.orchestration.controllers.pipeline_controller import (
-        router as pipeline_router,
-    )
-
-    api_router.include_router(pipeline_router, tags=["Orchestration"])
-    logger.info("✅ Loaded orchestration controller: pipeline")
-except (ImportError, AttributeError) as e:
-    logger.warning(f"⚠️ Failed to load pipeline controller: {e}")

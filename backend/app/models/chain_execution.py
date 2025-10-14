@@ -5,7 +5,7 @@ from sqlalchemy import Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from app.orchestration.schemas import ProcessStatus
+from app.domains.common.schemas import ProcessStatus
 
 from .base import Base
 

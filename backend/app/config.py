@@ -108,6 +108,10 @@ class Settings(BaseSettings):
     OCR_DET: str = ""
     OCR_REC: str = ""
 
+    # 모델 서버 설정
+    OCR_MODEL_SERVER_URL: str = "http://localhost:8001"
+    MODEL_SERVER_TIMEOUT: int = 60
+
 
 # 전역 설정 객체
 settings = Settings()

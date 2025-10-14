@@ -8,12 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
+from app.domains.common.schemas.pipeline import AIPipelineRequest
+from app.domains.pipeline.services import PipelineService
 from app.models.base import Base
-from app.orchestration.schemas.pipeline import AIPipelineRequest
-from app.orchestration.services.pipeline_service import PipelineService
-from app.repository.crud.async_crud.chain_execution import (
-    chain_execution as chain_execution_crud,
-)
+from app.repository.crud.async_crud.chain_execution import chain_execution_crud
 from app.shared.redis_service import RedisService
 
 # .env 파일의 DATABASE_URL을 사용하도록 설정

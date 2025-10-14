@@ -5,8 +5,8 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.common.schemas.task_log import TaskLogCreate, TaskLogUpdate
 from app.models.task_log import TaskLog
-from app.orchestration.schemas.task_log import TaskLogCreate, TaskLogUpdate
 
 from .base import AsyncCRUDBase
 
