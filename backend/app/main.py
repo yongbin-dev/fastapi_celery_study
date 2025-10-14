@@ -146,6 +146,12 @@ async def get_version():
     )
 
 
+@app.get("/test-error", tags=["Test"])
+async def test_error():
+    """Global Exception Handler 테스트"""
+    raise Exception("테스트 에러: Global handler가 이 에러를 처리합니다")
+
+
 # 애플리케이션 설정 초기화
 def create_application() -> FastAPI:
     """애플리케이션 생성 및 설정"""

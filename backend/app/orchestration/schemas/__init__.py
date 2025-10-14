@@ -1,4 +1,3 @@
-
 from .chain_execution import (
     ChainExecutionCreate,
     ChainExecutionResponse,
@@ -13,8 +12,6 @@ from .stage import StageInfo
 from .task_log import (
     TaskLogCreate,
     TaskLogResponse,
-    TaskLogStats,
-    TaskLogStatusStats,
     TaskLogUpdate,
 )
 
@@ -33,6 +30,4 @@ __all__ = [
     "TaskLogCreate",
     "TaskLogUpdate",
     "TaskLogResponse",
-    "TaskLogStats",
-    "TaskLogStatusStats"
 ]

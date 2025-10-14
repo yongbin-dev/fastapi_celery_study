@@ -40,23 +40,3 @@ class TaskLogResponse(TaskLogBase):
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
-
-
-class TaskLogStats(BaseModel):
-    """작업 로그 통계 스키마"""
-
-    total_count: int = Field(..., description="총 작업 수")
-    avg_duration: float = Field(..., description="평균 실행 시간 (초)")
-    min_duration: float = Field(..., description="최소 실행 시간 (초)")
-    max_duration: float = Field(..., description="최대 실행 시간 (초)")
-
-
-class TaskLogStatusStats(BaseModel):
-    """상태별 통계 스키마"""
-
-    PENDING: int = Field(default=0, description="대기 중인 작업 수")
-    STARTED: int = Field(default=0, description="시작된 작업 수")
-    SUCCESS: int = Field(default=0, description="성공한 작업 수")
-    FAILURE: int = Field(default=0, description="실패한 작업 수")
-    RETRY: int = Field(default=0, description="재시도 중인 작업 수")
-    REVOKED: int = Field(default=0, description="취소된 작업 수")

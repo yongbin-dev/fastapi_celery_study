@@ -2,14 +2,16 @@
 """파일 처리 유틸리티"""
 
 import os
+import uuid
+from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
-from fastapi import UploadFile
 from supabase import Client, create_client
 
 from app.config import settings
 from app.core.logging import get_logger
+from app.schemas.common import ImageResponse
 
 logger = get_logger(__name__)
 
@@ -25,7 +27,9 @@ supabase: Client = create_client(
 BUCKET_NAME = "yb_test_storage"
 
 
-async def save_uploaded_image(file: UploadFile, filename: str):
+async def save_uploaded_image(
+    image_data: bytes, filename: str, content_type: Optional[str]
+) -> ImageResponse:
     """
     업로드된 이미지를 Supabase Storage에 저장하고 URL을 반환합니다.
 
@@ -40,25 +44,27 @@ async def save_uploaded_image(file: UploadFile, filename: str):
         Exception: Storage 업로드 실패 시
     """
     try:
-        contents = await file.read()
+        now = datetime.now()
+        formatted_date = now.strftime("%Y-%m-%d")
+
+        contents = image_data
+
+        unique_file_name = str(uuid.uuid4()) + "_" + filename
 
         # filename 파라미터를 사용하여 업로드
         response = supabase.storage.from_(BUCKET_NAME).upload(
-            path=f"uploads/{filename}",
+            path=f"uploads/{formatted_date}/{unique_file_name}",
             file=contents,
             file_options={
-                "content-type": str(file.content_type or "application/octet-stream")
+                "content-type": str(content_type or "application/octet-stream")
             },
         )
 
-        logger.info(f"✅ Supabase 업로드 성공: {filename}")
-
-        # Public URL 가져오기
         public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
-            f"uploads/{filename}"
+            f"uploads/{formatted_date}/{unique_file_name}"
         )
 
-        return {"response": response, "public_url": public_url}
+        return ImageResponse(private_img=response.fullPath, public_img=public_url)
 
     except Exception as e:
         error_msg = str(e)

@@ -17,7 +17,6 @@ async def get_image(
     service: CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
 ):
-
     list = await service.get_ocr_list(db)
     return ResponseBuilder.success(data=list, message="COMMON 서비스 정상")
 
@@ -27,7 +26,6 @@ async def get_image_list(
     service: CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
 ):
-
     list = await service.get_ocr_list(db)
     return ResponseBuilder.success(data=list, message="COMMON 서비스 정상")
 
@@ -38,7 +36,6 @@ async def get_image_by_id(
     service: CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
 ):
-
     list = await service.get_image_by_id(db, id)
     return ResponseBuilder.success(data=list, message="COMMON 서비스 정상")
 

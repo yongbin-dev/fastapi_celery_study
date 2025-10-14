@@ -1,7 +1,10 @@
 # app/domains/ocr/services/ocr_service.py
 from typing import Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.logging import get_logger
+from app.repository.crud import async_ocr_execution_crud
 from app.shared.base_service import BaseService
 
 from ..schemas import OCRResultDTO
@@ -16,6 +19,10 @@ class OCRService(BaseService):
     def __init__(self):
         super().__init__()
         self.model: Optional[OCRModel] = None
+
+    async def get_all_ocr_executions(self, db: AsyncSession):
+        ocr_executions = await async_ocr_execution_crud.get_multi_with_text_box(db)
+        return [OCRResultDTO.model_validate(ce) for ce in ocr_executions]
 
     def extract_text_from_image(
         self,

@@ -154,7 +154,7 @@ class AsyncCRUDChainExecution(
 
 
 # 인스턴스 생성
-chain_execution = AsyncCRUDChainExecution(ChainExecution)
+chain_execution_crud = AsyncCRUDChainExecution(ChainExecution)
 
 # async def get_by_initiated_by(
 #     self, db: AsyncSession, *, initiated_by: str, skip: int = 0, limit: int = 100

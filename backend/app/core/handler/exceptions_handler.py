@@ -1,5 +1,3 @@
-import traceback
-
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
@@ -11,13 +9,6 @@ logger = get_logger(__name__)
 
 async def general_exception_handler(request: Request, exc: Exception):
     """일반 예외 핸들러"""
-    # 에러 로깅
-    logger.error(
-        f"\nPath: {request.url.path} | "
-        f"\nError Type: {type(exc).__name__} | "
-        f"\nError Message: {str(exc)} | "
-        f"\nTraceback: {traceback.format_exc()}"
-    )
 
     # DEBUG 레벨에서만 상세 에러 정보 노출
     from app.config import settings
@@ -29,8 +20,6 @@ async def general_exception_handler(request: Request, exc: Exception):
         error_code="INTERNAL_SERVER_ERROR",
         details=details,
     )
-
-    logger.info(f"Returning JSON response: {error_response.model_dump()}")
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

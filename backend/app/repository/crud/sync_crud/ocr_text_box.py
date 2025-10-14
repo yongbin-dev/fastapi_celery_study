@@ -1,5 +1,6 @@
 # app/repository/crud/sync_crud/ocr_text_box.py
 """OCR 텍스트 박스 동기 CRUD (Celery용)"""
+
 from sqlalchemy.orm import Session
 
 from app.domains.ocr.schemas.ocr_db import OCRTextBoxCreate

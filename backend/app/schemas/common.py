@@ -20,3 +20,8 @@ class ApiResponse(BaseModel, Generic[T]):
     data: Any
     error_code: Optional[str] = None
     details: Optional[Any] = None  # Any 타입으로 변경 (str, dict 모두 허용)
+
+
+class ImageResponse(BaseModel):
+    public_img: str = ""
+    private_img: str = ""

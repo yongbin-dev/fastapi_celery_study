@@ -26,9 +26,7 @@ class OCRTextBox(Base):
 
     # 텍스트 박스 정보
     text = Column(Text, nullable=False, comment="추출된 텍스트")
-    confidence = Column(
-        Float, nullable=False, comment="신뢰도 점수 (0.0 ~ 1.0)"
-    )
+    confidence = Column(Float, nullable=False, comment="신뢰도 점수 (0.0 ~ 1.0)")
     bbox = Column(
         JSON,
         nullable=False,

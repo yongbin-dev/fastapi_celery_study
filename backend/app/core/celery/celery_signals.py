@@ -50,4 +50,3 @@ def heartbeat_handler(sender=None, **kwargs):
     """하트비트 처리"""
     # 하트비트는 너무 자주 발생하므로 로깅하지 않음
     pass
-

@@ -24,6 +24,9 @@ class OCRExecution(Base):
     )
 
     image_path = Column(String(255), unique=True, index=True, comment="이미지 경로")
+    public_path = Column(
+        String(255), unique=True, index=True, comment="이미지 공개 경로"
+    )
     # OCR 실행 상태
     status = Column(
         String(50),
@@ -45,7 +48,5 @@ class OCRExecution(Base):
     def __repr__(self):
         boxes_count = len(self.text_boxes)
         return (
-            f"<OCRExecution(id={self.id}, "
-            f"status={self.status}, "
-            f"boxes={boxes_count})>"
+            f"<OCRExecution(id={self.id}, status={self.status}, boxes={boxes_count})>"
         )

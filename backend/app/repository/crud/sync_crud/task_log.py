@@ -67,4 +67,4 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
 
 
 # # 인스턴스 생성
-task_log = CRUDTaskLog(TaskLog)
+task_log_crud = CRUDTaskLog(TaskLog)

@@ -1,5 +1,6 @@
 # app/domains/ocr/schemas/ocr_db.py
 """OCR DB 스키마"""
+
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -21,32 +22,6 @@ class OCRExecutionCreate(BaseModel):
 
     chain_id: Optional[str] = Field(None, description="Celery chain ID (선택적)")
     image_path: str = Field(..., description="이미지 파일 경로")
+    public_path: str = Field(..., description="이미지 공개 경로")
     status: str = Field(..., description="처리 상태 (success/failed)")
     error: Optional[str] = Field(None, description="에러 메시지")
-
-
-class OCRTextBoxRead(BaseModel):
-    """텍스트 박스 읽기 스키마"""
-
-    id: int
-    ocr_execution_id: int
-    text: str
-    confidence: float
-    bbox: List[List[float]]
-
-    class Config:
-        from_attributes = True
-
-
-class OCRExecutionRead(BaseModel):
-    """OCR 실행 정보 읽기 스키마"""
-
-    id: int
-    chain_id: Optional[str]
-    image_path: str
-    status: str
-    error: Optional[str]
-    text_boxes: List[OCRTextBoxRead] = []
-
-    class Config:
-        from_attributes = True

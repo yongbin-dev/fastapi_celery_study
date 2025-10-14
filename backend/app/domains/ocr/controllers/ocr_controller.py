@@ -20,7 +20,7 @@ async def extract_text_sync(
     language: str = Form("korean"),
     confidence_threshold: float = Form(0.5),
     use_angle_cls: bool = Form(True),
-    ocr_service: OCRService = Depends(get_ocr_service),
+    service: OCRService = Depends(get_ocr_service),
     common_service: CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
 ):
@@ -32,15 +32,33 @@ async def extract_text_sync(
     - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
     - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
     """
-
-    # 이미지 파일 읽기
-    # image_data = await image_file.read()
-
+    image_data = await image_file.read()
     filename = image_file.filename or "unknown.png"
-    image_path = await common_service.save_image(image_file, filename)
-    logger.info(image_path)
+    image_response = await common_service.save_image(
+        image_data, filename, image_file.content_type
+    )
 
-    return ResponseBuilder.success(data="", message="OCR 텍스트 추출 완료")
+    result = service.extract_text_from_image(
+        image_data=image_data,
+        language=language,
+        confidence_threshold=confidence_threshold,
+        use_angle_cls=use_angle_cls,
+    )
+
+    ocr_results = await common_service.save_ocr_execution_to_db(
+        db=db, image_response=image_response, ocr_result=result
+    )
+
+    return ResponseBuilder.success(data=ocr_results, message="OCR 텍스트 추출 완료")
+
+
+@router.get("/results")
+async def get_all_ocr_executions(
+    service: OCRService = Depends(get_ocr_service),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await service.get_all_ocr_executions(db)
+    return ResponseBuilder.success(data=result)
 
 
 @router.get("/languages")

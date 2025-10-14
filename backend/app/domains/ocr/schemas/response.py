@@ -18,6 +18,9 @@ class TextBoxDTO(BaseModel):
 class OCRResultDTO(BaseModel):
     """OCR 실행 결과 DTO"""
 
+    # image_path = str = Field(default="" , description="이미지 경로")
+    id: Optional[int] = Field(default=0, description="ID")
+    public_path: Optional[str] = Field(default="", description="이미지 공개  경로")
     text_boxes: List[TextBoxDTO] = Field(
         default_factory=list, description="추출된 텍스트 박스 목록"
     )
@@ -25,9 +28,11 @@ class OCRResultDTO(BaseModel):
     status: Literal["success", "failed"] = Field(..., description="처리 상태")
     error: str | None = Field(default=None, description="에러 메시지 (실패 시)")
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 # 기존 스키마 (하위 호환성)
-class OCRTextBox(BaseModel):
+class OCRTextBoxResponse(BaseModel):
     """OCR 텍스트 박스 (deprecated: TextBoxDTO 사용 권장)"""
 
     text: str = Field(..., description="추출된 텍스트")
@@ -46,7 +51,7 @@ class OCRExtractResponse(BaseModel):
     status: str = Field(..., description="태스크 상태")
     image_path: Optional[str] = Field(default=None, description="전체 추출 텍스트")
     error: Optional[str] = Field(default=None, description="에러")
-    text_boxes: Optional[List[OCRTextBox]] = Field(
+    text_boxes: Optional[List[OCRTextBoxResponse]] = Field(
         default=None, description="추출된 텍스트 박스 목록"
     )
 

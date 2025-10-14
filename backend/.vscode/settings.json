@@ -5,12 +5,24 @@
 
   // Pylance 설정
   "python.analysis.autoImportCompletions": true,
-  // "python.analysis.autoSearchPaths": true,
+  "python.analysis.autoSearchPaths": true,
   "python.analysis.diagnosticMode": "workspace",
-  // "python.analysis.useLibraryCodeForTypes": true,
-  // "python.analysis.extraPaths": [
-  //   "${workspaceFolder}/app"
-  // ],
+  "python.analysis.useLibraryCodeForTypes": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.indexing": true,
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "sqlalchemy",
+      "depth": 3,
+      "includeAllSymbols": true
+    },
+    {
+      "name": "fastapi",
+      "depth": 2,
+      "includeAllSymbols": true
+    }
+  ],
+  "python.analysis.extraPaths": ["${workspaceFolder}/app"],
 
   // 포매팅 설정
   "[python]": {
@@ -40,5 +52,6 @@
   // Python 테스트 설정
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": ["tests"]
+  "python.testing.pytestArgs": ["tests"],
+  "python-envs.pythonProjects": []
 }

@@ -18,17 +18,13 @@ task_queues = (
 task_routes = {
     # OCR 도메인 태스크 → ocr 큐
     "ocr.*": {"queue": "ocr", "routing_key": "ocr.task"},
-
     # LLM 도메인 태스크 → llm 큐
     "llm.*": {"queue": "llm", "routing_key": "llm.task"},
-
     # Vision 도메인 태스크 → vision 큐
     "vision.*": {"queue": "vision", "routing_key": "vision.task"},
-
     # 오케스트레이션 태스크 → orchestration 큐 (base 컨테이너)
     "chain.*": {"queue": "orchestration", "routing_key": "orchestration.task"},
     "orchestration.*": {"queue": "orchestration", "routing_key": "orchestration.task"},
-
     # 기타 태스크 → default 큐
     "*": {"queue": "default", "routing_key": "default"},
 }

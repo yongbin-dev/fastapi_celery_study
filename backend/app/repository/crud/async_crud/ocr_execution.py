@@ -1,8 +1,9 @@
 # app/repository/crud/async_crud/ocr_execution.py
 """OCR 실행 정보 비동기 CRUD"""
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.domains.ocr.schemas.ocr_db import OCRExecutionCreate
 from app.models import OCRExecution
@@ -16,6 +17,25 @@ class AsyncCRUDOCRExecution(
 
     async def get_all(self, db: AsyncSession) -> list[OCRExecution]:
         stmt = select(OCRExecution)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_multi_with_text_box(
+        self,
+        db: AsyncSession,
+        *,
+        days: int = 7,
+        limit: int = 100,
+    ) -> list[OCRExecution]:
+        """TaskLog와 함께 여러 체인 실행 조회"""
+
+        stmt = (
+            select(OCRExecution)
+            .options(selectinload(OCRExecution.text_boxes))
+            .order_by(desc(OCRExecution.created_at))
+            .limit(limit)
+        )
+
         result = await db.execute(stmt)
         return list(result.scalars().all())
 

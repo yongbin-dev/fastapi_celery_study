@@ -43,7 +43,7 @@ logger = get_logger(__name__)
 class TableTruncator:
     """테이블 데이터 truncate를 담당하는 클래스"""
 
-    def __init__(self, exclude_tables: Set[str] , use_test_db: bool = False):
+    def __init__(self, exclude_tables: Set[str], use_test_db: bool = False):
         # 데이터베이스 URL 설정
         if use_test_db:
             # 테스트 DB용 설정으로 데이터베이스 매니저 설정 오버라이드
@@ -184,36 +184,32 @@ async def main():
         """,
     )
 
-    parser.add_argument("--confirm",
-                        action="store_true",
-                        help="확인 프롬프트 없이 바로 실행")
+    parser.add_argument(
+        "--confirm", action="store_true", help="확인 프롬프트 없이 바로 실행"
+    )
 
-    parser.add_argument("--exclude",
-                        type=str,
-                        default="",
-                        help="제외할 테이블명 (쉼표로 구분)"
-                        )
+    parser.add_argument(
+        "--exclude", type=str, default="", help="제외할 테이블명 (쉼표로 구분)"
+    )
 
-    parser.add_argument("--dry-run",
-                        action="store_true",
-                        help="실제 실행하지 않고 삭제될 테이블만 출력"
-                        )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="실제 실행하지 않고 삭제될 테이블만 출력"
+    )
 
-    parser.add_argument("--stats",
-                        action="store_true",
-                        help="각 테이블의 레코드 수만 출력"
-                        )
+    parser.add_argument(
+        "--stats", action="store_true", help="각 테이블의 레코드 수만 출력"
+    )
 
     parser.add_argument(
         "--test-db",
         action="store_true",
-        help="테스트 데이터베이스 사용 (TEST_DATABASE_URL)"
+        help="테스트 데이터베이스 사용 (TEST_DATABASE_URL)",
     )
 
     args = parser.parse_args()
 
     # 환경 확인
-    if settings.environment == "production":
+    if settings.ENVIRONMENT == "production":
         print("❌ 프로덕션 환경에서는 이 스크립트를 실행할 수 없습니다!")
         sys.exit(1)
 
@@ -245,7 +241,7 @@ async def main():
     db_url = settings.TEST_DATABASE_URL if use_test_db else settings.DATABASE_URL
     db_type = "테스트" if use_test_db else "기본"
 
-    print(f"🔧 환경: {settings.environment}")
+    print(f"🔧 환경: {settings.ENVIRONMENT}")
     print(f"🎯 DB 타입: {db_type} 데이터베이스")
     print(f"🔗 DB: {db_url.split('@')[-1]}")  # 비밀번호 제외하고 출력
 

@@ -97,4 +97,4 @@ class CRUDChainExecution(
 
 
 # 인스턴스 생성
-chain_execution = CRUDChainExecution(ChainExecution)
+chain_execution_crud = CRUDChainExecution(ChainExecution)

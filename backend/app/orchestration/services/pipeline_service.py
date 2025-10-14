@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.orchestration.pipelines.ai_pipeline import create_ai_processing_pipeline
-from app.repository.crud.async_crud import chain_execution as crud_chain_execution
+from app.repository.crud.async_crud import chain_execution_crud
 from app.shared.redis_service import RedisService
 
 from ..schemas import AIPipelineRequest, AIPipelineResponse, ChainExecutionResponse
@@ -51,7 +51,7 @@ class PipelineService:
         hours_value = hours or 1
         limit_value = limit or 100
 
-        chain_executions = await crud_chain_execution.get_multi_with_task_logs(
+        chain_executions = await chain_execution_crud.get_multi_with_task_logs(
             db, days=hours_value // 24 + 1, limit=limit_value
         )
 
@@ -77,7 +77,7 @@ class PipelineService:
 
         chain_id = str(uuid.uuid4())
 
-        chain_execution = await crud_chain_execution.create_chain_execution(
+        chain_execution = await chain_execution_crud.create_chain_execution(
             db,
             chain_id=chain_id,
             chain_name="ai_processing_pipeline",
@@ -102,7 +102,7 @@ class PipelineService:
         pipeline_chain.apply_async()
 
         # 4. 체인 실행 시작 상태로 업데이트
-        await crud_chain_execution.update_status(
+        await chain_execution_crud.update_status(
             db,
             chain_execution=chain_execution,
             status=ProcessStatus.STARTED,
@@ -121,7 +121,7 @@ class PipelineService:
         """파이프라인 전체 태스크 목록 조회 -  기반"""
         self._validate_chain_id(chain_id)
 
-        chain_execution = await crud_chain_execution.get_with_task_logs(
+        chain_execution = await chain_execution_crud.get_with_task_logs(
             db, chain_id=chain_id
         )
 
