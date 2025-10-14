@@ -6,8 +6,13 @@ export interface User {
 
 export interface ApiResponse<T> {
   success: boolean;
-  data: T;
-  message?: string;
+  status: string;
+  message: string;
+  timestamp: string;
+  data: T | null;
+  error_code?: string;
+  details?: any;
+  meta?: any;
 }
 
 export interface PaginatedResponse<T> {
