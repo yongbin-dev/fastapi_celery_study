@@ -1,0 +1,49 @@
+{
+  "include": [
+    "packages"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.venv",
+    "**/node_modules"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "packages/api_server",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "packages/shared",
+        "packages/api_server/app"
+      ]
+    },
+    {
+      "root": "packages/celery_worker",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "packages/shared"
+      ]
+    },
+    {
+      "root": "packages/ml_server",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "packages/shared"
+      ]
+    },
+    {
+      "root": "packages/shared",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "Linux",
+      "extraPaths": [
+        "packages"
+      ]
+    }
+  ],
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": false,
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true
+}

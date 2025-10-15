@@ -1,0 +1,72 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FastAPI Dev Server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--reload",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5050"
+      ],
+      "justMyCode": false,
+      "envFile": "${workspaceFolder}/.env.development",
+      "env": {
+        "ENVIRONMENT": "development"
+      },
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Celery Worker",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "args": [
+        "-A",
+        "app.celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "--pool=solo"
+      ],
+      "jinja": true,
+      "justMyCode": false,
+      "envFile": "${workspaceFolder}/.env.development",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Celery Flower",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "args": ["-A", "app.celery_app", "flower", "--port=5555"],
+      "jinja": true,
+      "justMyCode": false,
+      "envFile": "${workspaceFolder}/.env.development",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "FastAPI + Celery Worker",
+      "configurations": ["FastAPI Dev Server", "Celery Worker"],
+      "stopAll": true
+    },
+    {
+      "name": "Full Stack (API + Worker + Flower)",
+      "configurations": [
+        "FastAPI Dev Server",
+        "Celery Worker",
+        "Celery Flower"
+      ],
+      "stopAll": true
+    }
+  ]
+}

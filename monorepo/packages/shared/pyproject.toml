@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Shared utilities and core modules"
+requires-python = ">=3.12"
+dependencies = [
+    "redis>=5.0.0",
+    "psycopg2-binary>=2.9.10",
+    "psycopg>=3.2.10",
+    "greenlet>=3.2.4",
+    "supabase>=2.22.0",
+    "asyncpg>=0.30.0", # PostgreSQL용 비동기 드라이버
+    
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

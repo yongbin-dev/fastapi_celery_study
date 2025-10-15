@@ -1,0 +1,15 @@
+{
+  // Monorepo 전용 설정
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/packages/shared",
+    "${workspaceFolder}/packages/api_server/app",
+    "${workspaceFolder}/packages/celery_worker",
+    "${workspaceFolder}/packages/ml_server"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/packages/shared",
+    "${workspaceFolder}/packages/api_server/app",
+    "${workspaceFolder}/packages/celery_worker",
+    "${workspaceFolder}/packages/ml_server"
+  ]
+}

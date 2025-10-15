@@ -1,0 +1,8 @@
+# Python path configuration for shared package
+import sys
+from pathlib import Path
+
+# Add packages directory to Python path
+packages_dir = Path(__file__).parent.parent
+if str(packages_dir) not in sys.path:
+    sys.path.insert(0, str(packages_dir))

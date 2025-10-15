@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "api-server"
+version = "0.1.0"
+description = "FastAPI-based API server"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "sqlalchemy>=2.0.43",
+    "alembic>=1.16.5",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.1.0",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.0.0",
+    "python-json-logger>=2.0.7",
+    "psutil>=7.0.0",
+    "shared",  # 내부 공통 패키지 의존성
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

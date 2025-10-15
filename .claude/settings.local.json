@@ -31,7 +31,10 @@
       "Bash(uv remove:*)",
       "Bash(uv add:*)",
       "Bash(test:*)",
-      "Bash(git log -5 --pretty=format:'%s')"
+      "Bash(git log -5 --pretty=format:'%s')",
+      "mcp__serena__list_dir",
+      "mcp__serena__activate_project",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
