@@ -33,6 +33,24 @@ services:
     networks:
       - app-network
 
+  nginx-cpu-gateway:
+    image: nginx:alpine
+    container_name: api-cpu-gateway
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nginx/cpu/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./logs/nginx:/var/log/nginx
+    # depends_on:
+    # - app-base
+    # - ocr-model-server
+    # - app-ocr-cpu  # 모델 서버로 대체
+    # - app-ocr-gpu  # 모델 서버로 대체
+    # - app-llm
+    restart: unless-stopped
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
     driver: local

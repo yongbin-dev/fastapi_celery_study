@@ -144,7 +144,7 @@ services:
     volumes:
       - ./app:/app/app
       - ./logs/ocr-model:/logs
-      - ~/.paddleocr:/root/.paddleocr  # 모델 캐시
+      - ~/.paddleocr:/root/.paddleocr # 모델 캐시
     environment:
       - CUDA_VISIBLE_DEVICES=0
       - TZ=Asia/Seoul
@@ -173,24 +173,6 @@ services:
   #   restart: unless-stopped
   #   networks:
   #     - app-network
-
-  nginx-cpu-gateway:
-    image: nginx:alpine
-    container_name: api-cpu-gateway
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./infra/nginx/cpu/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - app-base
-      - ocr-model-server
-      # - app-ocr-cpu  # 모델 서버로 대체
-      # - app-ocr-gpu  # 모델 서버로 대체
-      # - app-llm
-    restart: unless-stopped
-    networks:
-      - app-network
 
 networks:
   app-network:
