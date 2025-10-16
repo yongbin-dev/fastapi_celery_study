@@ -3,12 +3,9 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.terminal.activateEnvironment": true,
 
-  // Pylance 설정
+  // Pylance 설정 (pyrightconfig.json에서 타입 체크 설정 관리)
   "python.analysis.autoImportCompletions": true,
-  "python.analysis.autoSearchPaths": true,
-  "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.useLibraryCodeForTypes": true,
-  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "openFilesOnly",
   "python.analysis.indexing": true,
   "python.analysis.packageIndexDepths": [
     {
@@ -21,13 +18,6 @@
       "depth": 2,
       "includeAllSymbols": true
     }
-  ],
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/packages",
-    "${workspaceFolder}/packages/shared",
-    "${workspaceFolder}/packages/api_server/app",
-    "${workspaceFolder}/packages/celery_worker",
-    "${workspaceFolder}/packages/ml_server"
   ],
 
   // 포매팅 설정

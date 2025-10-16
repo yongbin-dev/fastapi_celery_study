@@ -1,9 +1,7 @@
 # app/domains/ocr/services/ocr_model.py
-from typing import Optional
-
 # OCRResultDTO는 api_server의 도메인 스키마이므로 직접 정의하거나 shared로 이동 필요
 # from shared.schemas.ocr import OCRResultDTO
-from typing import Any, Dict, List
+from typing import Optional
 
 from shared.config import settings
 from shared.core.logging import get_logger

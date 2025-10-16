@@ -1,7 +1,6 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
 import cv2  # type: ignore
 import numpy as np  # type: ignore
-
 from shared.config import settings
 from shared.core.logging import get_logger
 

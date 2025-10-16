@@ -8,15 +8,14 @@ import time
 from typing import Any, Dict
 
 from celery import chain
-
 from celery_app_unified import celery_app
-from core.celery.task_decorators import (
+from core.task_decorators import (
     create_stage_result,
     task_logger,
 )
+from shared.config.pipeline_config import STAGES
 from shared.core.logging import get_logger
 from shared.schemas.enums import ProcessStatus
-from shared.config.pipeline_config import STAGES
 
 logger = get_logger(__name__)
 

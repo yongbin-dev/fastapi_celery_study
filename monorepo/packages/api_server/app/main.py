@@ -3,9 +3,9 @@
 import os
 from contextlib import asynccontextmanager
 
+from app.domains.ocr import ocr_controller
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from shared.config import settings
 from shared.core.database import close_db, init_db
 from shared.handler.exceptions_handler import (
@@ -73,7 +73,7 @@ app = FastAPI(
         Exception: general_exception_handler,
     },
 )
-
+app.mount("/ocr", ocr_controller)
 
 # 미들웨어 등록 (순서 중요: 역순으로 실행됨)
 def setup_middleware():

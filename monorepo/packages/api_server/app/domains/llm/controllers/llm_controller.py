@@ -1,6 +1,5 @@
 # app/domains/llm/controllers/llm_controller.py
 from fastapi import APIRouter
-
 from shared.core.logging import get_logger
 from shared.utils.response_builder import ResponseBuilder
 

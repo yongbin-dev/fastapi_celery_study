@@ -8,19 +8,17 @@
 import uuid
 from typing import Dict, List, Optional
 
-from domains.common.schemas import (
+from fastapi import HTTPException
+from shared.repository.crud.async_crud import chain_execution_crud
+from shared.core.logging import get_logger
+from shared.schemas import (
     AIPipelineRequest,
     AIPipelineResponse,
     ChainExecutionResponse,
 )
-from domains.pipeline.pipelines.ai_pipeline import create_ai_processing_pipeline
-from repository.crud.async_crud import chain_execution_crud
-from fastapi import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from shared.core.logging import get_logger
 from shared.schemas.enums import ProcessStatus
 from shared.service.redis_service import RedisService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 
@@ -101,8 +99,8 @@ class PipelineService:
             )
 
         # 3. 파이프라인 워크플로우 생성 및 실행
-        pipeline_chain = create_ai_processing_pipeline(chain_id_str, input_data)
-        pipeline_chain.apply_async()
+        # pipeline_chain = create_ai_processing_pipeline(chain_id_str, input_data)
+        # pipeline_chain.apply_async()
 
         # 4. 체인 실행 시작 상태로 업데이트
         await chain_execution_crud.update_status(

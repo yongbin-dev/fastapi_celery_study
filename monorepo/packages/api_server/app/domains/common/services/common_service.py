@@ -3,16 +3,15 @@
 
 from typing import Optional
 
-from repository.crud.async_crud import ocr_execution_crud, ocr_text_box_crud
+from app.domains.ocr.schemas import OCRResultDTO
+from app.domains.ocr.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
+from app.domains.ocr.schemas.response import OCRExtractResponse
 from shared.core.logging import get_logger
+from shared.repository.crud.async_crud import ocr_execution_crud, ocr_text_box_crud
 from shared.schemas.common import ImageResponse
 from shared.service.base_service import BaseService
 from shared.utils.file_utils import save_uploaded_image
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from domains.ocr.schemas import OCRResultDTO
-from domains.ocr.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
-from domains.ocr.schemas.response import OCRExtractResponse
 
 logger = get_logger(__name__)
 

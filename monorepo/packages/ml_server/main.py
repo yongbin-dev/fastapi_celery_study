@@ -12,7 +12,6 @@ sys.path.insert(0, str(project_root))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from shared.config import settings
 
 app = FastAPI(

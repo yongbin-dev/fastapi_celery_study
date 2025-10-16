@@ -12,7 +12,7 @@ except ImportError:
 from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
 from shared.schemas.enums import ProcessStatus
-from shared.schemas.stage import StageResult
+from shared.schemas.pipeline import StageResult
 
 # Import from api_server repository (will be accessed via shared workspace)
 # These imports need to be dynamic or handled through shared package

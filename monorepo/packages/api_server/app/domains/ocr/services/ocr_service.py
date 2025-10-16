@@ -1,10 +1,9 @@
 # app/domains/ocr/services/ocr_service.py
 
-from repository.crud import async_ocr_execution_crud
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from shared.repository.crud import async_ocr_execution_crud
 from shared.core.logging import get_logger
 from shared.service.base_service import BaseService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..schemas import OCRResultDTO
 

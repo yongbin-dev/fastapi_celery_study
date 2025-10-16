@@ -7,14 +7,15 @@
     "**/.venv",
     "**/node_modules"
   ],
+  "venvPath": ".",
+  "venv": ".venv",
   "executionEnvironments": [
     {
       "root": "packages/api_server",
       "pythonVersion": "3.12",
       "pythonPlatform": "Linux",
       "extraPaths": [
-        "packages/shared",
-        "packages/api_server/app"
+        "packages/shared"
       ]
     },
     {
@@ -36,13 +37,10 @@
     {
       "root": "packages/shared",
       "pythonVersion": "3.12",
-      "pythonPlatform": "Linux",
-      "extraPaths": [
-        "packages"
-      ]
+      "pythonPlatform": "Linux"
     }
   ],
-  "reportMissingImports": "warning",
+  "reportMissingImports": "error",
   "reportMissingTypeStubs": false,
   "typeCheckingMode": "basic",
   "useLibraryCodeForTypes": true

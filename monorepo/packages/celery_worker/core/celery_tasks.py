@@ -8,7 +8,7 @@ from shared.config.pipeline_config import STAGES
 from shared.core.logging import get_logger
 from shared.schemas.enums import ProcessStatus
 
-from core.celery.task_decorators import (
+from core.task_decorators import (
     create_stage_result,
     task_logger,
 )
