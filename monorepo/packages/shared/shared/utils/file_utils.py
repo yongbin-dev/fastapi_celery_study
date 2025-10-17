@@ -15,13 +15,21 @@ from ..schemas.common import ImageResponse
 
 logger = get_logger(__name__)
 
-# Supabase 클라이언트 초기화 (Service Role Key 사용 시 권한 문제 해결)
-supabase: Client = create_client(
-    settings.NEXT_PUBLIC_SUPABASE_URL,
-    settings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    # 권한 문제가 있다면 Service Role Key 사용:
-    # settings.SUPABASE_SERVICE_ROLE_KEY,
-)
+# Supabase 클라이언트 초기화 (환경 변수가 설정된 경우에만)
+supabase: Optional[Client] = None
+if settings.NEXT_PUBLIC_SUPABASE_URL and settings.NEXT_PUBLIC_SUPABASE_ANON_KEY:
+    try:
+        supabase = create_client(
+            settings.NEXT_PUBLIC_SUPABASE_URL,
+            settings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            # 권한 문제가 있다면 Service Role Key 사용:
+            # settings.SUPABASE_SERVICE_ROLE_KEY,
+        )
+        logger.info("✅ Supabase 클라이언트 초기화 완료")
+    except Exception as e:
+        logger.warning(f"⚠️ Supabase 클라이언트 초기화 실패: {e}")
+else:
+    logger.warning("ℹ️ Supabase 환경 변수가 설정되지 않음 (Storage 기능 비활성화)")
 
 # 환경 변수에서 버킷 이름 가져오기
 BUCKET_NAME = "yb_test_storage"
@@ -43,6 +51,13 @@ async def save_uploaded_image(
     Raises:
         Exception: Storage 업로드 실패 시
     """
+    # Supabase가 설정되지 않은 경우 에러
+    if supabase is None:
+        raise Exception(
+            "Supabase Storage가 설정되지 않았습니다. "
+            "환경 변수를 설정하세요."
+        )
+
     try:
         now = datetime.now()
         formatted_date = now.strftime("%Y-%m-%d")
