@@ -1,5 +1,4 @@
 {
-  // Monorepo 전용 설정
   "python.analysis.extraPaths": [
     "${workspaceFolder}/packages/shared",
     "${workspaceFolder}/packages/api_server/app",
