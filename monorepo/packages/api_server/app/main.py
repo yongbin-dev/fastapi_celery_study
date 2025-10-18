@@ -3,10 +3,10 @@
 import os
 from contextlib import asynccontextmanager
 
-from app.domains.ocr import ocr_controller
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.config import settings
+from shared.core.auto_router import setup_auto_routers
 from shared.core.database import close_db, init_db
 from shared.handler.exceptions_handler import (
     general_exception_handler,
@@ -73,7 +73,6 @@ app = FastAPI(
         Exception: general_exception_handler,
     },
 )
-app.mount("/ocr", ocr_controller)
 
 # 미들웨어 등록 (순서 중요: 역순으로 실행됨)
 def setup_middleware():
@@ -97,11 +96,30 @@ def setup_middleware():
 
 # 라우터 설정
 def setup_routers():
-    """라우터 설정"""
-    # API 라우터 등록
-    # app.include_router(api_router, prefix=settings.API_V1_STR, tags=["API v1"])
+    """라우터 설정 - 자동 스캔 및 등록"""
+    # 현재 파일의 디렉토리 기준으로 domains 경로 계산
+    import pathlib
 
-    logger.info(f"✅ 라우터 설정 완료 - Prefix: {settings.API_V1_STR}")
+    current_dir = pathlib.Path(__file__).parent
+    domains_path = str(current_dir / "domains")
+
+    # domains 내의 모든 controller를 자동으로 검색하고 등록
+    auto_router = setup_auto_routers(
+        app=app,
+        domains_path=domains_path,
+        exclude_domains=[],  # 제외할 도메인이 있으면 여기에 추가
+        global_prefix="/api/v1"
+    )
+
+    # 등록된 router 정보 로깅
+    registered = auto_router.get_registered_routers()
+    logger.info(f"✅ 라우터 설정 완료 - 등록된 routers: {len(registered)}개")
+    for router_info in registered:
+        logger.info(
+            f"  - {router_info['module']} "
+            f"(prefix: {router_info['prefix']}, "
+            f"tags: {router_info['tags']})"
+        )
 
 
 # 기본 엔드포인트들
