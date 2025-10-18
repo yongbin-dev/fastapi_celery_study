@@ -31,11 +31,11 @@ async def extract_text_sync(
     - **use_angle_cls**: 각도 분류 사용 여부 (기본값: True)
     - **confidence_threshold**: 신뢰도 임계값 (기본값: 0.5)
     """
-    # image_data = await image_file.read()
-    # filename = image_file.filename or "unknown.png"
-    # image_response = await common_service.save_image(
-    #     image_data, filename, image_file.content_type
-    # )
+    image_data = await image_file.read()
+    filename = image_file.filename or "unknown.png"
+    image_response = await common_service.save_image(
+        image_data, filename, image_file.content_type
+    )
 
     # result = service.extract_text_from_image(
     #     image_data=image_data,
@@ -48,7 +48,7 @@ async def extract_text_sync(
     #     db=db, image_response=image_response, ocr_result=result
     # )
 
-    return ResponseBuilder.success(data="", message="OCR 텍스트 추출 완료")
+    return ResponseBuilder.success(data=image_response, message="OCR 텍스트 추출 완료")
 
 
 @router.get("/results")

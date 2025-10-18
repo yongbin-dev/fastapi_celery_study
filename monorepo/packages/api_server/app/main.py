@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.config import settings
+from shared.core import get_logger
 from shared.core.auto_router import setup_auto_routers
 from shared.core.database import close_db, init_db
 from shared.handler.exceptions_handler import (
@@ -15,6 +16,7 @@ from shared.middleware.request_middleware import RequestLogMiddleware
 from shared.middleware.response_middleware import ResponseLogMiddleware
 from shared.utils.response_builder import ResponseBuilder
 
+logger = get_logger(__name__)
 
 # 애플리케이션 시작/종료 이벤트 처리
 @asynccontextmanager

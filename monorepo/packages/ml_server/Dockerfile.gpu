@@ -1,0 +1,22 @@
+# Dockerfile.ocr-cpu - OCR CPU 버전 (ml-base 기반)
+# ml-base에 paddlepaddle + paddleocr + easyocr 추가
+
+FROM backend-ml-base:latest
+
+WORKDIR /app
+
+# 1. 빌드 인수
+ARG DOMAIN_EXTRA=ocr-gpu
+
+# 2. OCR 전용 의존성 설치 (캐시 활용)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra ${DOMAIN_EXTRA} --no-dev
+
+# 3. 소스 코드 복사
+COPY app ./app
+
+# 4. 환경 변수
+ENV FLAGS_use_gpu=False
+
+# 5. 컨테이너 시작
+CMD ["sh", "-c", "uv run uvicorn app.main:app --host ${HOST} --port ${PORT}"]

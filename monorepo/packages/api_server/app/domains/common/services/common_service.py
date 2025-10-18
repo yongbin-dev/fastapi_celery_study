@@ -4,11 +4,10 @@
 from typing import Optional
 
 from app.domains.ocr.schemas import OCRResultDTO
-from app.domains.ocr.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
-from app.domains.ocr.schemas.response import OCRExtractResponse
 from shared.core.logging import get_logger
 from shared.repository.crud.async_crud import ocr_execution_crud, ocr_text_box_crud
 from shared.schemas.common import ImageResponse
+from shared.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
 from shared.service.base_service import BaseService
 from shared.utils.file_utils import save_uploaded_image
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,14 +54,6 @@ class CommonService(BaseService):
         logger.info(f"이미지 저장 시작: {filename}")
         image_response = await save_uploaded_image(image_data, filename, content_type)
         return image_response
-
-    async def get_ocr_list(self, db: AsyncSession) -> list[OCRExtractResponse]:
-        ocr_executions = await ocr_execution_crud.get_all(db)
-        return [OCRExtractResponse.model_validate(oer) for oer in ocr_executions]
-
-    async def get_image_by_id(self, db: AsyncSession, id: int) -> OCRExtractResponse:
-        ocr_execution = await ocr_execution_crud.get(db, id)
-        return OCRExtractResponse.model_validate(ocr_execution)
 
     async def save_ocr_execution_to_db(
         self,

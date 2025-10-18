@@ -1,11 +1,9 @@
-# app/domains/ocr/services/engines/factory.py
-from typing import Optional
+from typing import Optional  # noqa: N999
 
 from shared.core.logging import get_logger
 
 from .base import BaseOCREngine
 from .easyocr_engine import EasyOCREngine
-from .mock_engine import MockOCREngine
 from .paddleocr_engine import PaddleOCREngine
 
 logger = get_logger(__name__)
@@ -17,7 +15,6 @@ class OCREngineFactory:
     _engines = {
         "easyocr": EasyOCREngine,
         "paddleocr": PaddleOCREngine,
-        "mock": MockOCREngine,
     }
 
     @classmethod

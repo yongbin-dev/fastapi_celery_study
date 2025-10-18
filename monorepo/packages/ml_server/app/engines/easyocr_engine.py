@@ -1,7 +1,7 @@
 # app/domains/ocr/services/engines/easyocr_engine.py
 from shared.core.logging import get_logger
+from shared.schemas import OCRExtractDTO, TextBoxDTO
 
-from ...schemas import OCRResultDTO, TextBoxDTO
 from .base import BaseOCREngine
 
 logger = get_logger(__name__)
@@ -54,11 +54,11 @@ class EasyOCREngine(BaseOCREngine):
             logger.error(f"EasyOCR 모델 로드 중 오류: {e}")
             self.is_loaded = False
 
-    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
+    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRExtractDTO:
         """EasyOCR 예측"""
         if not self.is_loaded or self.model is None:
-            return OCRResultDTO(
-                text_boxes=[], full_text="", status="failed", error="Model not loaded"
+            return OCRExtractDTO(
+                text_boxes=[], status="failed", error="Model not loaded"
             )
 
         try:
@@ -85,16 +85,13 @@ class EasyOCREngine(BaseOCREngine):
                         )
                     )
 
-            full_text = " ".join([box.text for box in text_boxes])
 
-            logger.info(f"EasyOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
-
-            return OCRResultDTO(
-                text_boxes=text_boxes, full_text=full_text, status="success"
+            return OCRExtractDTO(
+                text_boxes=text_boxes,  status="success"
             )
 
         except Exception as e:
             logger.error(f"EasyOCR predict 실행 중 오류: {str(e)}")
-            return OCRResultDTO(
-                text_boxes=[], full_text="", status="failed", error=str(e)
+            return OCRExtractDTO(
+                text_boxes=[], status="failed", error=str(e)
             )

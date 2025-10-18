@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
-from shared.schemas import OCRResultDTO
+from shared.schemas import OCRExtractDTO
 
 
 class BaseOCREngine(ABC):
@@ -20,7 +20,7 @@ class BaseOCREngine(ABC):
         pass
 
     @abstractmethod
-    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRResultDTO:
+    def predict(self, image_data: bytes, confidence_threshold: float) -> OCRExtractDTO:
         """
         OCR 예측 수행
 
@@ -29,7 +29,7 @@ class BaseOCREngine(ABC):
             confidence_threshold: 신뢰도 임계값
 
         Returns:
-            OCRResultDTO 객체
+            OCRExtractDTO 객체
         """
         pass
 

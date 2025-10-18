@@ -1,3 +1,5 @@
+from shared.models.base_model import BaseModel
+
 from .base import Base
 from .chain_execution import ChainExecution
 from .ocr_execution import OCRExecution
@@ -10,6 +12,7 @@ __all__ = [
     "ChainExecution",
     "OCRExecution",
     "OCRTextBox",
+    "BaseModel"
 ]
 
 # 모델 버전

@@ -4,6 +4,6 @@ OCR 도메인 모듈
 """
 
 from .controllers.ocr_controller import router as ocr_controller
-from .schemas import OCRRequestDTO, OCRResultDTO, TextBoxDTO
+from .schemas import OCRRequestDTO, OCRResultDTO
 
-__all__ = ["OCRResultDTO", "TextBoxDTO", "OCRRequestDTO" , "ocr_controller"]
+__all__ = ["OCRResultDTO", "OCRRequestDTO" , "ocr_controller"]

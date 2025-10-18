@@ -3,12 +3,12 @@
 # from shared.schemas.ocr import OCRResultDTO
 from typing import Optional
 
+from engines import OCREngineFactory
+from engines.base import BaseOCREngine
 from shared.config import settings
 from shared.core.logging import get_logger
-
-from . import BaseModel
-from .engines import OCREngineFactory
-from .engines.base import BaseOCREngine
+from shared.models import BaseModel
+from shared.schemas.ocr_db import OCRExtractDTO
 
 logger = get_logger(__name__)
 
@@ -47,11 +47,11 @@ class OCRModel(BaseModel):
 
     def predict(
         self, image_data: bytes, confidence_threshold: float = 0.5
-    ) -> OCRResultDTO:
+    ) -> OCRExtractDTO:
         """OCR 텍스트 추출 실행"""
         if not self.is_loaded or self.engine is None:
-            return OCRResultDTO(
-                text_boxes=[], full_text="", status="failed", error="Model not loaded"
+            return OCRExtractDTO(
+                text_boxes=[],  status="failed", error="Model not loaded"
             )
 
         # 엔진에 위임
