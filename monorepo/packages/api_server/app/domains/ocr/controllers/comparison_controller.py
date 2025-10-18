@@ -1,13 +1,14 @@
 # app/domains/ocr/controllers/comparison_controller.py
 """OCR 결과 비교 API 컨트롤러"""
 
-from app.domains.ocr.schemas.similarity import SimilarityRequest, SimilarityResponse
-from app.domains.ocr.services.ocr_comparison_service import ocr_comparison_service
 from fastapi import APIRouter, Depends
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..schemas.similarity import SimilarityRequest, SimilarityResponse
+from ..services.ocr_comparison_service import ocr_comparison_service
 
 logger = get_logger(__name__)
 

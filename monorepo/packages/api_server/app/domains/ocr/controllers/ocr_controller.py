@@ -1,11 +1,11 @@
 # app/domains/ocr/controllers/ocr_controller.py
-from app.domains.common.services.common_service import CommonService, get_common_service
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...common.services.common_service import CommonService, get_common_service
 from ..services import OCRService, get_ocr_service
 
 logger = get_logger(__name__)

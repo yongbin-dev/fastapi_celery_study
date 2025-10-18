@@ -9,8 +9,8 @@ import uuid
 from typing import Dict, List, Optional
 
 from fastapi import HTTPException
-from shared.repository.crud.async_crud import chain_execution_crud
 from shared.core.logging import get_logger
+from shared.repository.crud.async_crud import chain_execution_crud
 from shared.schemas import (
     AIPipelineRequest,
     AIPipelineResponse,
