@@ -1,7 +1,0 @@
-#!/bin/bash
-# test - 테스트 실행
-
-echo "🧪 테스트 실행..."
-
-pytest --num-chains=100 tests/test_stress_chain.py::test_run_1000_chains_concurrently
-

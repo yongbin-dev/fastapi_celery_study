@@ -1,4 +1,0 @@
-@baseUrl = http://localhost:5050
-
-### 기본 헬스체크
-GET {{baseUrl}}/supabase

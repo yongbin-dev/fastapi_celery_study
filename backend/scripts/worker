@@ -1,9 +1,0 @@
-#!/bin/bash
-# worker - Celery Worker 시작
-
-set -a
-source .env.development
-set +a
-
-echo "👷 Celery Worker 시작..."
-exec uv run celery -A app.celery_app worker --loglevel=INFO
