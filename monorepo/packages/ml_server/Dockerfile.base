@@ -24,13 +24,18 @@ RUN pip install --upgrade pip
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # 5. 의존성 파일 복사
-COPY pyproject.toml ./
+COPY ml_server/pyproject.toml ./
 
 # 6. 공통 의존성 + ML 베이스 설치 (캐시 활용)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra ml-base --no-dev
+    uv sync --python 3.12 --extra ml-base --no-dev
 
-# 7. 환경 변수
+# 7. shared 패키지 복사 및 설치
+COPY shared /app/shared
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -e /app/shared
+
+# 8. 환경 변수
 ENV PYTHONPATH=/app \
     TZ=Asia/Seoul \
     FLAGS_fraction_of_gpu_memory_to_use=0.9 \
@@ -38,5 +43,5 @@ ENV PYTHONPATH=/app \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda-11.8/targets/x86_64-linux/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH \
     CUDA_HOME=/usr/local/cuda-11.8
 
-# 8. 포트 노출
+# 9. 포트 노출
 EXPOSE 5050

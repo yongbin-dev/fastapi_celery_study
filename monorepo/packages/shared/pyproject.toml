@@ -22,4 +22,3 @@ dependencies = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["shared"]
-
