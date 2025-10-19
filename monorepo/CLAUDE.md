@@ -46,70 +46,35 @@ packages/
 
 ## 가상환경 관리
 
-**중요**: 이 프로젝트는 **각 패키지별로 독립적인 가상환경**을 사용합니다.
+**중요**: 이 프로젝트는 **루트 디렉토리의 통합 가상환경**(.venv)을 사용합니다.
 
-### 가상환경 구조
-
-```
-packages/
-├── shared/.venv/          # shared 전용 가상환경
-├── api_server/.venv/      # api_server 전용 가상환경
-├── celery_worker/.venv/   # celery_worker 전용 가상환경
-└── ml_server/.venv/       # ml_server 전용 가상환경
-```
-
-### 가상환경 활성화 방법
-
-각 패키지에서 작업할 때는 해당 패키지의 가상환경을 활성화해야 합니다:
+### 가상환경 활성화
 
 ```bash
-# shared 패키지 작업
-cd packages/shared
-source .venv/bin/activate
-
-# api_server 패키지 작업
-cd packages/api_server
-source .venv/bin/activate
-
-# celery_worker 패키지 작업
-cd packages/celery_worker
-source .venv/bin/activate
-
-# ml_server 패키지 작업
-cd packages/ml_server
+# 프로젝트 루트에서 가상환경 활성화
 source .venv/bin/activate
 ```
 
 ### 의존성 설치
 
-각 패키지는 `shared`를 editable mode로 의존합니다:
+uv 워크스페이스 기능을 사용하여 모든 패키지를 한 번에 설치합니다:
 
 ```bash
-# shared 패키지 설치 (먼저 실행)
-cd packages/shared
-source .venv/bin/activate
-uv pip install -e .
-
-# 다른 패키지 설치 (예: api_server)
-cd packages/api_server
-source .venv/bin/activate
-uv pip install -e ../shared  # shared를 editable mode로 설치
-uv pip install -e .          # 자신의 의존성 설치
+# 모든 워크스페이스 패키지 및 의존성 설치
+uv sync
 ```
 
 ### 새로운 의존성 추가
 
 1. 해당 패키지의 `pyproject.toml` 파일 수정
-2. 가상환경에서 재설치:
+2. 루트에서 재동기화:
 
 ```bash
-cd packages/{패키지명}
-source .venv/bin/activate
-uv pip install -e .
+uv sync
 ```
 
-### 주의사항
+### VSCode 설정
 
-- 각 패키지는 독립적인 가상환경을 가지므로 **의존성 충돌이 방지**됩니다
-- `shared` 패키지를 수정하면 모든 패키지에 **즉시 반영**됩니다 (editable mode)
-- 개발 시 작업 중인 패키지의 가상환경을 활성화하는 것을 **잊지 마세요**
+- `.vscode/launch.json`의 모든 Python 인터프리터는 `${workspaceFolder}/.venv/bin/python` 사용
+- 각 패키지는 `cwd`로 작업 디렉토리 분리
+- `shared` 패키지 수정 시 모든 패키지에 즉시 반영 (editable mode)

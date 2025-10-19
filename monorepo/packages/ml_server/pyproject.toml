@@ -8,9 +8,8 @@ version = "0.1.0"
 description = "ML_SERVER"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.119.0",
+    "shared",  # 내부 공통 패키지 (fastapi 포함)
     "uvicorn[standard]>=0.37.0",
-    "shared",
 ]
 
 

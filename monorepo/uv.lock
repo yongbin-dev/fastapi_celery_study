@@ -109,34 +109,26 @@ version = "0.1.0"
 source = { editable = "packages/api_server" }
 dependencies = [
     { name = "alembic" },
-    { name = "fastapi" },
     { name = "httpx" },
     { name = "levenshtein" },
     { name = "psutil" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-json-logger" },
     { name = "python-multipart" },
     { name = "shared" },
-    { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
-    { name = "fastapi", specifier = ">=0.109.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "levenshtein", specifier = ">=0.27.1" },
     { name = "psutil", specifier = ">=7.0.0" },
-    { name = "pydantic", specifier = ">=2.11.9" },
-    { name = "pydantic-settings", specifier = ">=2.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "python-json-logger", specifier = ">=2.0.7" },
     { name = "python-multipart", specifier = ">=0.0.6" },
     { name = "shared", editable = "packages/shared" },
-    { name = "sqlalchemy", specifier = ">=2.0.43" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27.0" },
 ]
 
@@ -221,7 +213,6 @@ source = { editable = "packages/celery_worker" }
 dependencies = [
     { name = "celery" },
     { name = "kombu" },
-    { name = "redis" },
     { name = "shared" },
 ]
 
@@ -229,7 +220,6 @@ dependencies = [
 requires-dist = [
     { name = "celery", specifier = ">=5.3.0" },
     { name = "kombu", specifier = ">=5.3.0" },
-    { name = "redis", specifier = ">=5.0.0" },
     { name = "shared", editable = "packages/shared" },
 ]
 
@@ -1076,7 +1066,6 @@ name = "ml-server"
 version = "0.1.0"
 source = { editable = "packages/ml_server" }
 dependencies = [
-    { name = "fastapi" },
     { name = "shared" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -1142,7 +1131,6 @@ ocr-gpu = [
 requires-dist = [
     { name = "easyocr", marker = "extra == 'ocr-cpu'", specifier = ">=1.7.2" },
     { name = "easyocr", marker = "extra == 'ocr-gpu'", specifier = ">=1.7.2" },
-    { name = "fastapi", specifier = ">=0.119.0" },
     { name = "ml-server", extras = ["ml-base"], marker = "extra == 'ocr-cpu'" },
     { name = "ml-server", extras = ["ml-base"], marker = "extra == 'ocr-gpu'" },
     { name = "ml-server", extras = ["ocr-base"], marker = "extra == 'ocr-cpu'" },
