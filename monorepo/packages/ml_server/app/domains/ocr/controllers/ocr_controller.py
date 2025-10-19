@@ -1,11 +1,11 @@
 # app/domains/ocr/controllers/ocr_controller.py
+from app.models.ocr_model import get_ocr_model
 from fastapi import APIRouter, Depends, Form
+from shared.core.database import get_db
 from shared.core.logging import get_logger
+from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from shared.core.database import get_db
-from shared.service.common_service import CommonService, get_common_service
-from app.models.ocr_model import get_ocr_model
 
 logger = get_logger(__name__)
 
@@ -19,16 +19,12 @@ async def run_ocr_image_extract(
     use_angle_cls: bool = Form(True),
     common_service : CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
-    
 ):
     """image ocr"""
-  
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
     # logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
-    
     image_data = await common_service.load_image("");
     result = model.predict(image_data, confidence_threshold)
-    
     # OCRExecution 생성
     # ocr_execution_data = OCRExecutionCreate(
     #     chain_id=chain_id,
@@ -54,8 +50,6 @@ async def run_ocr_image_extract(
 
     # logger.info(f"OCR 실행 정보 DB 저장 완료: ID={db_ocr_execution.id}")
     # OCRResultDTO.model_validate(db_ocr_execution)
-    
-
     return ResponseBuilder.success(
         data="", message=""
     )
@@ -69,7 +63,7 @@ async def get_supported_languages():
         {"code": "chinese", "name": "중국어"},
         {"code": "japanese", "name": "일본어"},
     ]
-
+    
     return ResponseBuilder.success(
         data={"languages": languages}, message="지원 언어 목록"
     )

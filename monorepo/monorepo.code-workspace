@@ -1,7 +1,7 @@
 {
   "folders": [
     {
-      "name": "📦 shared",
+      "name": "shared",
       "path": "packages/shared"
     },
     {
@@ -17,7 +17,7 @@
       "path": "packages/ml_server"
     },
     {
-      "name": "📁 Root",
+      "name": "Root",
       "path": "."
     }
   ],
@@ -29,12 +29,12 @@
     "python.analysis.indexing": true,
 
     // 패키지별 Python 인터프리터 설정
-    "python.analysis.extraPaths": [
-      "${workspaceFolder:shared}",
-      "${workspaceFolder:api_server}",
-      "${workspaceFolder:celery_worker}",
-      "${workspaceFolder:ml_server}"
-    ],
+    // "python.analysis.extraPaths": [
+    //   "${workspaceFolder:shared}",
+      // "${workspaceFolder:api_server}",
+      // "${workspaceFolder:celery_worker}",
+      // "${workspaceFolder:ml_server}"
+    // ],
 
     // Pylance 설정
     "python.analysis.packageIndexDepths": [
@@ -52,7 +52,8 @@
         "name": "celery",
         "depth": 2,
         "includeAllSymbols": true
-      }
+      },
+     
     ],
 
     // 포매팅 설정
@@ -108,7 +109,7 @@
         },
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/api_server",
-        "python": "${workspaceFolder:Root}/packages/api_server/.venv/bin/python"
+        "python": "${workspaceFolder:Root}/.venv/bin/python"
       },
       {
         "name": "⚙️ Celery Worker (celery_worker)",
@@ -127,7 +128,7 @@
         "envFile": "${workspaceFolder:Root}/.env.development",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/celery_worker",
-        "python": "${workspaceFolder:Root}/packages/celery_worker/.venv/bin/python"
+        "python": "${workspaceFolder:Root}/.venv/bin/python"
       },
       {
         "name": "🌸 Celery Flower (celery_worker)",
@@ -145,7 +146,7 @@
         "envFile": "${workspaceFolder:Root}/.env.development",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/celery_worker",
-        "python": "${workspaceFolder:Root}/packages/celery_worker/.venv/bin/python"
+        "python": "${workspaceFolder:Root}/.venv/bin/python"
       },
       {
         "name": "🤖 ML Server (ml_server)",
@@ -168,7 +169,7 @@
         },
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/ml_server",
-        "python": "${workspaceFolder:Root}/packages/ml_server/.venv/bin/python"
+        "python": "${workspaceFolder:Root}/.venv/bin/python"
       }
     ],
     "compounds": [
