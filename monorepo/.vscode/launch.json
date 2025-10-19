@@ -21,7 +21,7 @@
         },
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder}/packages/api_server",
-        "python": "${workspaceFolder}/packages/api_server/.venv/bin/python"
+        "python": "${workspaceFolder}/.venv/bin/python"
       },
       {
         "name": "⚙️ Celery Worker (celery_worker)",
@@ -40,7 +40,7 @@
         "envFile": "${workspaceFolder}/.env.development",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder}/packages/celery_worker",
-        "python": "${workspaceFolder}/packages/celery_worker/.venv/bin/python"
+        "python": "${workspaceFolder}/.venv/bin/python"
       },
       {
         "name": "🌸 Celery Flower (celery_worker)",
@@ -58,7 +58,7 @@
         "envFile": "${workspaceFolder}/.env.development",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder}/packages/celery_worker",
-        "python": "${workspaceFolder}/packages/celery_worker/.venv/bin/python"
+        "python": "${workspaceFolder}/.venv/bin/python"
       },
       {
         "name": "🤖 ML Server (ml_server)",
@@ -81,7 +81,7 @@
         },
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder}/packages/ml_server",
-        "python": "${workspaceFolder}/packages/ml_server/.venv/bin/python"
+        "python": "${workspaceFolder}/.venv/bin/python"
       }
     ],
     "compounds": [

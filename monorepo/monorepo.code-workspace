@@ -2,19 +2,19 @@
   "folders": [
     {
       "name": "📦 shared",
-      "path": "./packages/shared"
+      "path": "packages/shared"
     },
     {
       "name": "🌐 api_server",
-      "path": "./packages/api_server"
+      "path": "packages/api_server"
     },
     {
       "name": "⚙️ celery_worker",
-      "path": "./packages/celery_worker"
+      "path": "packages/celery_worker"
     },
     {
       "name": "🤖 ml_server",
-      "path": "./packages/ml_server"
+      "path": "packages/ml_server"
     },
     {
       "name": "📁 Root",

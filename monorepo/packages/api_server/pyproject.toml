@@ -17,9 +17,10 @@ dependencies = [
     "httpx>=0.28.1",
     "python-dotenv>=1.0.0",
     "python-json-logger>=2.0.7",
-    "python-multipart>=0.0.6",  # Form 데이터 및 파일 업로드 지원
+    "python-multipart>=0.0.6", # Form 데이터 및 파일 업로드 지원
     "psutil>=7.0.0",
-    "shared",  # 내부 공통 패키지 의존성
+    "shared", # 내부 공통 패키지 의존성
+    "levenshtein>=0.27.1",
 ]
 
 [tool.hatch.build.targets.wheel]
