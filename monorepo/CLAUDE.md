@@ -43,3 +43,73 @@ packages/
 - **ml_server**: ML 모델 추론 서버 (독립 실행)
   - OCR 엔진: EasyOCR, PaddleOCR, Mock 엔진 지원
   - Factory 패턴으로 엔진 선택
+
+## 가상환경 관리
+
+**중요**: 이 프로젝트는 **각 패키지별로 독립적인 가상환경**을 사용합니다.
+
+### 가상환경 구조
+
+```
+packages/
+├── shared/.venv/          # shared 전용 가상환경
+├── api_server/.venv/      # api_server 전용 가상환경
+├── celery_worker/.venv/   # celery_worker 전용 가상환경
+└── ml_server/.venv/       # ml_server 전용 가상환경
+```
+
+### 가상환경 활성화 방법
+
+각 패키지에서 작업할 때는 해당 패키지의 가상환경을 활성화해야 합니다:
+
+```bash
+# shared 패키지 작업
+cd packages/shared
+source .venv/bin/activate
+
+# api_server 패키지 작업
+cd packages/api_server
+source .venv/bin/activate
+
+# celery_worker 패키지 작업
+cd packages/celery_worker
+source .venv/bin/activate
+
+# ml_server 패키지 작업
+cd packages/ml_server
+source .venv/bin/activate
+```
+
+### 의존성 설치
+
+각 패키지는 `shared`를 editable mode로 의존합니다:
+
+```bash
+# shared 패키지 설치 (먼저 실행)
+cd packages/shared
+source .venv/bin/activate
+uv pip install -e .
+
+# 다른 패키지 설치 (예: api_server)
+cd packages/api_server
+source .venv/bin/activate
+uv pip install -e ../shared  # shared를 editable mode로 설치
+uv pip install -e .          # 자신의 의존성 설치
+```
+
+### 새로운 의존성 추가
+
+1. 해당 패키지의 `pyproject.toml` 파일 수정
+2. 가상환경에서 재설치:
+
+```bash
+cd packages/{패키지명}
+source .venv/bin/activate
+uv pip install -e .
+```
+
+### 주의사항
+
+- 각 패키지는 독립적인 가상환경을 가지므로 **의존성 충돌이 방지**됩니다
+- `shared` 패키지를 수정하면 모든 패키지에 **즉시 반영**됩니다 (editable mode)
+- 개발 시 작업 중인 패키지의 가상환경을 활성화하는 것을 **잊지 마세요**

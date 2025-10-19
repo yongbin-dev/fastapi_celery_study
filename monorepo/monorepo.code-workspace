@@ -1,0 +1,194 @@
+{
+  "folders": [
+    {
+      "name": "📦 shared",
+      "path": "./packages/shared"
+    },
+    {
+      "name": "🌐 api_server",
+      "path": "./packages/api_server"
+    },
+    {
+      "name": "⚙️ celery_worker",
+      "path": "./packages/celery_worker"
+    },
+    {
+      "name": "🤖 ml_server",
+      "path": "./packages/ml_server"
+    },
+    {
+      "name": "📁 Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    // 공통 Python 설정
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.indexing": true,
+
+    // 패키지별 Python 인터프리터 설정
+    "python.analysis.extraPaths": [
+      "${workspaceFolder:shared}",
+      "${workspaceFolder:api_server}",
+      "${workspaceFolder:celery_worker}",
+      "${workspaceFolder:ml_server}"
+    ],
+
+    // Pylance 설정
+    "python.analysis.packageIndexDepths": [
+      {
+        "name": "sqlalchemy",
+        "depth": 3,
+        "includeAllSymbols": true
+      },
+      {
+        "name": "fastapi",
+        "depth": 2,
+        "includeAllSymbols": true
+      },
+      {
+        "name": "celery",
+        "depth": 2,
+        "includeAllSymbols": true
+      }
+    ],
+
+    // 포매팅 설정
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+      }
+    },
+
+    // 파일 제외 설정
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/.mypy_cache": true,
+      "**/.ruff_cache": true
+    },
+
+    // 파일 감시 제외
+    "files.watcherExclude": {
+      "**/__pycache__/**": true,
+      "**/logs/**": true,
+      "**/.venv/**": true,
+      "**/node_modules/**": true
+    },
+
+    // Python 테스트 설정
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": ["tests"]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🌐 FastAPI Dev Server (api_server)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "justMyCode": false,
+        "envFile": "${workspaceFolder:Root}/.env.development",
+        "env": {
+          "ENVIRONMENT": "development"
+        },
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:Root}/packages/api_server",
+        "python": "${workspaceFolder:Root}/packages/api_server/.venv/bin/python"
+      },
+      {
+        "name": "⚙️ Celery Worker (celery_worker)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "celery",
+        "args": [
+          "-A",
+          "core.celery_app",
+          "worker",
+          "--loglevel=INFO",
+          "--pool=solo"
+        ],
+        "jinja": true,
+        "justMyCode": false,
+        "envFile": "${workspaceFolder:Root}/.env.development",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:Root}/packages/celery_worker",
+        "python": "${workspaceFolder:Root}/packages/celery_worker/.venv/bin/python"
+      },
+      {
+        "name": "🌸 Celery Flower (celery_worker)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "celery",
+        "args": [
+          "-A",
+          "core.celery_app",
+          "flower",
+          "--port=5555"
+        ],
+        "jinja": true,
+        "justMyCode": false,
+        "envFile": "${workspaceFolder:Root}/.env.development",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:Root}/packages/celery_worker",
+        "python": "${workspaceFolder:Root}/packages/celery_worker/.venv/bin/python"
+      },
+      {
+        "name": "🤖 ML Server (ml_server)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "5050"
+        ],
+        "justMyCode": false,
+        "envFile": "${workspaceFolder:Root}/.env.development",
+        "env": {
+          "ENVIRONMENT": "development",
+          "OCR_ENGINE": "mock"
+        },
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder:Root}/packages/ml_server",
+        "python": "${workspaceFolder:Root}/packages/ml_server/.venv/bin/python"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "🚀 Full Stack (API + Worker + ML)",
+        "configurations": [
+          "🌐 FastAPI Dev Server (api_server)",
+          "⚙️ Celery Worker (celery_worker)",
+          "🤖 ML Server (ml_server)"
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "🔧 API + Worker",
+        "configurations": [
+          "🌐 FastAPI Dev Server (api_server)",
+          "⚙️ Celery Worker (celery_worker)"
+        ],
+        "stopAll": true
+      }
+    ]
+  }
+}

@@ -1,53 +1,64 @@
 {
-  // Python 인터프리터 설정
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-  "python.terminal.activateEnvironment": true,
+    // 공통 Python 설정
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.indexing": true,
 
-  // Pylance 설정 (pyrightconfig.json에서 타입 체크 설정 관리)
-  "python.analysis.autoImportCompletions": true,
-  "python.analysis.diagnosticMode": "openFilesOnly",
-  "python.analysis.indexing": true,
-  "python.analysis.packageIndexDepths": [
-    {
-      "name": "sqlalchemy",
-      "depth": 3,
-      "includeAllSymbols": true
+    // 패키지별 Python 인터프리터 설정
+    "python.analysis.extraPaths": [
+      "./packages/shared",
+      "./packages/api_server",
+      "./packages/celery_worker",
+      "./packages/ml_server"
+    ],
+
+    // Pylance 설정
+    "python.analysis.packageIndexDepths": [
+      {
+        "name": "sqlalchemy",
+        "depth": 3,
+        "includeAllSymbols": true
+      },
+      {
+        "name": "fastapi",
+        "depth": 2,
+        "includeAllSymbols": true
+      },
+      {
+        "name": "celery",
+        "depth": 2,
+        "includeAllSymbols": true
+      }
+    ],
+
+    // 포매팅 설정
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+      }
     },
-    {
-      "name": "fastapi",
-      "depth": 2,
-      "includeAllSymbols": true
-    }
-  ],
 
-  // 포매팅 설정
-  "[python]": {
-    // "editor.defaultFormatter": "ms-python.black-formatter",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
-    }
-  },
+    // 파일 제외 설정
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/.mypy_cache": true,
+      "**/.ruff_cache": true
+    },
 
-  // // 파일 제외 설정
-  "files.exclude": {
-    "**/__pycache__": true,
-    "**/*.pyc": true,
-    "**/.pytest_cache": true,
-    "**/.mypy_cache": true,
-    "**/.ruff_cache": true
-  },
+    // 파일 감시 제외
+    "files.watcherExclude": {
+      "**/__pycache__/**": true,
+      "**/logs/**": true,
+      "**/.venv/**": true,
+      "**/node_modules/**": true
+    },
 
-  // 파일 감시 제외
-  "files.watcherExclude": {
-    "**/__pycache__/**": true,
-    "**/logs/**": true,
-    "**/.venv/**": true
-  },
-
-  // Python 테스트 설정
-  "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": ["tests"],
-  "python-envs.pythonProjects": []
+    // Python 테스트 설정
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": ["tests"]
 }

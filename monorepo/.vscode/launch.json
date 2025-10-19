@@ -1,72 +1,106 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "FastAPI Dev Server",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "uvicorn",
-      "args": [
-        "app.main:app",
-        "--reload",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "5050"
-      ],
-      "justMyCode": false,
-      "envFile": "${workspaceFolder}/.env.development",
-      "env": {
-        "ENVIRONMENT": "development"
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🌐 FastAPI Dev Server (api_server)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env.development",
+        "env": {
+          "ENVIRONMENT": "development"
+        },
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/packages/api_server",
+        "python": "${workspaceFolder}/packages/api_server/.venv/bin/python"
       },
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "Celery Worker",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "celery",
-      "args": [
-        "-A",
-        "app.celery_app",
-        "worker",
-        "--loglevel=INFO",
-        "--pool=solo"
-      ],
-      "jinja": true,
-      "justMyCode": false,
-      "envFile": "${workspaceFolder}/.env.development",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "name": "Celery Flower",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "celery",
-      "args": ["-A", "app.celery_app", "flower", "--port=5555"],
-      "jinja": true,
-      "justMyCode": false,
-      "envFile": "${workspaceFolder}/.env.development",
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "FastAPI + Celery Worker",
-      "configurations": ["FastAPI Dev Server", "Celery Worker"],
-      "stopAll": true
-    },
-    {
-      "name": "Full Stack (API + Worker + Flower)",
-      "configurations": [
-        "FastAPI Dev Server",
-        "Celery Worker",
-        "Celery Flower"
-      ],
-      "stopAll": true
-    }
-  ]
+      {
+        "name": "⚙️ Celery Worker (celery_worker)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "celery",
+        "args": [
+          "-A",
+          "core.celery_app",
+          "worker",
+          "--loglevel=INFO",
+          "--pool=solo"
+        ],
+        "jinja": true,
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env.development",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/packages/celery_worker",
+        "python": "${workspaceFolder}/packages/celery_worker/.venv/bin/python"
+      },
+      {
+        "name": "🌸 Celery Flower (celery_worker)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "celery",
+        "args": [
+          "-A",
+          "core.celery_app",
+          "flower",
+          "--port=5555"
+        ],
+        "jinja": true,
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env.development",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/packages/celery_worker",
+        "python": "${workspaceFolder}/packages/celery_worker/.venv/bin/python"
+      },
+      {
+        "name": "🤖 ML Server (ml_server)",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "app.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "5050"
+        ],
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env.development",
+        "env": {
+          "ENVIRONMENT": "development",
+          "OCR_ENGINE": "mock"
+        },
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}/packages/ml_server",
+        "python": "${workspaceFolder}/packages/ml_server/.venv/bin/python"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "🚀 Full Stack (API + Worker + ML)",
+        "configurations": [
+          "🌐 FastAPI Dev Server (api_server)",
+          "⚙️ Celery Worker (celery_worker)",
+          "🤖 ML Server (ml_server)"
+        ],
+        "stopAll": true
+      },
+      {
+        "name": "🔧 API + Worker",
+        "configurations": [
+          "🌐 FastAPI Dev Server (api_server)",
+          "⚙️ Celery Worker (celery_worker)"
+        ],
+        "stopAll": true
+      }
+    ]
 }

@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 가상환경 (루트 및 각 패키지별)
+.venv/
+venv/
+ENV/
+env/
+packages/*/.venv/
+packages/*/venv/
+
+# 환경 설정 파일
+.env
+.env.*
+!.env.example
+!.env.docker
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 로그
+logs/
+*.log
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 빌드 및 배포
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 테스트 및 커버리지
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# Pyright
+pyrightconfig.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Serena (MCP)
+.serena/
+
+# Claude Code
+.claude/
+
+# uv
+uv.lock
