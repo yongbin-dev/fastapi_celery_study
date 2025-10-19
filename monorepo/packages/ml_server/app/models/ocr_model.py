@@ -46,7 +46,7 @@ class OCRModel(BaseModel):
             logger.error(f"{self.engine.get_engine_name()} 엔진 로드 실패")
 
     def predict(
-        self, image_data: bytes, confidence_threshold: float = 0.5
+        self, input_data: bytes, confidence_threshold: float = 0.5
     ) -> OCRExtractDTO:
         """OCR 텍스트 추출 실행"""
         if not self.is_loaded or self.engine is None:
@@ -55,7 +55,7 @@ class OCRModel(BaseModel):
             )
 
         # 엔진에 위임
-        return self.engine.predict(image_data, confidence_threshold)
+        return self.engine.predict(input_data, confidence_threshold)
 
 
 # 싱글톤 인스턴스

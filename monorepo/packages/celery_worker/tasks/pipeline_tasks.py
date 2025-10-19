@@ -81,9 +81,9 @@ def create_pipeline_chain(chain_id: str, input_data: Dict[str, Any]):
         Celery chain 객체
     """
     pipeline = chain(
-        stage1_preprocessing.s(chain_id, input_data),
-        stage2_feature_extraction.s(),
-        stage3_model_inference.s(),
-        stage4_post_processing.s(),
+        stage1_preprocessing.s(chain_id, input_data), # type: ignore
+        stage2_feature_extraction.s(),# type: ignore
+        stage3_model_inference.s(),# type: ignore
+        stage4_post_processing.s(), # type: ignore
     )
     return pipeline

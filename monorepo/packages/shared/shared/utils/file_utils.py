@@ -35,6 +35,51 @@ else:
 BUCKET_NAME = "yb_test_storage"
 
 
+async def load_uploaded_image(image_path: str) -> bytes:
+    """
+    Supabase Storage에서 image를 반환합니다.
+
+    Args:
+        image_path: 이미지 path
+
+    Returns:
+        dict: bytes
+
+    Raises:
+        Exception: Storage 업로드 실패 시
+    """
+    # Supabase가 설정되지 않은 경우 에러
+    if supabase is None:
+        raise Exception(
+            "Supabase Storage가 설정되지 않았습니다. "
+            "환경 변수를 설정하세요."
+        )
+
+    try:
+        # filename 파라미터를 사용하여 업로드
+        bytes = supabase.storage.from_(BUCKET_NAME).download(
+            path=f"/{image_path}",
+        )
+        return bytes
+
+    except Exception as e:
+        error_msg = str(e)
+        logger.error("❌ Supabase Storage 업로드 실패 ")
+
+        # RLS 정책 위반인 경우
+        if "row-level security policy" in error_msg.lower():
+            raise Exception(
+                "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
+                "Storage 버킷에 대한 INSERT 권한이 필요합니다."
+            )
+        # 버킷이 없는 경우
+        elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
+            raise Exception(f"Storage 버킷 '{BUCKET_NAME}'을 찾을 수 없습니다.")
+        # 기타 에러
+        else:
+            raise Exception(f"파일 업로드 실패: {error_msg}")
+
+
 async def save_uploaded_image(
     image_data: bytes, filename: str, content_type: Optional[str]
 ) -> ImageResponse:
@@ -97,27 +142,6 @@ async def save_uploaded_image(
         # 기타 에러
         else:
             raise Exception(f"파일 업로드 실패: {error_msg}")
-    # 기본 저장 디렉토리
-
-    # base_dir = Path("images")
-
-    # # 날짜별 서브디렉토리 생성 (YYYYMMDD)
-    # date_str = datetime.now().strftime("%Y%m%d")
-    # save_dir = base_dir / date_str
-    # save_dir.mkdir(parents=True, exist_ok=True)
-
-    # # 파일명 생성 (UUID + 원본 파일명)
-    # file_ext = Path(filename).suffix
-    # unique_filename = f"{uuid.uuid4()}{file_ext}"
-    # file_path = save_dir / unique_filename
-
-    # # 파일 저장
-    # with open(file_path, "wb") as f:
-    #     f.write(image_data)
-
-    # # 상대 경로 반환
-    # relative_path = str(file_path)
-    # logger.info(f"이미지 저장 완료: {relative_path}")
 
 
 def get_file_size_mb(file_path: str) -> float:

@@ -15,7 +15,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    def predict(self, input_data: Any) -> Any:
         """예측 실행 (추상 메서드)"""
         pass
 

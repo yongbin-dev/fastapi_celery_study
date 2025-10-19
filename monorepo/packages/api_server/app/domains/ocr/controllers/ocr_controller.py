@@ -5,7 +5,7 @@ from shared.core.logging import get_logger
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...common.services.common_service import CommonService, get_common_service
+from shared.service.common_service import CommonService, get_common_service
 from ..services import OCRService, get_ocr_service
 
 logger = get_logger(__name__)
