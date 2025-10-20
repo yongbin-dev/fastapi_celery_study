@@ -16,9 +16,7 @@
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
 
     // Pylance가 shared 패키지를 인식하도록 설정
-    "python.analysis.extraPaths": [
-      "${workspaceFolder}/packages/shared"
-    ]
+    "python.analysis.extraPaths": ["${workspaceFolder}/packages/shared"],
 
     // Pylance 설정
     "python.analysis.packageIndexDepths": [
