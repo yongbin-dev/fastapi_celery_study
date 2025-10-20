@@ -85,13 +85,8 @@ class EasyOCREngine(BaseOCREngine):
                         )
                     )
 
-
-            return OCRExtractDTO(
-                text_boxes=text_boxes,  status="success"
-            )
+            return OCRExtractDTO(text_boxes=text_boxes, status="success")
 
         except Exception as e:
             logger.error(f"EasyOCR predict 실행 중 오류: {str(e)}")
-            return OCRExtractDTO(
-                text_boxes=[], status="failed", error=str(e)
-            )
+            return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))

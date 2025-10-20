@@ -1,22 +1,6 @@
 {
   "folders": [
     {
-      "name": "shared",
-      "path": "packages/shared"
-    },
-    {
-      "name": "🌐 api_server",
-      "path": "packages/api_server"
-    },
-    {
-      "name": "⚙️ celery_worker",
-      "path": "packages/celery_worker"
-    },
-    {
-      "name": "🤖 ml_server",
-      "path": "packages/ml_server"
-    },
-    {
       "name": "Root",
       "path": "."
     }
@@ -28,13 +12,13 @@
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.indexing": true,
 
-    // 패키지별 Python 인터프리터 설정
-    // "python.analysis.extraPaths": [
-    //   "${workspaceFolder:shared}",
-      // "${workspaceFolder:api_server}",
-      // "${workspaceFolder:celery_worker}",
-      // "${workspaceFolder:ml_server}"
-    // ],
+    // Python 인터프리터 설정
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+
+    // Pylance가 shared 패키지를 인식하도록 설정
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/packages/shared"
+    ]
 
     // Pylance 설정
     "python.analysis.packageIndexDepths": [
@@ -52,8 +36,7 @@
         "name": "celery",
         "depth": 2,
         "includeAllSymbols": true
-      },
-     
+      }
     ],
 
     // 포매팅 설정
@@ -135,12 +118,7 @@
         "type": "debugpy",
         "request": "launch",
         "module": "celery",
-        "args": [
-          "-A",
-          "core.celery_app",
-          "flower",
-          "--port=5555"
-        ],
+        "args": ["-A", "core.celery_app", "flower", "--port=5555"],
         "jinja": true,
         "justMyCode": false,
         "envFile": "${workspaceFolder:Root}/.env.development",
