@@ -1,7 +1,7 @@
-# Dockerfile.ocr-cpu - OCR CPU 버전 (ml-base 기반)
-# ml-base에 paddlepaddle + paddleocr + easyocr 추가
+# Dockerfile.ocr-cpu - OCR CPU 버전 (ml-base-cpu 기반)
+# ml-base-cpu에 paddlepaddle + paddleocr + easyocr 추가
 
-FROM backend-ml-base:latest
+FROM backend-ml-base-cpu:latest
 
 WORKDIR /app
 

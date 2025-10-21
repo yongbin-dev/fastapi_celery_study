@@ -14,6 +14,17 @@ export const useExtractText = (
   });
 };
 
+export const useExtractImage = (
+  options: { onSuccess?: (data: OcrResponse) => void } = {}
+) => {
+  return useMutation({
+    mutationFn: ocrApi.extractImageSync,
+    onSuccess: (data) => {
+      options.onSuccess?.(data);
+    },
+  });
+};
+
 export const useOcrResults = () => {
   return useQuery({
     queryKey: ['ocrResults'],

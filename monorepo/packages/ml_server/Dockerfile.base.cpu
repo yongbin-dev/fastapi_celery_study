@@ -1,0 +1,39 @@
+# Dockerfile.ml-cpu-base - ML CPU 베이스 이미지
+# Python 3.12 + 기본 ML 라이브러리 (CPU 버전)
+
+# 1. Python 베이스 이미지
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# 2. 시스템 의존성 설치
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl git \
+    libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3. pip 업그레이드
+RUN pip install --upgrade pip
+
+# 4. UV 설치
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# 5. 의존성 파일 복사
+COPY ml_server/pyproject.toml ./
+
+# 6. 공통 의존성 + ML 베이스 설치 (캐시 활용)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --python 3.12 --extra ml-base --no-dev
+
+# 7. shared 패키지 복사 및 설치
+COPY shared /app/shared
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -e /app/shared
+
+# 8. 환경 변수
+ENV PYTHONPATH=/app \
+    TZ=Asia/Seoul \
+    FLAGS_use_gpu=False
+
+# 9. 포트 노출
+EXPOSE 5050

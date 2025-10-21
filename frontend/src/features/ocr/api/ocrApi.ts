@@ -38,6 +38,13 @@ export const ocrApi = {
     return response.data;
   },
 
+  extractImageSync: async (image_path: string): Promise<OcrResponse> => {
+    const response = await api.get<OcrResponse>(
+      `/ocr/extract/sync/${image_path}`
+    );
+    return response.data;
+  },
+
   getOcrResults: async (): Promise<OcrResponse[]> => {
     const response = await api.get<OcrResponse[]>('/ocr/results');
     return response.data;

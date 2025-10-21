@@ -10,6 +10,7 @@ requires-python = ">=3.12"
 dependencies = [
     "shared",  # 내부 공통 패키지 (fastapi 포함)
     "uvicorn[standard]>=0.37.0",
+    "python-multipart>=0.0.20",  # Form 데이터 처리
 ]
 
 

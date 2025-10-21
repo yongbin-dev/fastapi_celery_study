@@ -3,8 +3,8 @@
 # from shared.schemas.ocr import OCRResultDTO
 from typing import Optional
 
-from engines import OCREngineFactory
-from engines.base import BaseOCREngine
+from app.engines import OCREngineFactory
+from app.engines.base import BaseOCREngine
 from shared.config import settings
 from shared.core.logging import get_logger
 from shared.models import BaseModel

@@ -14,16 +14,16 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 
 @router.get("/extract")
 async def run_ocr_image_extract(
-    language: str = Form("korean"),
-    confidence_threshold: float = Form(0.5),
-    use_angle_cls: bool = Form(True),
-    common_service : CommonService = Depends(get_common_service),
+    image_path: str = "",
+    language: str = "korean",
+    confidence_threshold: float = 0.5,
+    use_angle_cls: bool = True,
+    common_service: CommonService = Depends(get_common_service),
     db: AsyncSession = Depends(get_db),
 ):
     """image ocr"""
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
-    # logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
-    image_data = await common_service.load_image("");
+    image_data = await common_service.load_image(image_path)
     result = model.predict(image_data, confidence_threshold)
     # OCRExecution 생성
     # ocr_execution_data = OCRExecutionCreate(
@@ -50,9 +50,8 @@ async def run_ocr_image_extract(
 
     # logger.info(f"OCR 실행 정보 DB 저장 완료: ID={db_ocr_execution.id}")
     # OCRResultDTO.model_validate(db_ocr_execution)
-    return ResponseBuilder.success(
-        data="", message=""
-    )
+    return ResponseBuilder.success(data=result, message="")
+
 
 @router.get("/languages")
 async def get_supported_languages():
@@ -63,7 +62,7 @@ async def get_supported_languages():
         {"code": "chinese", "name": "중국어"},
         {"code": "japanese", "name": "일본어"},
     ]
-    
+
     return ResponseBuilder.success(
         data={"languages": languages}, message="지원 언어 목록"
     )

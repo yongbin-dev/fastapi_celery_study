@@ -14,6 +14,7 @@ TAG ?= latest
 API_IMAGE := $(PROJECT_NAME)-api:$(TAG)
 CELERY_IMAGE := $(PROJECT_NAME)-celery:$(TAG)
 ML_BASE_IMAGE := backend-ml-base:$(TAG)
+ML_BASE_CPU_IMAGE := backend-ml-base-cpu:$(TAG)
 ML_OCR_IMAGE := $(PROJECT_NAME)-ml-ocr:$(TAG)
 
 # 도움말
@@ -26,7 +27,8 @@ help:
 	@echo "  make build-all        - 모든 서비스 이미지 빌드"
 	@echo "  make build-api        - API 서버 이미지 빌드"
 	@echo "  make build-celery     - Celery Worker 이미지 빌드"
-	@echo "  make build-ml-base    - ML Base 이미지 빌드"
+	@echo "  make build-ml-base    - ML Base 이미지 빌드 (GPU)"
+	@echo "  make build-ml-base-cpu - ML Base 이미지 빌드 (CPU)"
 	@echo "  make build-ml-ocr     - ML OCR 이미지 빌드 (ml-base 필요)"
 	@echo ""
 	@echo "실행 명령어:"
@@ -60,8 +62,8 @@ build-all: build-ml-base build-api build-celery build-ml-ocr
 # API 서버 빌드
 build-api:
 	@echo "🔨 API 서버 이미지 빌드 중..."
-	docker build \
-		-f packages/api_server/Dockerfile \
+	cd packages && docker build \
+		-f api_server/Dockerfile \
 		-t $(API_IMAGE) \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		.
@@ -70,47 +72,60 @@ build-api:
 # Celery Worker 빌드
 build-celery:
 	@echo "🔨 Celery Worker 이미지 빌드 중..."
-	docker build \
-		-f packages/celery_worker/Dockerfile \
+	cd packages && docker build \
+		-f celery_worker/Dockerfile \
 		-t $(CELERY_IMAGE) \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		.
 	@echo "✅ Celery Worker 이미지 빌드 완료: $(CELERY_IMAGE)"
 
-# ML Base 이미지 빌드 (ml-server의 베이스)
+# ML Base 이미지 빌드 (GPU 버전)
 build-ml-base:
-	@echo "🔨 ML Base 이미지 빌드 중..."
-	@# ml-server에 Dockerfile.base가 있다고 가정
+	@echo "🔨 ML Base (GPU) 이미지 빌드 중..."
 	@if [ -f packages/ml_server/Dockerfile.base ]; then \
-		docker build \
-			-f packages/ml_server/Dockerfile.base \
+		cd packages && docker build \
+			-f ml_server/Dockerfile.base \
 			-t $(ML_BASE_IMAGE) \
 			--build-arg BUILDKIT_INLINE_CACHE=1 \
 			.; \
 	else \
 		echo "⚠️  Dockerfile.base not found, skipping ml-base build"; \
 	fi
-	@echo "✅ ML Base 이미지 빌드 완료: $(ML_BASE_IMAGE)"
+	@echo "✅ ML Base (GPU) 이미지 빌드 완료: $(ML_BASE_IMAGE)"
 
-# ML OCR 이미지 빌드 (ml-base 기반)
-build-ml-ocr: build-ml-base
-	@echo "🔨 ML OCR 이미지 빌드 중..."
-	docker build \
-		-f packages/ml_server/Dockerfile \
+# ML Base CPU 이미지 빌드 (CPU 버전)
+build-ml-base-cpu:
+	@echo "🔨 ML Base (CPU) 이미지 빌드 중..."
+	@if [ -f packages/ml_server/Dockerfile.base.cpu ]; then \
+		cd packages && docker build \
+			-f ml_server/Dockerfile.base.cpu \
+			-t $(ML_BASE_CPU_IMAGE) \
+			--build-arg BUILDKIT_INLINE_CACHE=1 \
+			.; \
+	else \
+		echo "⚠️  Dockerfile.base.cpu not found, skipping ml-base-cpu build"; \
+	fi
+	@echo "✅ ML Base (CPU) 이미지 빌드 완료: $(ML_BASE_CPU_IMAGE)"
+
+# ML OCR 이미지 빌드 (ml-base-cpu 기반)
+build-ml-ocr: build-ml-base-cpu
+	@echo "🔨 ML OCR (CPU) 이미지 빌드 중..."
+	cd packages && docker build \
+		-f ml_server/Dockerfile \
 		-t $(ML_OCR_IMAGE) \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		.
-	@echo "✅ ML OCR 이미지 빌드 완료: $(ML_OCR_IMAGE)"
+	@echo "✅ ML OCR (CPU) 이미지 빌드 완료: $(ML_OCR_IMAGE)"
 
 # 캐시 없이 재빌드
 rebuild:
 	@echo "🔨 캐시 없이 전체 재빌드 중..."
-	docker build --no-cache -f packages/api_server/Dockerfile -t $(API_IMAGE) .
-	docker build --no-cache -f packages/celery_worker/Dockerfile -t $(CELERY_IMAGE) .
+	cd packages && docker build --no-cache -f api_server/Dockerfile -t $(API_IMAGE) .
+	cd packages && docker build --no-cache -f celery_worker/Dockerfile -t $(CELERY_IMAGE) .
 	@if [ -f packages/ml_server/Dockerfile.base ]; then \
-		docker build --no-cache -f packages/ml_server/Dockerfile.base -t $(ML_BASE_IMAGE) .; \
+		cd packages && docker build --no-cache -f ml_server/Dockerfile.base -t $(ML_BASE_IMAGE) .; \
 	fi
-	docker build --no-cache -f packages/ml_server/Dockerfile -t $(ML_OCR_IMAGE) .
+	cd packages && docker build --no-cache -f ml_server/Dockerfile -t $(ML_OCR_IMAGE) .
 	@echo "✅ 전체 재빌드 완료"
 
 # Docker Compose 명령어 (docker-compose.yml이 있다고 가정)

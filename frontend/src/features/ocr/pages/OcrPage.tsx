@@ -1,7 +1,7 @@
-import React, { useCallback, useRef, useState, type ChangeEvent } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 import { OcrResultDisplay } from '../components';
-import { useExtractText, useOcrResults } from '../hooks/useOcr';
+import { useExtractImage, useExtractText, useOcrResults } from '../hooks/useOcr';
 
 import OcrImage from '../components/OcrImage';
 import type { OcrResponse } from '../types/ocr';
@@ -14,16 +14,41 @@ const OcrPage: React.FC = () => {
   const [selectedResult, setSelectedResult] = useState<OcrResponse | null>(
     null
   );
+  const [selectedImagePath, setSelectedImagePath] = useState("https://ifhenrlmwkfsxibiwggf.supabase.co/storage/v1/object/public/yb_test_storage/uploads/2025-10-21/d260dd1b-2ba5-4bb7-b515-1824847b3dff_ocr_test.png")
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: ocrListData, isLoading: isListLoading, refetch } = useOcrResults();
 
   const mutation = useExtractText({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       refetch();
 
-      setSelectedResult(data);
+      const privateImg = data.private_img;
+      const publicIng = data.public_img;
+      setSelectedImagePath(publicIng)
+
+      // console.log(data)
+      // setSelectedResult(data);
     },
   });
+
+
+  const mutationImage = useExtractImage({
+    onSuccess: (data: any) => {
+      refetch();
+
+      const privateImg = data.private_img;
+      const publicIng = data.public_img;
+
+
+      // console.log(data)
+      // setSelectedResult(data);
+    },
+  });
+
+  // useEffect(() => {
+
+  // }, [selectedImagePath])
+
 
   const handleFileSelect = useCallback(
     (file: File) => {
@@ -49,6 +74,11 @@ const OcrPage: React.FC = () => {
     if (selectedFile) {
       mutation.mutate({ image_file: selectedFile });
     }
+  };
+
+  const handleTest = () => {
+    if (!selectedImagePath) return;
+    mutationImage.mutate(selectedImagePath);
   };
 
   const handleClear = () => {
@@ -209,6 +239,12 @@ const OcrPage: React.FC = () => {
               <button
                 onClick={handleUpload}
                 disabled={!selectedFile || mutation.isPending}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {mutation.isPending ? '텍스트 추출 중...' : '텍스트 추출'}
+              </button>
+              <button
+                onClick={handleTest}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {mutation.isPending ? '텍스트 추출 중...' : '텍스트 추출'}
