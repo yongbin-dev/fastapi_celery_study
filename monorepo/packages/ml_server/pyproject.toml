@@ -12,6 +12,8 @@ dependencies = [
     "uvicorn[standard]>=0.37.0",
     "python-multipart>=0.0.20",  # Form 데이터 처리
     "python-Levenshtein>=0.23.0",
+    "scikit-learn>=1.7.2",
+    "scikit-image>=0.25.0",
 ]
 
 
@@ -25,8 +27,7 @@ ml-base = [
     "Pillow>=10.2.0",
     "numpy>=2.0.0",
     "scipy>=1.13.0",
-    "scikit-learn>=1.7.2",
-    "scikit-image>=0.25.0",
+    
 ]
 
 

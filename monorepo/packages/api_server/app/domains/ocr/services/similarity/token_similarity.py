@@ -73,8 +73,8 @@ class TokenSimilarity(BaseSimilarity):
 
         # Cosine Similarity
         try:
-            from sklearn.feature_extraction.text import TfidfVectorizer
-            from sklearn.metrics.pairwise import cosine_similarity
+            from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
+            from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 
             # TF-IDF 벡터화
             vectorizer = TfidfVectorizer()
