@@ -47,11 +47,5 @@ ocr-gpu = [
     "ml-server[ml-base]",
 ]
 
-# 하위 호환성 유지 (기본은 GPU)
-ocr = [
-    "ml-server[ocr-gpu]",
-]
-
-
 [tool.hatch.build.targets.wheel]
 packages = ["ml_app"]
