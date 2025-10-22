@@ -11,6 +11,7 @@ dependencies = [
     "shared",  # 내부 공통 패키지 (fastapi 포함)
     "uvicorn[standard]>=0.37.0",
     "python-multipart>=0.0.20",  # Form 데이터 처리
+    "python-Levenshtein>=0.23.0",
 ]
 
 
@@ -28,10 +29,6 @@ ml-base = [
     "scikit-image>=0.25.0",
 ]
 
-# 공통 OCR 의존성
-ocr-base = [
-    "python-Levenshtein>=0.23.0",
-]
 
 # OCR CPU 버전 (경량화)
 ocr-cpu = [
@@ -39,7 +36,6 @@ ocr-cpu = [
     "paddlepaddle>=2.6.2,<3.0.0",  # CPU 버전 (GPU 버전보다 훨씬 가벼움)
     "easyocr>=1.7.2",
     "ml-server[ml-base]",
-    "ml-server[ocr-base]",
 ]
 
 # OCR GPU 버전
@@ -48,7 +44,6 @@ ocr-gpu = [
     "paddlepaddle-gpu>=2.6.2,<3.0.0",  # GPU 버전
     "easyocr>=1.7.2",
     "ml-server[ml-base]",
-    "ml-server[ocr-base]",
 ]
 
 # 하위 호환성 유지 (기본은 GPU)
@@ -58,4 +53,4 @@ ocr = [
 
 
 [tool.hatch.build.targets.wheel]
-packages = ["app"]
+packages = ["ml_app"]

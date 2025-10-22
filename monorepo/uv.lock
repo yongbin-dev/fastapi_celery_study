@@ -1066,6 +1066,7 @@ name = "ml-server"
 version = "0.1.0"
 source = { editable = "packages/ml_server" }
 dependencies = [
+    { name = "python-levenshtein" },
     { name = "python-multipart" },
     { name = "shared" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1089,15 +1090,11 @@ ocr = [
     { name = "paddleocr" },
     { name = "paddlepaddle-gpu" },
     { name = "pillow" },
-    { name = "python-levenshtein" },
     { name = "scikit-image" },
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "torch" },
     { name = "torchvision" },
-]
-ocr-base = [
-    { name = "python-levenshtein" },
 ]
 ocr-cpu = [
     { name = "easyocr" },
@@ -1106,7 +1103,6 @@ ocr-cpu = [
     { name = "paddleocr" },
     { name = "paddlepaddle" },
     { name = "pillow" },
-    { name = "python-levenshtein" },
     { name = "scikit-image" },
     { name = "scikit-learn" },
     { name = "scipy" },
@@ -1120,7 +1116,6 @@ ocr-gpu = [
     { name = "paddleocr" },
     { name = "paddlepaddle-gpu" },
     { name = "pillow" },
-    { name = "python-levenshtein" },
     { name = "scikit-image" },
     { name = "scikit-learn" },
     { name = "scipy" },
@@ -1134,8 +1129,6 @@ requires-dist = [
     { name = "easyocr", marker = "extra == 'ocr-gpu'", specifier = ">=1.7.2" },
     { name = "ml-server", extras = ["ml-base"], marker = "extra == 'ocr-cpu'" },
     { name = "ml-server", extras = ["ml-base"], marker = "extra == 'ocr-gpu'" },
-    { name = "ml-server", extras = ["ocr-base"], marker = "extra == 'ocr-cpu'" },
-    { name = "ml-server", extras = ["ocr-base"], marker = "extra == 'ocr-gpu'" },
     { name = "ml-server", extras = ["ocr-gpu"], marker = "extra == 'ocr'" },
     { name = "numpy", marker = "extra == 'ml-base'", specifier = ">=2.0.0" },
     { name = "opencv-python", marker = "extra == 'ml-base'", specifier = ">=4.9.0" },
@@ -1144,7 +1137,7 @@ requires-dist = [
     { name = "paddlepaddle", marker = "extra == 'ocr-cpu'", specifier = ">=2.6.2,<3.0.0" },
     { name = "paddlepaddle-gpu", marker = "extra == 'ocr-gpu'", specifier = ">=2.6.2,<3.0.0" },
     { name = "pillow", marker = "extra == 'ml-base'", specifier = ">=10.2.0" },
-    { name = "python-levenshtein", marker = "extra == 'ocr-base'", specifier = ">=0.23.0" },
+    { name = "python-levenshtein", specifier = ">=0.23.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "scikit-image", marker = "extra == 'ml-base'", specifier = ">=0.25.0" },
     { name = "scikit-learn", marker = "extra == 'ml-base'", specifier = ">=1.7.2" },
@@ -1154,7 +1147,7 @@ requires-dist = [
     { name = "torchvision", marker = "extra == 'ml-base'", specifier = ">=0.17.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.37.0" },
 ]
-provides-extras = ["ml-base", "ocr-base", "ocr-cpu", "ocr-gpu", "ocr"]
+provides-extras = ["ml-base", "ocr-cpu", "ocr-gpu", "ocr"]
 
 [[package]]
 name = "mpmath"

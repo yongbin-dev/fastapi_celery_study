@@ -37,16 +37,18 @@ BUCKET_NAME = "yb_test_storage"
 
 async def load_uploaded_image(image_path: str) -> bytes:
     """
-    Supabase Storage에서 image를 반환합니다.
+    Supabase Storage에서 이미지를 다운로드하여 반환합니다.
 
     Args:
-        image_path: 이미지 path
+        image_path: 이미지 경로 또는 전체 URL
+            - 경로만: "uploads/2025-10-21/file.png"
+            - 전체 URL: "https://.../storage/v1/object/public/bucket/uploads/..."
 
     Returns:
-        dict: bytes
+        bytes: 이미지 바이너리 데이터
 
     Raises:
-        Exception: Storage 업로드 실패 시
+        Exception: Storage 다운로드 실패 시
     """
     # Supabase가 설정되지 않은 경우 에러
     if supabase is None:
@@ -56,28 +58,46 @@ async def load_uploaded_image(image_path: str) -> bytes:
         )
 
     try:
-        # filename 파라미터를 사용하여 업로드
-        bytes = supabase.storage.from_(BUCKET_NAME).download(
-            path=f"/{image_path}",
-        )
-        return bytes
+        # URL인 경우 경로 추출
+        path = image_path
+        if "/public/" in image_path:
+            # https://.../storage/v1/object/public/bucket_name/path/to/file
+            # -> path/to/file 추출
+            parts = image_path.split("/public/")
+            if len(parts) > 1:
+                # bucket_name/ 이후 부분만 사용
+                bucket_and_path = parts[1]
+                path = "/".join(bucket_and_path.split("/")[1:])
+
+        # 경로 정규화 (앞의 슬래시 제거)
+        path = path.lstrip("/")
+
+        logger.debug(f"이미지 다운로드 시도: {path}")
+
+        # Supabase Storage에서 다운로드
+        image_data = supabase.storage.from_(BUCKET_NAME).download(path=path)
+
+        logger.info(f"✅ 이미지 다운로드 성공: {len(image_data)} bytes")
+        return image_data
 
     except Exception as e:
         error_msg = str(e)
-        logger.error("❌ Supabase Storage 업로드 실패 ")
+        logger.error(f"❌ Supabase Storage 다운로드 실패: {error_msg}")
 
         # RLS 정책 위반인 경우
         if "row-level security policy" in error_msg.lower():
             raise Exception(
                 "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
-                "Storage 버킷에 대한 INSERT 권한이 필요합니다."
+                "Storage 버킷에 대한 READ 권한이 필요합니다."
             )
         # 버킷이 없는 경우
         elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
-            raise Exception(f"Storage 버킷 '{BUCKET_NAME}'을 찾을 수 없습니다.")
+            raise Exception(
+                f"Storage 버킷 '{BUCKET_NAME}' 또는 파일을 찾을 수 없습니다: {path}"
+            )
         # 기타 에러
         else:
-            raise Exception(f"파일 업로드 실패: {error_msg}")
+            raise Exception(f"파일 로드 실패: {error_msg}")
 
 
 async def save_uploaded_image(

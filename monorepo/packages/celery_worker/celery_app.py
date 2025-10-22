@@ -3,8 +3,6 @@ ML Server Celery Application
 ML 관련 Celery 태스크 설정
 """
 
-import sys
-from pathlib import Path
 
 from celery import Celery
 from shared import get_logger

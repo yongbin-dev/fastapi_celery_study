@@ -4,6 +4,7 @@ from shared.core.logging import get_logger
 
 from .base import BaseOCREngine
 from .easyocr_engine import EasyOCREngine
+from .mock_engine import MockOCREngine
 from .paddleocr_engine import PaddleOCREngine
 
 logger = get_logger(__name__)
@@ -15,6 +16,7 @@ class OCREngineFactory:
     _engines = {
         "easyocr": EasyOCREngine,
         "paddleocr": PaddleOCREngine,
+        "mock": MockOCREngine,
     }
 
     @classmethod
@@ -31,6 +33,11 @@ class OCREngineFactory:
 
         Returns:
             BaseOCREngine 인스턴스 또는 None
+
+        Note:
+            - easyocr: EasyOCR 엔진 (다국어 지원)
+            - paddleocr: PaddleOCR 엔진 (중국어 특화)
+            - mock: 테스트용 Mock 엔진 (가짜 결과 반환)
         """
         engine_type = engine_type.lower()
 

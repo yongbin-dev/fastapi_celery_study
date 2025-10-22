@@ -3,7 +3,6 @@ ML Server Main Application
 AI/ML 모델 추론을 담당하는 서버
 """
 
-# 프로젝트 루트를 sys.path에 추가
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.core.auto_router import setup_auto_routers
@@ -30,10 +29,8 @@ def setup_routers():
 
     app.add_middleware(ResponseLogMiddleware)
     app.add_middleware(RequestLogMiddleware)
-    # CORS 미들웨어 (가장 먼저 실행되어야 함)
     app.add_middleware(
         CORSMiddleware,
-        # allow_origins=settings.BACKEND_CORS_ORIGINS,
         allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],

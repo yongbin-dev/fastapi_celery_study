@@ -96,9 +96,13 @@ class AutoRouter:
         """
         try:
             # 파일 경로를 모듈 경로로 변환
-            # 예: app/domains/ocr/controllers/ocr_controller.py
+            # domains_path의 2단계 부모를 기준으로 상대 경로 계산
+            # 예: file_path = /path/to/ml_server/app/domains/ocr/controllers/ocr_controller.py
+            #     domains_path = /path/to/ml_server/app/domains
+            #     base_path = /path/to/ml_server (domains_path.parent.parent)
             #  -> app.domains.ocr.controllers.ocr_controller
-            relative_path = file_path.relative_to(Path.cwd())
+            base_path = self.domains_path.parent.parent
+            relative_path = file_path.relative_to(base_path)
             module_path = str(relative_path).replace("/", ".").replace(".py", "")
 
             # 모듈 동적 import
@@ -195,7 +199,8 @@ class AutoRouter:
                 continue
 
             # 모듈 경로 생성 (로깅용)
-            relative_path = file_path.relative_to(Path.cwd())
+            base_path = self.domains_path.parent.parent
+            relative_path = file_path.relative_to(base_path)
             module_path = str(relative_path).replace("/", ".").replace(".py", "")
 
             # Router 등록

@@ -17,10 +17,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e /app/shared
 
 # 4. 소스 코드 복사
-COPY ml_server/app ./app
+COPY ml_server/ml_app ./ml_app
 
 # 5. 환경 변수
 ENV FLAGS_use_gpu=False
 
 # 6. 컨테이너 시작
-CMD ["sh", "-c", "/app/.venv/bin/uvicorn app.main:app --host ${HOST} --port ${PORT}"]
+CMD ["sh", "-c", "/app/.venv/bin/uvicorn ml_app.main:app --host ${HOST} --port ${PORT}"]

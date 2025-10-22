@@ -13,10 +13,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra ${DOMAIN_EXTRA} --no-dev
 
 # 3. 소스 코드 복사
-COPY app ./app
+COPY ml_app ./ml_app
 
 # 4. 환경 변수
 ENV FLAGS_use_gpu=False
 
 # 5. 컨테이너 시작
-CMD ["sh", "-c", "uv run uvicorn app.main:app --host ${HOST} --port ${PORT}"]
+CMD ["sh", "-c", "uv run uvicorn ml_app.main:app --host ${HOST} --port ${PORT}"]
