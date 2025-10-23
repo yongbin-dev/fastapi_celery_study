@@ -1,122 +1,95 @@
-# app/orchestration/controllers/pipeline_controller.py
-"""
-파이프라인 오케스트레이션 API
+"""Pipeline Controller - 파이프라인 API 엔드포인트
 
-여러 도메인을 조합한 워크플로우를 실행하고 관리합니다.
+파이프라인 시작, 상태 조회, 결과 조회 등의 API를 제공합니다.
 """
 
-from typing import Optional
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException
 from shared.core.database import get_db
 from shared.core.logging import get_logger
-from shared.schemas import AIPipelineRequest, AIPipelineResponse
-from shared.schemas.chain_execution import ChainExecutionResponse
-from shared.schemas.common import ApiResponse
-from shared.service.redis_service import RedisService, get_redis_service
-from shared.utils.response_builder import ResponseBuilder
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
-from ..services import PipelineService, get_pipeline_service
+from ..schemas.pipeline_schemas import (
+    PipelineStartRequest,
+    PipelineStartResponse,
+    PipelineStatusResponse,
+)
+from ..services.pipeline_service import PipelineService
 
 logger = get_logger(__name__)
-
-router = APIRouter(prefix="/pipelines", tags=["Pipelines"])
-
-
-@router.get("/history", response_model=ApiResponse[list[ChainExecutionResponse]])
-async def get_pipeline_history(
-    service: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
-    hours: Optional[int] = Query(
-        1, description="조회할 시간 범위 (시간 단위)", ge=1, le=168
-    ),
-    status: Optional[str] = Query(None, description="필터링할 상태"),
-    task_name: Optional[str] = Query(None, description="필터링할 태스크 이름"),
-    limit: Optional[int] = Query(100, description="반환할 최대 결과 수", ge=1, le=1000),
-) -> ApiResponse[list[ChainExecutionResponse]]:
-    """
-    파이프라인 실행 히스토리 조회
-
-    - **hours**: 조회할 시간 범위
-    - **status**: 필터링할 상태 (선택)
-    - **task_name**: 필터링할 태스크 이름 (선택)
-    - **limit**: 최대 결과 수
-    """
-    result = await service.get_pipeline_history(
-        db=db, hours=hours, status=status, task_name=task_name, limit=limit
-    )
-
-    return ResponseBuilder.success(
-        data=result, message=f"지난 {hours}시간 내 파이프라인 히스토리 조회 완료"
-    )
+router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 
-@router.post("/ai-pipeline", response_model=ApiResponse[AIPipelineResponse])
-async def create_ai_pipeline(
-    request: AIPipelineRequest,
-    service: PipelineService = Depends(get_pipeline_service),
-    redis_service: RedisService = Depends(get_redis_service),
-    db: AsyncSession = Depends(get_db),
-) -> ApiResponse[AIPipelineResponse]:
-    """
-    AI 처리 파이프라인 시작
-
-    여러 AI 도메인(OCR, LLM, Vision)을 조합한 복잡한 워크플로우를 실행합니다.
-
-    - **text**: 입력 텍스트
-    - **options**: 추가 옵션
-    - **priority**: 우선순위 (1-10)
-    - **callback_url**: 완료 시 콜백 URL (선택)
-    """
-    result = await service.create_ai_pipeline(
-        db=db, redis_service=redis_service, request=request
-    )
-
-    return ResponseBuilder.success(
-        data=result, message="AI 처리 파이프라인이 시작되었습니다"
-    )
-
-
-@router.get(
-    "/ai-pipeline/{chain_id}/tasks",
-    response_model=ApiResponse[ChainExecutionResponse],
-)
-async def get_pipeline_tasks(
-    chain_id: str,
-    service: PipelineService = Depends(get_pipeline_service),
-    db: AsyncSession = Depends(get_db),
-) -> ApiResponse[ChainExecutionResponse]:
-    """
-    파이프라인 태스크 목록 조회
-
-    특정 파이프라인의 모든 태스크 실행 상태를 조회합니다.
-
-    - **chain_id**: 파이프라인 실행 ID
-    """
-    pipeline_stages = await service.get_pipeline_tasks(db=db, chain_id=chain_id)
-
-    return ResponseBuilder.success(
-        data=pipeline_stages,
-        message=f"체인 '{chain_id}'의 태스크 목록 조회 완료",
-    )
-
-
-@router.delete("/ai-pipeline/{chain_id}/cancel")
-async def cancel_ai_pipeline(
-    chain_id: str,
-    service: PipelineService = Depends(get_pipeline_service),
-    redis_service: RedisService = Depends(get_redis_service),
+@router.post("/start", response_model=PipelineStartResponse)
+async def start_pipeline(
+    request: PipelineStartRequest,
+    db: Session = Depends(get_db)
 ):
-    """
-    파이프라인 취소 및 데이터 삭제
+    """파이프라인 시작
 
-    실행 중이거나 완료된 파이프라인을 취소하고 관련 데이터를 삭제합니다.
+    Args:
+        request: 파이프라인 시작 요청
+        db: 데이터베이스 세션
 
-    - **chain_id**: 파이프라인 실행 ID
+    Returns:
+        파이프라인 시작 응답 (context_id 포함)
     """
-    result = service.cancel_pipeline(redis_service=redis_service, chain_id=chain_id)
-    return ResponseBuilder.success(
-        data={"chain_id": result["chain_id"], "status": result["status"]},
-        message=result["message"],
-    )
+    try:
+        logger.info(f"파이프라인 시작 요청: {request.model_dump()}")
+        service = PipelineService(db)
+        result = await service.start_pipeline(request)
+        return result
+    except Exception as e:
+        logger.error(f"파이프라인 시작 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/status/{context_id}", response_model=PipelineStatusResponse)
+async def get_pipeline_status(
+    context_id: str,
+    db: Session = Depends(get_db)
+):
+    """파이프라인 상태 조회
+
+    Args:
+        context_id: 컨텍스트 ID
+        db: 데이터베이스 세션
+
+    Returns:
+        파이프라인 상태 정보
+    """
+    try:
+        logger.info(f"파이프라인 상태 조회: {context_id}")
+        service = PipelineService(db)
+        result = await service.get_pipeline_status(context_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"파이프라인 상태 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{context_id}")
+async def cancel_pipeline(
+    context_id: str,
+    db: Session = Depends(get_db)
+):
+    """파이프라인 취소
+
+    Args:
+        context_id: 컨텍스트 ID
+        db: 데이터베이스 세션
+
+    Returns:
+        취소 성공 메시지
+    """
+    try:
+        logger.info(f"파이프라인 취소 요청: {context_id}")
+        service = PipelineService(db)
+        await service.cancel_pipeline(context_id)
+        return {"message": "파이프라인이 취소되었습니다"}
+    except Exception as e:
+        logger.error(f"파이프라인 취소 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

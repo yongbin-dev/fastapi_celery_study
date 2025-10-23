@@ -1,4 +1,8 @@
-# app/orchestration/controllers/__init__.py
+"""Pipeline Controllers 패키지
+
+파이프라인 관련 API 엔드포인트를 제공합니다.
 """
-파이프라인 오케스트레이션 API 컨트롤러
-"""
+
+from .pipeline_controller import router
+
+__all__ = ["router"]

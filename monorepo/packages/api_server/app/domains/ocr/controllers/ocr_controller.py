@@ -68,6 +68,7 @@ async def extract_text_sync(
         db_ocr_execution = await ocr_execution_crud.create(
             db=db, obj_in=ocr_execution_data
         )
+        logger.info(db_ocr_execution)
         # 3. OCR 결과를 DB에 저장
         # ocr_execution = await common_service.save_ocr_execution_to_db(
         #     db=db, image_response=image_response, ocr_result=ocr_result

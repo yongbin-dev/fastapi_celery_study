@@ -1,163 +1,127 @@
-# app/orchestration/services/pipeline_service.py
-"""
-파이프라인 오케스트레이션 서비스
+"""Pipeline Service - 파이프라인 비즈니스 로직
 
-여러 도메인을 조합한 복잡한 워크플로우를 관리합니다.
+파이프라인 시작, 상태 관리, 취소 등의 비즈니스 로직을 처리합니다.
 """
 
 import uuid
-from typing import Dict, List, Optional
 
-from fastapi import HTTPException
+import redis
 from shared.core.logging import get_logger
-from shared.repository.crud.async_crud import chain_execution_crud
-from shared.schemas import (
-    AIPipelineRequest,
-    AIPipelineResponse,
-    ChainExecutionResponse,
+from shared.pipeline import PipelineContext
+from shared.schemas.enums import PipelineStatus
+from shared.service.redis_service import get_redis_service
+from sqlalchemy.orm import Session
+
+from ..schemas.pipeline_schemas import (
+    PipelineStartRequest,
+    PipelineStartResponse,
+    PipelineStatusResponse,
 )
-from shared.schemas.enums import ProcessStatus
-from shared.service.redis_service import RedisService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 
 
 class PipelineService:
-    """파이프라인 오케스트레이션 서비스"""
+    """파이프라인 서비스
 
-    def _validate_chain_id(self, chain_id: str) -> None:
-        """체인 ID 유효성 검증"""
-        if not chain_id or len(chain_id) < 5:
-            raise HTTPException(
-                status_code=400, detail="유효하지 않은 체인 ID 형식입니다"
-            )
+    파이프라인 관련 비즈니스 로직을 처리합니다.
 
-    def _validate_stage(self, stage: int) -> None:
-        """스테이지 번호 유효성 검증"""
-        if stage < 1 or stage > 4:
-            raise HTTPException(
-                status_code=400, detail="단계는 1~4 사이의 값이어야 합니다"
-            )
+    Attributes:
+        db: 데이터베이스 세션
+        redis_service: Redis 클라이언트
+    """
 
-    async def get_pipeline_history(
-        self,
-        db: AsyncSession,
-        hours: Optional[int] = None,
-        status: Optional[str] = None,
-        task_name: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> List[ChainExecutionResponse]:
-        """파이프라인 히스토리 조회 -  기반"""
-        hours_value = hours or 1
-        limit_value = limit or 100
+    def __init__(self, db: Session):
+        self.db = db
+        self.redis_service : redis.Redis = get_redis_service().get_redis_client()
 
-        chain_executions = await chain_execution_crud.get_multi_with_task_logs(
-            db, days=hours_value // 24 + 1, limit=limit_value
-        )
+    async def start_pipeline(self, request: PipelineStartRequest) -> PipelineStartResponse:  # noqa: E501
+        """파이프라인 시작
 
-        return [ChainExecutionResponse.model_validate(ce) for ce in chain_executions]
+        Args:
+            request: 파이프라인 시작 요청
 
-    async def create_ai_pipeline(
-        self,
-        db: AsyncSession,
-        redis_service: RedisService,
-        request: AIPipelineRequest,
-    ) -> AIPipelineResponse:
+        Returns:
+            파이프라인 시작 응답
         """
-        AI 처리 파이프라인 시작
+        # 컨텍스트 ID 생성
+        context_id = str(uuid.uuid4())
 
-        여러 도메인(OCR, LLM, Vision)을 조합한 파이프라인을 실행합니다.
+        # 컨텍스트 생성
+        context = PipelineContext(
+            context_id=context_id,
+            status=PipelineStatus.PENDING,
+            data={
+                "image_path": request.image_path,
+                "options": request.options or {}
+            }
+        )
+
+        # Redis에 컨텍스트 저장
+        await self._save_context(context)
+
+        # TODO: Celery 태스크 체인 시작
+        # from celery_worker.tasks.pipeline_tasks import start_pipeline_task
+        # start_pipeline_task.delay(context_id)
+
+        logger.info(f"파이프라인 시작됨: {context_id}")
+
+        return PipelineStartResponse(
+            context_id=context_id,
+            status=context.status,
+            message="파이프라인이 시작되었습니다"
+        )
+
+    async def get_pipeline_status(self, context_id: str) -> PipelineStatusResponse:
+        """파이프라인 상태 조회
+
+        Args:
+            context_id: 컨텍스트 ID
+
+        Returns:
+            파이프라인 상태 정보
         """
-        input_data = {
-            "text": request.text,
-            "options": request.options,
-            "priority": request.priority,
-            "callback_url": request.callback_url,
-        }
+        # Redis에서 컨텍스트 조회
+        context = await self._get_context(context_id)
 
-        chain_id = str(uuid.uuid4())
-
-        chain_execution = await chain_execution_crud.create_chain_execution(
-            db,
-            chain_id=chain_id,
-            chain_name="ai_processing_pipeline",
-            total_tasks=4,  # 4단계 파이프라인
-            initiated_by=getattr(request, "user_id", "system"),
-            input_data=input_data,
+        return PipelineStatusResponse(
+            context_id=context.context_id,
+            status=context.status,
+            data=context.data,
+            error=context.error
         )
 
-        # 2. Redis에 스테이지 정보 초기화
-        chain_id_str = str(chain_execution.chain_id)
-        stages_initialized = redis_service.initialize_pipeline_stages(chain_id_str)
+    async def cancel_pipeline(self, context_id: str) -> None:
+        """파이프라인 취소
 
-        if not stages_initialized:
-            # 는 자동 롤백이 없으므로 에러만 로깅
-            logger.error(f"Pipeline {chain_id_str}: 스테이지 초기화 실패")
-            raise HTTPException(
-                status_code=500, detail="파이프라인 스테이지 초기화에 실패했습니다"
-            )
+        Args:
+            context_id: 컨텍스트 ID
+        """
+        # Redis에서 컨텍스트 조회
+        context = await self._get_context(context_id)
+        if not context:
+            raise ValueError(f"파이프라인을 찾을 수 없습니다: {context_id}")
 
-        # 3. 파이프라인 워크플로우 생성 및 실행
-        # pipeline_chain = create_ai_processing_pipeline(chain_id_str, input_data)
-        # pipeline_chain.apply_async()
+        # 상태 업데이트
+        context.update_status(PipelineStatus.CANCELLED)
+        await self._save_context(context)
 
-        # 4. 체인 실행 시작 상태로 업데이트
-        await chain_execution_crud.update_status(
-            db,
-            chain_execution=chain_execution,
-            status=ProcessStatus.STARTED,
+        # TODO: Celery 태스크 취소
+        # from celery_worker.core.celery_app import app
+        # app.control.revoke(task_id, terminate=True)
+
+        logger.info(f"파이프라인 취소됨: {context_id}")
+
+    async def _save_context(self, context: PipelineContext) -> None:
+        """컨텍스트를 Redis에 저장"""
+        await self.redis_service.set(
+            name=f"pipeline:{context.context_id}",
+            value=context.model_dump_json(),
+            # key=f"pipeline:{context.context_id}",
+            # expire=3600  # 1시간 TTL
         )
 
-        return AIPipelineResponse(
-            pipeline_id=chain_id_str,
-            status="STARTED",
-            message="AI 처리 파이프라인이 시작되었습니다",
-            estimated_duration=20,
-        )
-
-    async def get_pipeline_tasks(
-        self, db: AsyncSession, chain_id: str
-    ) -> ChainExecutionResponse:
-        """파이프라인 전체 태스크 목록 조회 -  기반"""
-        self._validate_chain_id(chain_id)
-
-        chain_execution = await chain_execution_crud.get_with_task_logs(
-            db, chain_id=chain_id
-        )
-
-        if not chain_execution:
-            raise HTTPException(
-                status_code=404,
-                detail=f"체인 ID '{chain_id}'에 해당하는 파이프라인을 찾을 수 없습니다",
-            )
-
-        return ChainExecutionResponse.model_validate(chain_execution)
-
-    def cancel_pipeline(
-        self, redis_service: RedisService, chain_id: str
-    ) -> Dict[str, str]:
-        """파이프라인 취소 및 데이터 삭제"""
-        deleted = redis_service.delete_pipeline(chain_id)
-
-        if deleted:
-            return {
-                "chain_id": chain_id,
-                "status": "DELETED",
-                "message": "AI 파이프라인 취소 및 데이터 삭제가 완료되었습니다",
-            }
-        else:
-            return {
-                "chain_id": chain_id,
-                "status": "NOT_FOUND",
-                "message": "파이프라인 데이터를 찾을 수 없어 취소만 수행되었습니다",
-            }
-
-
-# 싱글톤 인스턴스
-pipeline_service_instance = PipelineService()
-
-
-def get_pipeline_service() -> PipelineService:
-    """파이프라인 서비스 의존성 주입"""
-    return pipeline_service_instance
+    async def _get_context(self, context_id: str) -> PipelineContext:
+        """Redis에서 컨텍스트 조회"""
+        data = await self.redis_service.get(f"pipeline:{context_id}")
+        return PipelineContext.model_validate_json(data)

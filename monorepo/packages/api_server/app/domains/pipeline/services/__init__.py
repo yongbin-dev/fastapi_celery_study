@@ -1,8 +1,8 @@
-# app/orchestration/services/__init__.py
-"""
-파이프라인 서비스 레이어
+"""Pipeline Services 패키지
+
+파이프라인 비즈니스 로직을 제공합니다.
 """
 
-from .pipeline_service import PipelineService, get_pipeline_service
+from .pipeline_service import PipelineService
 
-__all__ = ["PipelineService", "get_pipeline_service"]
+__all__ = ["PipelineService"]
