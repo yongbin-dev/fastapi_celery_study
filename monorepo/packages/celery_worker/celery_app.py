@@ -3,6 +3,8 @@ ML Server Celery Application
 ML 관련 Celery 태스크 설정
 """
 
+import os
+import time
 
 from celery import Celery
 from shared import get_logger
@@ -16,10 +18,10 @@ logger = get_logger(__name__)
 
 # Celery 앱 생성
 celery_app = Celery(
-    "ml_server",
+    "celery_worker",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["ml_server.app.tasks"],  # ML 태스크 모듈
+    include=["tasks.pipeline_tasks"],  # 파이프라인 태스크 모듈
 )
 
 # Celery 설정
@@ -36,20 +38,19 @@ celery_app.conf.update(
 
 
 # 타임존을 서울로 설정
-# os.environ["TZ"] = "Asia/Seoul"
-# try:
-#     time.tzset()  # Unix/Linux에서 타임존 설정 적용
-#     logger.info("🕐 Celery 타임존 설정: Asia/Seoul")
-# except AttributeError:
-#     # Windows에서는 tzset이 없음
-#     logger.info("🕐 Celery 타임존 설정: Asia/Seoul (Windows 환경)")
+os.environ["TZ"] = "Asia/Seoul"
+try:
+    time.tzset()  # Unix/Linux에서 타임존 설정 적용
+    logger.info("🕐 Celery 타임존 설정: Asia/Seoul")
+except AttributeError:
+    # Windows에서는 tzset이 없음
+    logger.info("🕐 Celery 타임존 설정: Asia/Seoul (Windows 환경)")
 
 
 # Celery signals 등록
 try:
-    from .core import celery_signals
+    from core import celery_signals  # noqa: F401
 
-    __all__ = ["celery_app", "celery_signals"]
     logger.info("✅ Celery signals 모듈 import 성공!")
 except ImportError as e:
     logger.error(f"❌ Celery signals import 실패: {e}")

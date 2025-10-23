@@ -5,10 +5,13 @@ Shared Package
 
 # Core exports
 from .base_service import BaseService
+from .common_service import CommonService, get_common_service
 from .redis_service import RedisService, get_redis_service
 
 __all__ = [
     "BaseService",
     "RedisService",
     "get_redis_service",
+    "CommonService",
+    "get_common_service",
 ]

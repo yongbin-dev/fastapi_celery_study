@@ -9,9 +9,15 @@ description = "Celery Worker for FastAPI Celery Monorepo"
 requires-python = ">=3.12"
 dependencies = [
     "shared",  # 내부 공통 패키지 (redis 포함)
+    "ml-server",  # ML 서버 모듈 (OCR 모델 직접 사용)
     "celery>=5.3.0",
     "kombu>=5.3.0",
+    "watchdog>=3.0.0",  # Auto-reload 지원
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["core", "tasks"]
+
+[tool.uv.sources]
+shared = { workspace = true }
+ml-server = { workspace = true }

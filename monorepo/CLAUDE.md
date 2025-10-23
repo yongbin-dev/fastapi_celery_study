@@ -23,6 +23,7 @@ packages/
 ### 패키지 의존성
 
 - **shared**: 공통 유틸리티, 모델, CRUD, 설정, 미들웨어
+
   - `config/`: 환경 설정 (settings.py)
   - `models/`: SQLAlchemy 모델
   - `schemas/`: Pydantic 스키마
@@ -32,11 +33,13 @@ packages/
   - `exceptions/`: 예외 처리
 
 - **api_server**: REST API 서버 (shared 의존)
+
   - 도메인 중심 아키텍처: `app/domains/{ocr,llm,pipeline,common}/`
   - 각 도메인: `controllers/`, `services/`, `schemas/`
   - Repository 패턴: `app/repository/crud/`
 
 - **celery_worker**: 백그라운드 작업 워커 (shared 의존)
+
   - `core/`: Celery 설정 및 태스크 데코레이터
   - `tasks/`: 실제 작업 정의 (pipeline_tasks.py)
 
@@ -48,33 +51,6 @@ packages/
 
 **중요**: 이 프로젝트는 **루트 디렉토리의 통합 가상환경**(.venv)을 사용합니다.
 
-### 가상환경 활성화
-
-```bash
-# 프로젝트 루트에서 가상환경 활성화
-source .venv/bin/activate
-```
-
-### 의존성 설치
-
-uv 워크스페이스 기능을 사용하여 모든 패키지를 한 번에 설치합니다:
-
-```bash
-# 모든 워크스페이스 패키지 및 의존성 설치
-uv sync
-```
-
-### 새로운 의존성 추가
-
-1. 해당 패키지의 `pyproject.toml` 파일 수정
-2. 루트에서 재동기화:
-
-```bash
-uv sync
-```
-
 ### VSCode 설정
 
-- `.vscode/launch.json`의 모든 Python 인터프리터는 `${workspaceFolder}/.venv/bin/python` 사용
-- 각 패키지는 `cwd`로 작업 디렉토리 분리
-- `shared` 패키지 수정 시 모든 패키지에 즉시 반영 (editable mode)
+- `.vscode/monorepo.code-workspace` 로 vscode의 작업환경 구성

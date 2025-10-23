@@ -14,6 +14,8 @@ dependencies = [
     "python-Levenshtein>=0.23.0",
     "scikit-learn>=1.7.2",
     "scikit-image>=0.25.0",
+    "celery>=5.3.0",  # Celery 태스크 호출
+    "kombu>=5.3.0",
 ]
 
 

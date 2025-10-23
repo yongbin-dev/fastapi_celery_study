@@ -3,13 +3,14 @@
 
 from typing import Any, Dict
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from shared.core.logging import get_logger
 from shared.repository.crud import async_ocr_execution_crud, async_ocr_text_box_crud
 from shared.schemas.common import ImageResponse
 from shared.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
 from shared.service.base_service import BaseService
 from shared.utils.file_utils import load_uploaded_image, save_uploaded_image
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 
@@ -38,7 +39,10 @@ class CommonService(BaseService):
         return image_response
 
     async def save_ocr_execution_to_db(
-        self, db: AsyncSession, image_response: Dict[str, Any], ocr_result: Dict[str, Any]
+        self,
+        db: AsyncSession,
+        image_response: Dict[str, Any],
+        ocr_result: Dict[str, Any],
     ):
         """
         OCR 실행 결과를 DB에 저장합니다.

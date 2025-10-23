@@ -1,0 +1,218 @@
+### ML Server - OCR API 테스트
+### Base URL: http://localhost:8002
+
+### ============================================
+### 헬스체크 및 기본 정보
+### ============================================
+
+### 1. 서버 헬스체크
+GET http://localhost:8002/health
+Content-Type: application/json
+
+###
+
+### 2. 서버 정보 조회
+GET http://localhost:8002/
+Content-Type: application/json
+
+###
+
+### ============================================
+### OCR 텍스트 추출 API
+### ============================================
+
+### 3. 기본 OCR 추출 (한글, 기본 설정)
+GET http://localhost:8002/api/model/ocr/healthy
+Content-Type: application/json
+
+
+###
+
+### 3. 기본 OCR 추출 (한글, 기본 설정)
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=https://ifhenrlmwkfsxibiwggf.supabase.co/storage/v1/object/public/yb_test_storage/uploads/2025-10-21/12954acb-fb8a-4b5e-adab-2df55be6f748_ocr_test.png
+
+###
+
+
+### 3. 기본 OCR 추출 (한글, 기본 설정)
+POST http://localhost:8002/api/model/ocr/extract-async
+Content-Type: application/x-www-form-urlencoded
+
+image_path=https://ifhenrlmwkfsxibiwggf.supabase.co/storage/v1/object/public/yb_test_storage/uploads/2025-10-21/12954acb-fb8a-4b5e-adab-2df55be6f748_ocr_test.png
+
+###
+
+
+### 4. OCR 추출 - 높은 신뢰도 임계값
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/image.jpg
+&language=korean
+&confidence_threshold=0.8
+&use_angle_cls=true
+
+###
+
+### 5. OCR 추출 - 영어 텍스트
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/english_document.jpg
+&language=english
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 6. OCR 추출 - 각도 보정 비활성화
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/image.jpg
+&language=korean
+&confidence_threshold=0.5
+&use_angle_cls=false
+
+###
+
+### 7. OCR 추출 - 낮은 신뢰도 임계값 (모든 텍스트 추출)
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/image.jpg
+&language=korean
+&confidence_threshold=0.3
+&use_angle_cls=true
+
+###
+
+### 8. OCR 추출 - 일본어
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/japanese_text.jpg
+&language=japanese
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 9. OCR 추출 - 중국어 간체
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/chinese_text.jpg
+&language=chinese
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### ============================================
+### 실제 파일 경로 예시
+### ============================================
+
+### 10. 실제 로컬 파일 경로로 테스트
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/Users/username/Documents/test_image.jpg
+&language=korean
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 11. Supabase Storage 경로로 테스트
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=ocr-images/2024/01/sample_document.jpg
+&language=korean
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### ============================================
+### 에러 케이스 테스트
+### ============================================
+
+### 12. 잘못된 파일 경로
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/invalid/path/to/image.jpg
+&language=korean
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 13. 빈 파일 경로
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=
+&language=korean
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 14. 지원하지 않는 언어
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/image.jpg
+&language=unsupported_language
+&confidence_threshold=0.5
+&use_angle_cls=true
+
+###
+
+### 15. 잘못된 신뢰도 값 (0-1 범위 초과)
+POST http://localhost:8002/api/model/ocr/extract
+Content-Type: application/x-www-form-urlencoded
+
+image_path=/path/to/image.jpg
+&language=korean
+&confidence_threshold=1.5
+&use_angle_cls=true
+
+###
+
+### ============================================
+### 응답 예시
+### ============================================
+# 성공 응답:
+# {
+#   "success": true,
+#   "message": "",
+#   "data": {
+#     "text_boxes": [
+#       {
+#         "text": "추출된 텍스트",
+#         "confidence": 0.95,
+#         "bbox": [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+#       }
+#     ],
+#     "status": "success",
+#     "error": null
+#   }
+# }
+#
+# 실패 응답:
+# {
+#   "success": false,
+#   "message": "에러 메시지",
+#   "data": {
+#     "text_boxes": [],
+#     "status": "failed",
+#     "error": "상세 에러 설명"
+#   }
+# }

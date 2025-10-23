@@ -26,6 +26,7 @@ class OCRService(BaseService):
 
     async def call_ml_server_ocr(
         self,
+        chain_id: str,
         image_path: str,
         language: str = "korean",
         confidence_threshold: float = 0.5,
@@ -45,9 +46,9 @@ class OCRService(BaseService):
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                logger.info(self.ml_server_url)
-                url = f"{self.ml_server_url}/api/model/v1/ocr/extract"
-                params = {
+                url = f"{self.ml_server_url}/api/model/ocr/extract-async"
+                data = {
+                    "chain_id": chain_id,
                     "image_path": image_path,
                     "language": language,
                     "confidence_threshold": confidence_threshold,
@@ -56,12 +57,10 @@ class OCRService(BaseService):
 
                 logger.info(f"ML 서버 OCR 호출 시작: {url}, 이미지 경로: {image_path}")
 
-                response = await client.get(url, params=params)
+                response = await client.post(url, json=data)
                 response.raise_for_status()
 
                 result = response.json()
-                logger.info("ML 서버 OCR 호출 성공")
-
                 return result
 
         except httpx.HTTPStatusError as e:

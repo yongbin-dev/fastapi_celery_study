@@ -37,16 +37,15 @@ class TextBoxDTO(BaseModel):
     )
     model_config = ConfigDict(from_attributes=True)
 
+
 class OCRExtractDTO(BaseModel):
     """OCR 텍스트 추출 응답 스키마"""
 
     status: str = Field(..., description="태스크 상태")
     image_path: Optional[str] = Field(default=None, description="전체 추출 텍스트")
     error: Optional[str] = Field(default=None, description="에러")
-    text_boxes: Optional[List[TextBoxDTO]] = Field(
-        default=None, description="추출된 텍스트 박스 목록"
+    text_boxes: List[TextBoxDTO] = Field(
+        default=[], description="추출된 텍스트 박스 목록"
     )
 
     model_config = ConfigDict(from_attributes=True)
-
-

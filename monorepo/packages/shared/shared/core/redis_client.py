@@ -12,7 +12,7 @@ class RedisClient:
     _pool: Optional[ConnectionPool] = None
 
     @classmethod
-    async def init(cls):
+    async def init(cls) -> Redis:
         """Connection Pool로 초기화"""
         if not cls._pool:
             cls._pool = ConnectionPool(
@@ -31,7 +31,10 @@ class RedisClient:
                 },
             )
             cls._instance = Redis(connection_pool=cls._pool)
-            await cls._instance.ping()
+            # Redis 연결 확인 (비동기 메서드, Pylance 타입 추론 이슈로 ignore 추가)
+            await cls._instance.ping()  # type: ignore[misc]
+
+        assert cls._instance is not None
         return cls._instance
 
     @classmethod

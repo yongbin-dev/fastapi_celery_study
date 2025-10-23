@@ -1,7 +1,12 @@
 # app/domains/ocr/controllers/ocr_controller.py
+import uuid
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from shared.core.database import get_db
 from shared.core.logging import get_logger
+from shared.repository.crud.async_crud import ocr_execution_crud
+from shared.schemas.ocr_db import OCRExecutionCreate
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,26 +39,43 @@ async def extract_text_sync(
     try:
         # 1. 이미지를 Supabase Storage에 저장
         image_data = await image_file.read()
+
         filename = image_file.filename or "unknown.png"
+        encoded_name = quote(filename)  # URL-safe 인코딩
         image_response = await common_service.save_image(
-            image_data, filename, image_file.content_type
+            image_data, encoded_name, image_file.content_type
         )
 
-        logger.info(image_response)
+        chain_id = str(uuid.uuid4())
         # 2. ML 서버의 OCR API 호출
         ocr_result = await service.call_ml_server_ocr(
-            image_path=image_response.private_img,
+            chain_id=chain_id,
+            image_path=image_response.public_img,
             language=language,
             confidence_threshold=confidence_threshold,
             use_angle_cls=use_angle_cls,
         )
 
+        # OCRExecution 생성
+        ocr_execution_data = OCRExecutionCreate(
+            chain_id=chain_id,
+            image_path=image_response.private_img,
+            public_path=image_response.public_img,
+            status=ocr_result.status,
+            error=ocr_result.error,
+        )
+
+        db_ocr_execution = await ocr_execution_crud.create(
+            db=db, obj_in=ocr_execution_data
+        )
         # 3. OCR 결과를 DB에 저장
         # ocr_execution = await common_service.save_ocr_execution_to_db(
         #     db=db, image_response=image_response, ocr_result=ocr_result
         # )
 
-        return ResponseBuilder.success(data=ocr_result, message="OCR 텍스트 추출 완료")
+        return ResponseBuilder.success(
+            data=image_response, message="OCR 텍스트 추출 완료"
+        )
 
     except Exception as e:
         logger.error(f"OCR 처리 중 오류 발생: {str(e)}")

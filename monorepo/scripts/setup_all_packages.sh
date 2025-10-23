@@ -25,7 +25,8 @@ echo "📦 2/2: 모든 패키지를 편집 가능 모드로 설치 중..."
 uv pip install -e ./packages/shared
 uv pip install -e ./packages/api_server
 uv pip install -e ./packages/celery_worker
-uv pip install -e ./packages/ml_server
+# uv pip install -e ./packages/ml_server
+uv pip install -e "./packages/ml_server[ocr-cpu]"
 echo "✅ 모든 패키지 설치 완료"
 echo ""
 
