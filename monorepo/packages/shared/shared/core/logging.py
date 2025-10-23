@@ -45,8 +45,20 @@ class LoggingManager:
     """로깅 관리자 클래스"""
 
     def __init__(self):
-        self.log_dir = Path("logs")
-        self.log_dir.mkdir(exist_ok=True)
+        # 서비스 이름 환경 변수에서 가져오기
+        service_name = os.getenv("SERVICE_NAME", "api_server")
+
+        # monorepo 루트 디렉토리 설정 (현재 파일 위치 기반)
+        # packages/shared/shared/core/logging.py -> 4 levels up
+        monorepo_root = Path(__file__).resolve().parents[4]
+
+        # 오늘 날짜
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
+        # 로그 디렉토리 경로 구성
+        self.log_dir = monorepo_root / "logs" / service_name / today_str
+
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         self._setup_logging()
 
     def _setup_logging(self):
@@ -123,8 +135,7 @@ class LoggingManager:
                 print(f"에러 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 3. 일별 로그 파일
-        today = datetime.now().strftime("%Y-%m-%d")
-        daily_log_file = self.log_dir / f"app_{today}.log"
+        daily_log_file = self.log_dir / "app.log"
         if self._can_write_log_file(daily_log_file):
             try:
                 daily_handler = logging.FileHandler(daily_log_file, encoding="utf-8")
@@ -135,7 +146,7 @@ class LoggingManager:
                 print(f"일별 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 4. Celery 전용 로그 파일
-        celery_log_file = self.log_dir / f"celery_{today}.log"
+        celery_log_file = self.log_dir / "celery.log"
         if self._can_write_log_file(celery_log_file):
             try:
                 celery_handler = logging.FileHandler(celery_log_file, encoding="utf-8")
@@ -158,7 +169,7 @@ class LoggingManager:
                 print(f"Celery 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 5. DB 전용 로그 파일 (파일에만 기록, 콘솔 출력 안 함)
-        db_log_file = self.log_dir / f"db_{today}.log"
+        db_log_file = self.log_dir / "db.log"
         if self._can_write_log_file(db_log_file):
             try:
                 db_handler = logging.FileHandler(db_log_file, encoding="utf-8")
@@ -184,7 +195,7 @@ class LoggingManager:
                 print(f"DB 로그 파일 핸들러 생성 실패: {e}", file=sys.stderr)
 
         # 6. HTTP 요청/응답 로그 파일
-        http_log_file = self.log_dir / f"http_{today}.log"
+        http_log_file = self.log_dir / "http.log"
         if self._can_write_log_file(http_log_file):
             try:
                 http_handler = logging.FileHandler(http_log_file, encoding="utf-8")
