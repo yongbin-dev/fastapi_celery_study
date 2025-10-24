@@ -61,6 +61,16 @@ class PipelineStage(ABC):
         """
         _ = context  # 서브클래스에서 구현
 
+    def save_db(self, context: PipelineContext) -> None:
+        """DB 저장
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+
+        """
+        _ = context  # 서브클래스에서 구현
+
     async def run(self, context: PipelineContext) -> PipelineContext:
         """전체 실행 플로우 (템플릿 메서드 패턴)
 
@@ -96,6 +106,8 @@ class PipelineStage(ABC):
             context.update_status(
                 status=f"{self.stage_name.lower()}_completed", stage=self.stage_name
             )
+
+            self.save_db(context)
 
             logger.info(f"{self.stage_name.lower()}_in_progress 상태 업데이트")
             return context

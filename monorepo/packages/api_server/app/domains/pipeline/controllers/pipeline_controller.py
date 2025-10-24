@@ -70,33 +70,9 @@ async def create_pipeline(
             use_angle_cls=use_angle_cls,
         )
 
-        # # OCRExecution 생성
-        # ocr_execution_data = OCRExecutionCreate(
-        #     chain_id=chain_id,
-        #     image_path=image_response.private_img,
-        #     public_path=image_response.public_img,
-        #     status=ocr_result.status,
-        #     error=ocr_result.error,
-        # )
-
-        # db_ocr_execution = await ocr_execution_crud.create(
-        #     db=db, obj_in=ocr_execution_data
-        # )
-        # ocr_execution = await common_service.save_ocr_execution_to_db(
-        #     db=db, image_response=image_response, ocr_result=ocr_result
-        # )
-
-        #           PipelineStartResponse(
-        #             context_id=context_id,
-        #             status="started",
-        #             message="CR extraction pipeline started successfully",
-        #         )
-
         return ResponseBuilder.success(
             data=image_response, message="OCR 텍스트 추출 완료"
         )
-
-        #
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -121,13 +97,5 @@ async def get_pipeline_history(
     Returns:
         파이프라인 실행 이력 리스트
     """
-
-    # chain_execs = (
-    #     db.query(ChainExecution)
-    #     .order_by(ChainExecution.started_at)
-    #     .limit(limit)
-    #     .offset(offset)
-    #     .all()
-    # )
 
     return []

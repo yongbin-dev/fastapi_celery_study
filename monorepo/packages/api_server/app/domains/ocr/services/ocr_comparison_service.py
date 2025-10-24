@@ -10,9 +10,9 @@ from app.domains.ocr.schemas.similarity import (
 )
 from app.domains.ocr.services.similarity.string_similarity import StringSimilarity
 from app.domains.ocr.services.similarity.token_similarity import TokenSimilarity
-from shared.repository.crud.async_crud.ocr_execution import ocr_execution_crud
 from shared.core.logging import get_logger
 from shared.models import OCRExecution
+from shared.repository.crud.async_crud.ocr_execution import ocr_execution_crud
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)

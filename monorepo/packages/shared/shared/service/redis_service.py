@@ -33,5 +33,12 @@ class RedisService:
             )
         return self._redis_client
 
+
 def get_redis_service():
     return RedisService(redis_host="localhost", redis_port=6379, redis_db=0)
+
+
+def get_client():
+    return RedisService(
+        redis_host="localhost", redis_port=6379, redis_db=0
+    ).get_redis_client()

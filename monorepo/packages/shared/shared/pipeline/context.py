@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
+from shared.schemas.ocr_db import TextBoxDTO
+
 
 class OCRResult(BaseModel):
     """OCR 단계 결과 스키마
@@ -22,9 +24,7 @@ class OCRResult(BaseModel):
 
     text: str = Field(..., description="추출된 텍스트")
     confidence: float = Field(..., ge=0.0, le=1.0, description="신뢰도 점수")
-    bbox: Optional[list[Dict[str, Any]]] = Field(
-        default=None, description="텍스트 영역 좌표 리스트"
-    )
+    bbox: list[TextBoxDTO] = Field(default=[], description="텍스트 영역 좌표 리스트")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="추가 메타데이터"
     )

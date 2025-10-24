@@ -4,11 +4,15 @@ ML 서버를 호출하여 이미지/PDF 파일에서 텍스트를 추출합니�
 """
 
 import httpx
+from app.domains.ocr.schemas.response import OCRResultDTO
 from celery.beat import get_logger
 from shared.config import settings
+from shared.core.database import get_db_manager
 from shared.pipeline.context import OCRResult, PipelineContext
 from shared.pipeline.exceptions import RetryableError
 from shared.pipeline.stage import PipelineStage
+from shared.repository.crud.sync_crud import ocr_execution_crud, ocr_text_box_crud
+from shared.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
 
 logger = get_logger(__name__)
 
@@ -99,17 +103,36 @@ class OCRStage(PipelineStage):
         if not context.ocr_result.bbox:
             raise ValueError("OCR failed to extract text")
 
-    def save_db(self, context: PipelineContext) -> None:
-        """출력 검증: OCR 결과에 텍스트가 있는지 확인
+    def save_db(self, context: PipelineContext):
+        ocr_result = context.ocr_result
+        if ocr_result is None:
+            return
 
-        Args:
-            context: 파이프라인 컨텍스트
+        with get_db_manager().get_sync_session() as session:
+            if not session:
+                raise RuntimeError("DB 세션 생성 실패")
 
-        Raises:
-            ValueError: OCR 결과가 없거나 텍스트가 없을 때
-        """
-        if not context.ocr_result:
-            raise ValueError("OCR result is empty")
+            # OCRExecution 생성
+            ocr_execution_data = OCRExecutionCreate(
+                chain_id=context.context_id,
+                image_path="",
+                public_path=context.input_file_path,
+                status="success",
+                error="",
+            )
 
-        if not context.ocr_result.bbox:
-            raise ValueError("OCR failed to extract text")
+            db_ocr_execution = ocr_execution_crud.create(
+                db=session, obj_in=ocr_execution_data
+            )
+
+            ocr_execution = OCRResultDTO.model_validate(db_ocr_execution)
+
+            for box in ocr_result.bbox:
+                text_box_data = OCRTextBoxCreate(
+                    ocr_execution_id=ocr_execution.id,
+                    text=box.text,
+                    confidence=box.confidence,
+                    bbox=box.bbox,
+                )
+
+                ocr_text_box_crud.create(db=session, obj_in=text_box_data)

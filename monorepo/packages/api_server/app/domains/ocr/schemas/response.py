@@ -8,7 +8,7 @@ from shared.schemas.ocr_db import TextBoxDTO
 class OCRResultDTO(BaseModel):
     """OCR 실행 결과 DTO"""
 
-    id: Optional[int] = Field(default=0, description="ID")
+    id: int = Field(default=0, description="ID")
     public_path: Optional[str] = Field(default="", description="이미지 공개  경로")
     text_boxes: List[TextBoxDTO] = Field(
         default_factory=list, description="추출된 텍스트 박스 목록"
@@ -18,6 +18,3 @@ class OCRResultDTO(BaseModel):
     error: str | None = Field(default=None, description="에러 메시지 (실패 시)")
 
     model_config = ConfigDict(from_attributes=True)
-
-
-

@@ -148,3 +148,7 @@ Return as JSON.
 
             if missing_fields:
                 raise ValueError(f"Missing required fields: {missing_fields}")
+
+    def save_db(self, context: PipelineContext):
+
+        pass

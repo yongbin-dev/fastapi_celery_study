@@ -9,36 +9,6 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 
-class CRExtractOptions(BaseModel):
-    """CR 추출 옵션
-
-    Attributes:
-        ocr_engine: OCR 엔진 (easyocr, paddleocr)
-        llm_model: LLM 모델 (gpt-4, gpt-3.5-turbo)
-        min_confidence: 최소 OCR 신뢰도 (0.0-1.0)
-        languages: OCR 언어 목록
-    """
-
-    ocr_engine: str = Field(
-        default="easyocr",
-        description="OCR 엔진 (easyocr, paddleocr)"
-    )
-    llm_model: str = Field(
-        default="gpt-4",
-        description="LLM 모델 (gpt-4, gpt-3.5-turbo)"
-    )
-    min_confidence: float = Field(
-        default=0.5,
-        ge=0.0,
-        le=1.0,
-        description="최소 OCR 신뢰도"
-    )
-    languages: list[str] = Field(
-        default=["ko", "en"],
-        description="OCR 언어 목록"
-    )
-
-
 class PipelineStartResponse(BaseModel):
     """파이프라인 시작 응답
 
