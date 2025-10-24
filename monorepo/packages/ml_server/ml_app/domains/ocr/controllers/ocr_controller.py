@@ -32,8 +32,7 @@ async def run_ocr_image_extract(
     image_data = await common_service.load_image(image_path)
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
     result = model.predict(image_data, confidence_threshold)
-
-    return ResponseBuilder.success(data=result, message="")
+    return result
 
 
 @router.post("/extract-async")
@@ -52,31 +51,14 @@ async def run_ocr_image_extract_async(
     """
     logger.info(f"🚀 OCR 비동기 태스크 전송: {image_path}")
 
-    # # OCRTextBox 생성
-    # for box in ocr_result.text_boxes:
-    #     text_box_data = OCRTextBoxCreate(
-    #         ocr_execution_id=db_ocr_execution.id,  # type: ignore
-    #         text=box.text,
-    #         confidence=box.confidence,
-    #         bbox=box.bbox,
-    #     )
-
-    #     await ocr_text_box_crud.create(db=db, obj_in=text_box_data)
-
-    # logger.info(f"OCR 실행 정보 DB 저장 완료: ID={db_ocr_execution.id}")
-    # OCRResultDTO.model_validate(db_ocr_execution)
-
     # Celery 클라이언트 가져오기
     celery_client = get_celery_client()
 
     # 태스크 전송
     celery_client.send_task(
-        "tasks.ocr_extract",
-        chain_id=chain_id,
-        image_path=image_path,
-        language=language,
-        confidence_threshold=confidence_threshold,
-        use_angle_cls=use_angle_cls,
+        "tasks.start_pipeline",
+        file_path=image_path,
+        options={},
     )
 
     return ResponseBuilder.success(

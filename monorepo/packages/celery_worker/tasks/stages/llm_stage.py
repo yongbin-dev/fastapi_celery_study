@@ -1,73 +1,150 @@
-"""LLM Stage - LLM 분석 로직
+"""LLM 분석 스테이지
 
-OCR로 추출한 텍스트를 LLM으로 분석하는 스테이지입니다.
+OpenAI API를 사용하여 OCR 텍스트를 구조화된 데이터로 변환합니다.
 """
 
-from typing import Any
+import json
+from typing import Any, Dict
 
-from shared.core.logging import get_logger
-from shared.pipeline import PipelineContext, PipelineStage
-from shared.pipeline.exceptions import StageError
+from shared.config import settings
+from shared.pipeline.context import LLMResult, PipelineContext
+from shared.pipeline.stage import PipelineStage
 
-logger = get_logger(__name__)
 
 class LLMStage(PipelineStage):
     """LLM 분석 스테이지
 
-    OCR 결과를 LLM으로 분석합니다.
+    OCR로 추출된 텍스트를 LLM으로 분석하여 구조화된 데이터로 변환합니다.
     """
 
     def __init__(self):
-        super().__init__(stage_name="llm")
+        super().__init__()
+        self.client = ""
+        self.MODEL_SERVER_URL = settings.MODEL_SERVER_URL
+        # TODO: API 키는 환경 변수에서 로드
 
-    async def execute(self, context: PipelineContext) -> Any:
-        """LLM 분석 실행
+    def validate_input(self, context: PipelineContext) -> None:
+        """입력 검증: OCR 결과가 있는지 확인
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Raises:
+            ValueError: OCR 결과가 없거나 텍스트가 없을 때
+        """
+        if not context.ocr_result:
+            raise ValueError("OCR result is required for LLM analysis")
+
+        if not context.ocr_result.bbox:
+            raise ValueError("OCR bbox is empty")
+
+    async def execute(self, context: PipelineContext) -> PipelineContext:
+        """LLM으로 텍스트 구조화
 
         Args:
             context: 파이프라인 컨텍스트
 
         Returns:
-            LLM 분석 결과
+            업데이트된 컨텍스트 (llm_result 포함)
 
         Raises:
-            StageError: LLM 분석 중 오류 발생 시
+            RetryableError: API 오류 또는 Rate limit
+        """
+        # OCR 텍스트 추출
+        ocr_result = context.ocr_result
+        if ocr_result is None:
+            return context
+
+        ocr_bbox = ocr_result.bbox
+
+        # TODO: 실제 LLM API 호출 구현
+        # 현재는 Mock 데이터 반환
+        context.llm_result = LLMResult(
+            analysis="Mock LLM analysis result",
+            confidence=0.9,
+            entities={
+                "cr_number": "CR-2024-001",
+                "title": "Sample CR",
+                "description": "Sample description",
+            },
+            metadata={
+                "model": "mock",
+                "tokens_used": 0,
+                "prompt": self._build_prompt(str(ocr_bbox), context.options),
+            },
+        )
+
+        return context
+
+    def _build_prompt(self, ocr_bbox: str, options: Dict[str, Any]) -> str:
+        """LLM 프롬프트 생성
+
+        Args:
+            text: OCR로 추출된 텍스트
+            options: 파이프라인 옵션
+
+        Returns:
+            LLM 프롬프트
+        """
+        _ = options  # 향후 사용 가능
+        return f"""
+Extract the following information from this CR document:
+
+{ocr_bbox}
+
+Extract:
+- CR Number
+- Title
+- Description
+- Requester
+- Date
+- Priority
+- Status
+- Changes requested
+
+Return as JSON.
+"""
+
+    def _parse_llm_response(self, response: str) -> Dict[str, Any]:
+        """LLM 응답 파싱
+
+        Args:
+            response: LLM 응답 (JSON 문자열)
+
+        Returns:
+            파싱된 딕셔너리
+
+        Raises:
+            ValueError: JSON 파싱 실패
         """
         try:
-            logger.info(f"LLM 분석 시작: {context.context_id}")
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse LLM response: {str(e)}") from e
 
-            # OCR 결과 가져오기
-            ocr_result = context.get_stage_data("ocr")
-            if not ocr_result:
-                raise StageError(
-                    stage_name=self.stage_name,
-                    message="OCR 결과를 찾을 수 없습니다"
-                )
+    def validate_output(self, context: PipelineContext) -> None:
+        """출력 검증: 필수 필드가 있는지 확인
 
-            # TODO: 실제 LLM 분석 로직 구현
-            # 1. OCR 결과에서 텍스트 추출
-            # 2. LLM API 호출
-            # 3. 분석 결과 반환
+        Args:
+            context: 파이프라인 컨텍스트
 
-            # 임시 구현
-            result = {
-                "analysis": "",
-                "entities": []
-            }
-
-            logger.info(f"LLM 분석 완료: {context.context_id}")
-            return result
-
-        except Exception as e:
-            logger.error(f"LLM 분석 에러: {str(e)}")
-            raise StageError(
-                stage_name=self.stage_name,
-                message=f"LLM 분석 실패: {str(e)}"
-            ) from e
-
-    def validate_input(self, context: PipelineContext) -> bool:
-        """입력 검증
-
-        OCR 결과가 컨텍스트에 존재하는지 확인합니다.
+        Raises:
+            ValueError: LLM 결과가 없거나 필수 필드가 없을 때
         """
-        ocr_result = context.get_stage_data("ocr")
-        return ocr_result is not None
+        if not context.llm_result:
+            raise ValueError("LLM result is empty")
+
+        if not context.llm_result.analysis:
+            raise ValueError("LLM analysis is empty")
+
+        # entities가 있는 경우 필수 필드 검증
+        if context.llm_result.entities:
+            required_fields = ["cr_number", "title", "description"]
+            missing_fields = [
+                field
+                for field in required_fields
+                if field not in context.llm_result.entities
+            ]
+
+            if missing_fields:
+                raise ValueError(f"Missing required fields: {missing_fields}")

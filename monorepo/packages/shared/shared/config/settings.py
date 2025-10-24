@@ -109,7 +109,7 @@ class Settings(BaseSettings):
     OCR_REC: str = ""
 
     # 모델 서버 설정
-    OCR_MODEL_SERVER_URL: str = "http://localhost:5050"
+    MODEL_SERVER_URL: str = "http://localhost:8002"
     MODEL_SERVER_TIMEOUT: int = 60
 
 

@@ -7,13 +7,15 @@
 - Exceptions: 파이프라인 관련 예외 처리
 """
 
-from .context import PipelineContext
+from .context import LLMResult, OCRResult, PipelineContext
 from .exceptions import PipelineError, StageError
 from .orchestrator import PipelineOrchestrator
 from .stage import PipelineStage
 
 __all__ = [
     "PipelineContext",
+    "OCRResult",
+    "LLMResult",
     "PipelineStage",
     "PipelineOrchestrator",
     "StageError",

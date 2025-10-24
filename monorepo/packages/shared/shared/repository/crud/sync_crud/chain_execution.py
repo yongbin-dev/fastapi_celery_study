@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from shared.models.chain_execution import ChainExecution
 from shared.schemas.chain_execution import (
     ChainExecutionCreate,
+    ChainExecutionResponse,
     ChainExecutionUpdate,
 )
 from shared.schemas.enums import ProcessStatus
@@ -29,6 +30,19 @@ class CRUDChainExecution(
             .filter(ChainExecution.chain_id == chain_id)
             .first()
         )
+
+    def get_dto_by_chain_id(
+        self, session: Session, *, chain_id: str
+    ) -> Optional[ChainExecutionResponse]:
+        """chain_id로 체인 실행 조회"""
+
+        chain_execution = (
+            session.query(ChainExecution)
+            .filter(ChainExecution.chain_id == chain_id)
+            .first()
+        )
+
+        return ChainExecutionResponse.model_validate(chain_execution)
 
     def create_chain_execution(
         self,

@@ -5,6 +5,7 @@
 ## DB 모델 정의
 
 **실제 구현 파일 위치:**
+
 - `shared/models/chain_execution.py`
 - `shared/models/task_log.py`
 - `shared/schemas/enums.py`
@@ -337,7 +338,6 @@ TASK_STAGE_MAP = {
     "pipeline.ocr_stage": "OCRStage",
     "pipeline.llm_stage": "LLMStage",
     "pipeline.layout_stage": "LayoutStage",
-    "pipeline.excel_stage": "ExcelStage",
 }
 
 @signals.task_prerun.connect

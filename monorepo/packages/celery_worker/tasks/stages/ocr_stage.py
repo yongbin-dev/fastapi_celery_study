@@ -1,65 +1,115 @@
-"""OCR Stage - OCR 처리 로직
+"""OCR 처리 스테이지
 
-이미지에서 텍스트를 추출하는 스테이지입니다.
+ML 서버를 호출하여 이미지/PDF 파일에서 텍스트를 추출합니다.
 """
 
-from typing import Any
-
-from shared.core.logging import get_logger
-from shared.pipeline import PipelineContext, PipelineStage
-from shared.pipeline.exceptions import StageError
+import httpx
+from celery.beat import get_logger
+from shared.config import settings
+from shared.pipeline.context import OCRResult, PipelineContext
+from shared.pipeline.exceptions import RetryableError
+from shared.pipeline.stage import PipelineStage
 
 logger = get_logger(__name__)
+
 
 class OCRStage(PipelineStage):
     """OCR 처리 스테이지
 
-    이미지에서 텍스트를 추출합니다.
+    ML 서버의 OCR 엔진을 사용하여 텍스트를 추출합니다.
     """
 
     def __init__(self):
-        super().__init__(stage_name="ocr")
+        super().__init__()
+        self.ml_server_url = settings.MODEL_SERVER_URL
 
-    async def execute(self, context: PipelineContext) -> Any:
-        """OCR 실행
+    def validate_input(self, context: PipelineContext) -> None:
+        """입력 검증: 파일 경로가 있는지 확인
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Raises:
+            ValueError: 입력 파일 경로가 없을 때
+        """
+        if not context.input_file_path:
+            raise ValueError("input_file_path is required")
+
+    async def execute(self, context: PipelineContext) -> PipelineContext:
+        """ML 서버에 OCR 요청
 
         Args:
             context: 파이프라인 컨텍스트
 
         Returns:
-            OCR 결과 (텍스트 박스 리스트)
+            업데이트된 컨텍스트 (ocr_result 포함)
 
         Raises:
-            StageError: OCR 처리 중 오류 발생 시
+            RetryableError: 네트워크 오류 또는 서버 오류
+            ValueError: 클라이언트 오류
         """
         try:
-            logger.info(f"OCR 시작: {context.context_id}")
+            # ML 서버 호출
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{self.ml_server_url}/ocr/extract",
+                    json={
+                        "image_path": context.input_file_path,
+                    },
+                )
+                response.raise_for_status()
 
-            # TODO: 실제 OCR 처리 로직 구현
-            # 1. context에서 이미지 경로 가져오기
-            # 2. ML 서버 호출하여 OCR 수행
-            # 3. 결과 반환
+        except (httpx.TimeoutException, httpx.NetworkError) as e:
+            # 네트워크 오류 → 재시도 가능
+            raise RetryableError("OCRStage", f"Network error: {str(e)}") from e
 
-            # 임시 구현
-            result = {
-                "text_boxes": [],
-                "confidence": 0.0
-            }
+        except httpx.HTTPStatusError as e:
+            # HTTP 오류
+            if e.response.status_code >= 500:
+                # 서버 오류 → 재시도 가능
+                raise RetryableError("OCRStage", f"Server error: {str(e)}") from e
+            else:
+                # 클라이언트 오류 → 재시도 불가
+                raise ValueError(f"OCR request failed: {str(e)}") from e
 
-            logger.info(f"OCR 완료: {context.context_id}")
-            return result
+        # 결과 저장 (OCRResult 스키마 사용)
+        ocr_data = response.json()
 
-        except Exception as e:
-            logger.error(f"OCR 에러: {str(e)}")
-            raise StageError(
-                stage_name=self.stage_name,
-                message=f"OCR 처리 실패: {str(e)}"
-            ) from e
+        context.ocr_result = OCRResult(
+            text=ocr_data.get("text", ""),
+            confidence=ocr_data.get("confidence", 0.0),
+            bbox=ocr_data.get("text_boxes"),
+            metadata=ocr_data.get("metadata", {}),
+        )
 
-    def validate_input(self, context: PipelineContext) -> bool:
-        """입력 검증
+        return context
 
-        이미지 경로가 컨텍스트에 존재하는지 확인합니다.
+    def validate_output(self, context: PipelineContext) -> None:
+        """출력 검증: OCR 결과에 텍스트가 있는지 확인
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Raises:
+            ValueError: OCR 결과가 없거나 텍스트가 없을 때
         """
-        # TODO: 실제 검증 로직 구현
-        return True
+        if not context.ocr_result:
+            raise ValueError("OCR result is empty")
+
+        if not context.ocr_result.bbox:
+            raise ValueError("OCR failed to extract text")
+
+    def save_db(self, context: PipelineContext) -> None:
+        """출력 검증: OCR 결과에 텍스트가 있는지 확인
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Raises:
+            ValueError: OCR 결과가 없거나 텍스트가 없을 때
+        """
+        if not context.ocr_result:
+            raise ValueError("OCR result is empty")
+
+        if not context.ocr_result.bbox:
+            raise ValueError("OCR failed to extract text")

@@ -1,95 +1,133 @@
-"""Pipeline Controller - 파이프라인 API 엔드포인트
+"""파이프라인 API 컨트롤러
 
-파이프라인 시작, 상태 조회, 결과 조회 등의 API를 제공합니다.
+CR 추출 파이프라인 REST API 엔드포인트
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+from typing import List
+
+from app.domains.ocr.services.ocr_service import OCRService, get_ocr_service
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from shared.core.database import get_db
 from shared.core.logging import get_logger
+from shared.service.common_service import CommonService, get_common_service
+from shared.utils.response_builder import ResponseBuilder
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ..schemas.pipeline_schemas import (
-    PipelineStartRequest,
+    PipelineHistoryResponse,
     PipelineStartResponse,
     PipelineStatusResponse,
 )
-from ..services.pipeline_service import PipelineService
 
 logger = get_logger(__name__)
-router = APIRouter(prefix="/pipeline", tags=["pipeline"])
+
+router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
 
 
-@router.post("/start", response_model=PipelineStartResponse)
-async def start_pipeline(
-    request: PipelineStartRequest,
-    db: Session = Depends(get_db)
+@router.post("/run-pipeline", response_model=PipelineStartResponse)
+async def create_pipeline(
+    image_file: UploadFile = File(...),
+    language: str = Form("korean"),
+    confidence_threshold: float = Form(0.5),
+    use_angle_cls: bool = Form(True),
+    service: OCRService = Depends(get_ocr_service),
+    common_service: CommonService = Depends(get_common_service),
+    db: AsyncSession = Depends(get_db),
 ):
-    """파이프라인 시작
+    """CR 추출 파이프라인 시작
 
     Args:
-        request: 파이프라인 시작 요청
-        db: 데이터베이스 세션
+        file: 처리할 이미지 또는 PDF 파일
+        ocr_engine: OCR 엔진 (easyocr, paddleocr)
+        llm_model: LLM 모델 (gpt-4, gpt-3.5-turbo)
+        min_confidence: 최소 OCR 신뢰도 (0.0-1.0)
 
     Returns:
-        파이프라인 시작 응답 (context_id 포함)
+        파이프라인 시작 응답
+
+    Raises:
+        HTTPException: 처리 중 오류 발생 시
     """
     try:
-        logger.info(f"파이프라인 시작 요청: {request.model_dump()}")
-        service = PipelineService(db)
-        result = await service.start_pipeline(request)
-        return result
+        # 1. 이미지를 Supabase Storage에 저장
+        image_data = await image_file.read()
+
+        filename = image_file.filename or "unknown.png"
+        # encoded_name = quote(filename)  # URL-safe 인코딩
+        image_response = await common_service.save_image(
+            image_data, filename, image_file.content_type
+        )
+
+        chain_id = str(uuid.uuid4())
+        # 2. ML 서버의 CELERY_CHAIN 호출
+        await service.call_ml_server_ocr(
+            chain_id=chain_id,
+            image_path=image_response.private_img,
+            language=language,
+            confidence_threshold=confidence_threshold,
+            use_angle_cls=use_angle_cls,
+        )
+
+        # # OCRExecution 생성
+        # ocr_execution_data = OCRExecutionCreate(
+        #     chain_id=chain_id,
+        #     image_path=image_response.private_img,
+        #     public_path=image_response.public_img,
+        #     status=ocr_result.status,
+        #     error=ocr_result.error,
+        # )
+
+        # db_ocr_execution = await ocr_execution_crud.create(
+        #     db=db, obj_in=ocr_execution_data
+        # )
+        # ocr_execution = await common_service.save_ocr_execution_to_db(
+        #     db=db, image_response=image_response, ocr_result=ocr_result
+        # )
+
+        #           PipelineStartResponse(
+        #             context_id=context_id,
+        #             status="started",
+        #             message="CR extraction pipeline started successfully",
+        #         )
+
+        return ResponseBuilder.success(
+            data=image_response, message="OCR 텍스트 추출 완료"
+        )
+
+        #
+
     except Exception as e:
-        logger.error(f"파이프라인 시작 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/status/{context_id}", response_model=PipelineStatusResponse)
-async def get_pipeline_status(
-    context_id: str,
-    db: Session = Depends(get_db)
-):
-    """파이프라인 상태 조회
+@router.get("/status/{chain_id}", response_model=PipelineStatusResponse)
+async def get_pipeline_status(chain_id: str, db: Session = Depends(get_db)):
+    pass
+
+
+@router.get("/history", response_model=List[PipelineHistoryResponse])
+async def get_pipeline_history(
+    limit: int = 100, offset: int = 0, db: Session = Depends(get_db)
+) -> List[PipelineHistoryResponse]:
+    """파이프라인 실행 이력 조회
 
     Args:
-        context_id: 컨텍스트 ID
-        db: 데이터베이스 세션
+        limit: 최대 조회 개수
+        offset: 시작 위치
+        db: DB 세션
 
     Returns:
-        파이프라인 상태 정보
+        파이프라인 실행 이력 리스트
     """
-    try:
-        logger.info(f"파이프라인 상태 조회: {context_id}")
-        service = PipelineService(db)
-        result = await service.get_pipeline_status(context_id)
-        if not result:
-            raise HTTPException(status_code=404, detail="파이프라인을 찾을 수 없습니다")
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"파이프라인 상태 조회 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
+    # chain_execs = (
+    #     db.query(ChainExecution)
+    #     .order_by(ChainExecution.started_at)
+    #     .limit(limit)
+    #     .offset(offset)
+    #     .all()
+    # )
 
-@router.delete("/{context_id}")
-async def cancel_pipeline(
-    context_id: str,
-    db: Session = Depends(get_db)
-):
-    """파이프라인 취소
-
-    Args:
-        context_id: 컨텍스트 ID
-        db: 데이터베이스 세션
-
-    Returns:
-        취소 성공 메시지
-    """
-    try:
-        logger.info(f"파이프라인 취소 요청: {context_id}")
-        service = PipelineService(db)
-        await service.cancel_pipeline(context_id)
-        return {"message": "파이프라인이 취소되었습니다"}
-    except Exception as e:
-        logger.error(f"파이프라인 취소 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return []

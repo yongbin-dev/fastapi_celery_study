@@ -16,6 +16,7 @@ dependencies = [
     "scikit-image>=0.25.0",
     "celery>=5.3.0",  # Celery 태스크 호출
     "kombu>=5.3.0",
+    "vllm==0.6.6",
 ]
 
 
@@ -27,7 +28,7 @@ ml-base = [
     "torchvision>=0.17.0",
     "opencv-python>=4.9.0",
     "Pillow>=10.2.0",
-    "numpy>=2.0.0",
+    "numpy<2.0.0", # vllm의 요구 사항을 명시적으로 추가
     "scipy>=1.13.0",
     
 ]
@@ -47,6 +48,14 @@ ocr-gpu = [
     "paddlepaddle-gpu>=2.6.2,<3.0.0",  # GPU 버전
     "easyocr>=1.7.2",
     "ml-server[ml-base]",
+]
+
+[tool.uv.extra-build-dependencies]
+# uv는 vllm이 PyTorch에 의존한다는 것을 빌드 단계에서 인지하고
+# 위에 명시된 "torch"를 사용하여 vllm을 빌드하도록 돕습니다.
+# "match-runtime = true"는 [project].dependencies에 있는 torch를 사용하도록 지정합니다.
+vllm = [
+    { requirement = "torch", match-runtime = true }
 ]
 
 [tool.hatch.build.targets.wheel]

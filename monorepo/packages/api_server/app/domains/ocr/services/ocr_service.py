@@ -17,7 +17,7 @@ class OCRService(BaseService):
 
     def __init__(self):
         super().__init__()
-        self.ml_server_url = settings.OCR_MODEL_SERVER_URL
+        self.ml_server_url = settings.MODEL_SERVER_URL
         self.timeout = settings.MODEL_SERVER_TIMEOUT
 
     async def get_all_ocr_executions(self, db: AsyncSession):
@@ -46,7 +46,7 @@ class OCRService(BaseService):
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                url = f"{self.ml_server_url}/api/model/ocr/extract-async"
+                url = f"{self.ml_server_url}/ocr/extract-async"
                 data = {
                     "chain_id": chain_id,
                     "image_path": image_path,

@@ -1,6 +1,6 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
-import cv2  # type: ignore
-import numpy as np  # type: ignore
+import cv2
+import numpy as np
 from shared.config import settings
 from shared.core.logging import get_logger
 from shared.schemas import OCRExtractDTO, TextBoxDTO
@@ -57,7 +57,7 @@ class PaddleOCREngine(BaseOCREngine):
         """PaddleOCR 예측"""
         if not self.is_loaded or self.model is None:
             return OCRExtractDTO(
-                text_boxes=[],  status="failed", error="Model not loaded"
+                text_boxes=[], status="failed", error="Model not loaded"
             )
 
         try:
@@ -89,15 +89,10 @@ class PaddleOCREngine(BaseOCREngine):
                             )
                         )
 
-
             logger.info(f"PaddleOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
-            return OCRExtractDTO(
-                text_boxes=text_boxes,  status="success"
-            )
+            return OCRExtractDTO(text_boxes=text_boxes, status="success")
 
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
-            return OCRExtractDTO(
-                text_boxes=[], status="failed", error=str(e)
-            )
+            return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))
