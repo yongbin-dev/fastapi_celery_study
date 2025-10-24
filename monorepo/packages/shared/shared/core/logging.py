@@ -45,8 +45,8 @@ class LoggingManager:
     """로깅 관리자 클래스"""
 
     def __init__(self):
-        # 서비스 이름 환경 변수에서 가져오기
-        service_name = os.getenv("SERVICE_NAME", "api_server")
+        # 서비스 이름 자동 감지
+        service_name = self._detect_service_name()
 
         # monorepo 루트 디렉토리 설정 (현재 파일 위치 기반)
         # packages/shared/shared/core/logging.py -> 4 levels up
@@ -60,6 +60,39 @@ class LoggingManager:
 
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self._setup_logging()
+
+    def _detect_service_name(self) -> str:
+        """
+        실행 중인 프로세스의 경로를 분석하여 서비스 이름 자동 감지
+
+        Returns:
+            str: 감지된 서비스 이름 (api_server, celery_worker, ml_server 등)
+        """
+        # 환경 변수가 설정되어 있으면 우선 사용
+        env_service_name = os.getenv("SERVICE_NAME")
+        if env_service_name:
+            return env_service_name
+
+        # 현재 실행 중인 스크립트의 경로 분석
+        import traceback
+
+        # 스택 트레이스에서 packages 디렉토리 아래의 경로 찾기
+        for frame_info in traceback.extract_stack():
+            filepath = Path(frame_info.filename)
+            parts = filepath.parts
+
+            # packages 디렉토리를 포함하는 경로인지 확인
+            if "packages" in parts:
+                packages_idx = parts.index("packages")
+                # packages 다음에 오는 디렉토리가 서비스 이름
+                if packages_idx + 1 < len(parts):
+                    service_dir = parts[packages_idx + 1]
+                    # shared는 제외 (공통 라이브러리)
+                    if service_dir != "shared":
+                        return service_dir
+
+        # 감지 실패 시 기본값
+        return "unknown"
 
     def _setup_logging(self):
         """로깅 설정 초기화"""
