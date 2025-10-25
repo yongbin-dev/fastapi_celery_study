@@ -4,11 +4,9 @@ from .chain_execution import (
     ChainExecutionUpdate,
 )
 from .enums import ProcessStatus
-from .ocr_db import OCRExecutionCreate, OCRExtractDTO, OCRTextBoxCreate
-from .pipeline import (
-    AIPipelineRequest,
-    AIPipelineResponse,
-)
+from .ocr_db import OCRExtractDTO
+from .ocr_execution import OCRExecutionCreate
+from .ocr_text_box import OCRTextBoxCreate
 from .stage import StageInfo
 from .task_log import (
     TaskLogCreate,
@@ -20,9 +18,6 @@ __all__ = [
     "ProcessStatus",
     # Stage models
     "StageInfo",
-    # Pipeline
-    "AIPipelineRequest",
-    "AIPipelineResponse",
     # Chain Execution
     "ChainExecutionCreate",
     "ChainExecutionUpdate",

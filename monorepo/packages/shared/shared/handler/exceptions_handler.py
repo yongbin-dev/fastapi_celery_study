@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from ..core.logging import get_logger
-from ..utils.response_builder import ResponseBuilder
+from shared.core.logging import get_logger
+from shared.utils.response_builder import ResponseBuilder
 
 logger = get_logger(__name__)
 

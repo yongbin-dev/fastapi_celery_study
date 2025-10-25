@@ -5,7 +5,7 @@ from starlette.background import BackgroundTask
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from ..core.logging import get_logger
+from shared.core.logging import get_logger
 
 logger = get_logger(__name__)
 

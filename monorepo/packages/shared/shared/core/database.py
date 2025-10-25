@@ -11,8 +11,8 @@ from sqlalchemy.exc import DisconnectionError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from ..config import settings
-from ..models.base import Base
+from shared.config import settings
+from shared.models.base import Base
 
 # 로깅 설정
 logger = logging.getLogger(__name__)

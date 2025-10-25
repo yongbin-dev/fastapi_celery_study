@@ -12,7 +12,8 @@ from shared.pipeline.context import OCRResult, PipelineContext
 from shared.pipeline.exceptions import RetryableError
 from shared.pipeline.stage import PipelineStage
 from shared.repository.crud.sync_crud import ocr_execution_crud, ocr_text_box_crud
-from shared.schemas.ocr_db import OCRExecutionCreate, OCRTextBoxCreate
+from shared.schemas import OCRExecutionCreate
+from shared.schemas.ocr_db import OCRTextBoxCreate
 
 logger = get_logger(__name__)
 

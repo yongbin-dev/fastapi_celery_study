@@ -5,8 +5,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from ....models import OCRExecution
-from ....schemas.ocr_db import OCRExecutionCreate
+from shared.models.ocr_execution import OCRExecution
+from shared.schemas.ocr_execution import OCRExecutionCreate
+
 from .base import CRUDBase
 
 

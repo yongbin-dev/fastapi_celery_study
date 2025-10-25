@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from shared.models import OCRExecution
 from shared.repository.crud.async_crud.base import AsyncCRUDBase
-from shared.schemas.ocr_db import OCRExecutionCreate
+from shared.schemas import OCRExecutionCreate
 
 
 class AsyncCRUDOCRExecution(

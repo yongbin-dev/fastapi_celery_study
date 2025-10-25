@@ -7,13 +7,7 @@ from .enums import ProcessStatus
 from .task_log import TaskLogResponse
 
 
-class ChainExecutionBase(BaseModel):
-    """ChainExecution 기본 스키마"""
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ChainExecutionCreate(ChainExecutionBase):
+class ChainExecutionCreate(BaseModel):
     """ChainExecution 생성용 스키마"""
 
     chain_id: str = Field(..., description="체인 ID")
@@ -34,7 +28,7 @@ class ChainExecutionUpdate(BaseModel):
     error_message: Optional[str] = Field(None, description="오류 메시지")
 
 
-class ChainExecutionResponse(ChainExecutionBase):
+class ChainExecutionResponse(BaseModel):
     """ChainExecution 응답용 스키마"""
 
     id: int
@@ -56,29 +50,6 @@ class ChainExecutionResponse(ChainExecutionBase):
 
     model_config = ConfigDict(from_attributes=True)
 
-
-class ChainExecutionListResponse(BaseModel):
-    """ChainExecution 목록 응답 스키마"""
-
-    items: List[ChainExecutionResponse] = Field(..., description="체인 실행 목록")
-    total: int = Field(..., description="총 개수")
-    skip: int = Field(..., description="건너뛴 개수")
-    limit: int = Field(..., description="제한 개수")
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ChainExecutionStatsResponse(BaseModel):
-    """ChainExecution 통계 응답 스키마"""
-
-    PENDING: int = Field(default=0, description="대기 중인 체인 수")
-    STARTED: int = Field(default=0, description="시작된 체인 수")
-    SUCCESS: int = Field(default=0, description="성공한 체인 수")
-    FAILURE: int = Field(default=0, description="실패한 체인 수")
-    REVOKED: int = Field(default=0, description="취소된 체인 수")
-    total: int = Field(default=0, description="총 체인 수")
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 # Forward reference 해결을 위한 모델 업데이트
