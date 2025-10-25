@@ -1,8 +1,9 @@
 """
 Mock OCR 엔진 - 테스트용 가짜 OCR 엔진
 """
+
 from shared.core.logging import get_logger
-from shared.schemas import OCRExtractDTO, TextBoxDTO
+from shared.schemas import OCRExtractDTO, OCRTextBoxCreate
 
 from .base import BaseOCREngine
 
@@ -39,17 +40,17 @@ class MockOCREngine(BaseOCREngine):
 
             # 테스트용 가짜 텍스트 박스 생성
             mock_text_boxes = [
-                TextBoxDTO(
+                OCRTextBoxCreate(
                     text="Mock Text 1",
                     confidence=0.95,
                     bbox=[[10.0, 10.0], [100.0, 10.0], [100.0, 30.0], [10.0, 30.0]],
                 ),
-                TextBoxDTO(
+                OCRTextBoxCreate(
                     text="Mock Text 2",
                     confidence=0.90,
                     bbox=[[10.0, 40.0], [100.0, 40.0], [100.0, 60.0], [10.0, 60.0]],
                 ),
-                TextBoxDTO(
+                OCRTextBoxCreate(
                     text="테스트 텍스트",
                     confidence=0.85,
                     bbox=[[10.0, 70.0], [100.0, 70.0], [100.0, 90.0], [10.0, 90.0]],
@@ -61,9 +62,7 @@ class MockOCREngine(BaseOCREngine):
                 box for box in mock_text_boxes if box.confidence >= confidence_threshold
             ]
 
-            logger.info(
-                f"MockOCR 실행 완료: {len(filtered_boxes)}개 텍스트 박스 반환"
-            )
+            logger.info(f"MockOCR 실행 완료: {len(filtered_boxes)}개 텍스트 박스 반환")
 
             return OCRExtractDTO(text_boxes=filtered_boxes, status="success")
 

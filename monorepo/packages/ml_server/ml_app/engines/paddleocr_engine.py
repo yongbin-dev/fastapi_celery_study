@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from shared.config import settings
 from shared.core.logging import get_logger
-from shared.schemas import OCRExtractDTO, TextBoxDTO
+from shared.schemas import OCRExtractDTO, OCRTextBoxCreate
 
 from .base import BaseOCREngine
 
@@ -82,7 +82,7 @@ class PaddleOCREngine(BaseOCREngine):
                         # numpy 배열을 Python 리스트로 변환
                         bbox_list = [[float(x), float(y)] for x, y in bbox]
                         text_boxes.append(
-                            TextBoxDTO(
+                            OCRTextBoxCreate(
                                 text=text,
                                 confidence=float(confidence),
                                 bbox=bbox_list,

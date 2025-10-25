@@ -12,6 +12,7 @@ class ProcessStatus(str, Enum):
     RETRY = "RETRY"  # 재시도
     REVOKED = "REVOKED"  # 취소됨
 
+
 class PipelineStatus(str, Enum):
     PENDING = "PENDING"  # 대기 중
     STARTED = "STARTED"  # 시작됨
@@ -21,4 +22,3 @@ class PipelineStatus(str, Enum):
     RETRY = "RETRY"  # 재시도
     REVOKED = "REVOKED"  # 취소됨
     CANCELLED = "CANCELLED"
-

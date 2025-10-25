@@ -4,7 +4,7 @@ from .chain_execution import (
     ChainExecutionUpdate,
 )
 from .enums import ProcessStatus
-from .ocr_db import OCRExecutionCreate, OCRExtractDTO, OCRTextBoxCreate, TextBoxDTO
+from .ocr_db import OCRExecutionCreate, OCRExtractDTO, OCRTextBoxCreate
 from .pipeline import (
     AIPipelineRequest,
     AIPipelineResponse,
@@ -34,5 +34,4 @@ __all__ = [
     "OCRExecutionCreate",
     "OCRTextBoxCreate",
     "OCRExtractDTO",
-    "TextBoxDTO"
 ]
