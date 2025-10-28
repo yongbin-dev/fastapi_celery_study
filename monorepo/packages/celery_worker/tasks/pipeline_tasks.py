@@ -135,13 +135,17 @@ def llm_stage_task(self, context_id: str) -> str:
 
 
 @celery_app.task(bind=True, name="tasks.start_pipeline")
-def start_pipeline_task(self, file_path: str, options: Dict[str, Any]) -> str:
+def start_pipeline_task(
+    self, file_path: str, public_file_path: str, options: Dict[str, Any]
+) -> str:
     """파이프라인 시작 (Celery Task)"""
-    return start_pipeline(file_path, options)
+    return start_pipeline(file_path, public_file_path, options)
 
 
 # 파이프라인 시작 함수
-def start_pipeline(file_path: str, options: Dict[str, Any]) -> str:
+def start_pipeline(
+    file_path: str, public_file_path: str, options: Dict[str, Any]
+) -> str:
     """CR 추출 파이프라인 시작
 
     Args:
@@ -178,7 +182,10 @@ def start_pipeline(file_path: str, options: Dict[str, Any]) -> str:
 
     # 3. Context 생성 및 Redis 저장
     context = PipelineContext(
-        context_id=chain_id, input_file_path=file_path, options=options
+        context_id=chain_id,
+        input_file_path=file_path,
+        public_file_path=public_file_path,
+        options=options,
     )
 
     save_context_to_redis(context)

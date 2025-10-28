@@ -148,8 +148,7 @@
         "justMyCode": false,
         "envFile": "${workspaceFolder:Root}/.env.development",
         "env": {
-          "ENVIRONMENT": "development",
-          "OCR_ENGINE": "mock"
+          "ENVIRONMENT": "development"
         },
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/ml_server",

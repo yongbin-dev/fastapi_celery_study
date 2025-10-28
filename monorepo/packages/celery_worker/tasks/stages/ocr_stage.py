@@ -59,7 +59,8 @@ class OCRStage(PipelineStage):
                 response = await client.post(
                     f"{self.ml_server_url}/ocr/extract",
                     json={
-                        "image_path": context.input_file_path,
+                        "public_image_path": context.public_file_path,
+                        "private_image_path": context.input_file_path,
                     },
                 )
                 response.raise_for_status()
@@ -116,8 +117,8 @@ class OCRStage(PipelineStage):
             # OCRExecution 생성
             ocr_execution_data = OCRExecutionCreate(
                 chain_id=context.context_id,
-                image_path="",
-                public_path=context.input_file_path,
+                image_path=context.input_file_path,
+                public_path=context.public_file_path,
                 status="success",
                 error="",
             )

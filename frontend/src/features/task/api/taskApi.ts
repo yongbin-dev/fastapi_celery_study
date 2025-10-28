@@ -21,7 +21,7 @@ export const taskApi = {
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
     const queryString = searchParams.toString();
-    const url = `/pipelines/history?${queryString ? `${queryString}` : ''}`;
+    const url = `/pipeline/history?${queryString ? `${queryString}` : ''}`;
 
     const response = await api.get<ChainExecutionResponseDto[]>(url);
     return response.data;
@@ -47,30 +47,31 @@ export const taskApi = {
     return response.data;
   },
 
-  // 파이프라인 시작
-  startPipeline: async (data: {
-    text: string;
-    options: { model: string };
-  }): Promise<{ pipeline_id: string }> => {
-    const response = await api.post<{ pipeline_id: string }>(
-      '/pipelines/ai-pipeline',
-      data
-    );
-    return response.data;
-  },
-
   // 파이프라인 상태 확인
   getPipelineStatus: async (
     pipelineId: string
   ): Promise<ChainExecutionResponseDto> => {
     const response = await api.get<ChainExecutionResponseDto>(
-      `/pipelines/ai-pipeline/${pipelineId}/pipelines`
+      `/pipeline/status/${pipelineId}`
     );
     return response.data;
   },
 
   // 파이프라인 취소
   cancelPipeline: async (pipelineId: string): Promise<void> => {
-    await api.delete(`/pipelines/ai-pipeline/${pipelineId}/cancel`);
+    await api.delete(`/pipeline/ai-pipeline/${pipelineId}/cancel`);
+  },
+
+  // PDF 추출
+  extractPdf: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('pdf_file', file);
+
+    const response = await api.post<any>('/pipeline/extract/pdf', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   },
 };

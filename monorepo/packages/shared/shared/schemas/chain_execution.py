@@ -33,7 +33,6 @@ class ChainExecutionResponse(BaseModel):
 
     id: int
     chain_id: str
-    chain_name: str
     status: ProcessStatus
     total_tasks: int
     completed_tasks: int
@@ -45,7 +44,8 @@ class ChainExecutionResponse(BaseModel):
     final_result: Optional[Dict[str, Any]]
     error_message: Optional[str]
     task_logs: List[TaskLogResponse] = Field(
-        default_factory=list, description="관련 작업 로그 목록"
+        default_factory=list,
+        description="관련 작업 로그 목록"
     )
 
     model_config = ConfigDict(from_attributes=True)

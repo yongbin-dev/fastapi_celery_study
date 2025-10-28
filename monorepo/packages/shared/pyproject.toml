@@ -18,6 +18,7 @@ dependencies = [
     "greenlet>=3.2.4",
     "supabase>=2.22.0",
     "asyncpg>=0.30.0", # PostgreSQL용 비동기 드라이버
+    "pymupdf>=1.26.5",
 ]
 
 [tool.hatch.build.targets.wheel]

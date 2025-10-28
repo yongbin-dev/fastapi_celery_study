@@ -33,6 +33,7 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
             task_name=task_name,
             status=status,
             chain_execution_id=chain_execution_id,
+            started_at=datetime.now()
         )
         db.add(task_log)
         db.commit()
@@ -52,9 +53,7 @@ class CRUDTaskLog(CRUDBase[TaskLog, TaskLogCreate, TaskLogUpdate]):  # type: ign
         if error is not None:
             task_log.error = error  # type: ignore
 
-        # 시작 시간 설정
-        if status == "STARTED" and task_log.started_at is None:
-            task_log.started_at = datetime.now()  # type: ignore
+
 
         # 완료 시간 설정
         if status in ["SUCCESS", "FAILURE", "REVOKED"] and task_log.finished_at is None:

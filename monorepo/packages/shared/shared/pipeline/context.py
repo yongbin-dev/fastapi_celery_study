@@ -73,6 +73,8 @@ class PipelineContext(BaseModel):
     # 기본 정보
     context_id: str = Field(..., description="고유 컨텍스트 ID")
     input_file_path: str = Field(..., description="입력 파일 경로")
+    public_file_path: str = Field(..., description="공개 파일 경로")
+
     options: Dict[str, Any] = Field(default_factory=dict, description="파이프라인 옵션")
 
     # 단계별 결과 (Pydantic 스키마 사용)

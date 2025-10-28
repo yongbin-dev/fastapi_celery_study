@@ -75,8 +75,9 @@ class ChainExecution(Base):
     def __repr__(self):
         return (
             f"<ChainExecution(id={self.id}"
-            ",chain_name={self.chain_name}"
+            ",chain_id={self.chain_id}"
             ",status={self.status})>"
+            ","
         )  # noqa: E501
 
     def increment_completed_tasks(self):

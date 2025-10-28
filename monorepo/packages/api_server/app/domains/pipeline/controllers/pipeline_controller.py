@@ -4,26 +4,68 @@ CR 추출 파이프라인 REST API 엔드포인트
 """
 
 import uuid
-from typing import List
 
 from app.domains.ocr.services.ocr_service import OCRService, get_ocr_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from redis import Redis
 from shared.core.database import get_db
 from shared.core.logging import get_logger
+from shared.repository.crud.async_crud import chain_execution_crud
+from shared.schemas.chain_execution import ChainExecutionResponse
 from shared.service.common_service import CommonService, get_common_service
+from shared.service.redis_service import RedisService, get_redis_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ..schemas.pipeline_schemas import (
-    PipelineHistoryResponse,
     PipelineStartResponse,
-    PipelineStatusResponse,
 )
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/pipeline", tags=["Pipeline"])
+
+
+@router.post("/extract/pdf")
+async def extract_text_sync_by_pdf(
+    pdf_file: UploadFile = File(...),
+    service: OCRService = Depends(get_ocr_service),
+    common_service: CommonService = Depends(get_common_service),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    OCR 텍스트 추출 API (동기)
+
+    - **pdf_file**: PDF 파일 (multipart/form-data)
+    """
+    try:
+        filename = pdf_file.filename
+        pdf_file_bytes = await pdf_file.read()
+
+        if filename is None :
+            raise Exception()
+
+        image_response_list = await common_service.save_pdf(
+            original_filename=filename ,
+            pdf_file_bytes=pdf_file_bytes
+        )
+
+        chain_id = str(uuid.uuid4())
+
+        await service.call_ml_server_pdf(
+            chain_id=chain_id,
+            image_response_list=image_response_list
+        )
+
+        return ResponseBuilder.success(
+            data=image_response_list,
+            message="PDF 페이지 수 확인 완료"
+        )
+
+    except Exception as e:
+        logger.error(f"PDF 처리 중 오류 발생: {str(e)}")
+        return ResponseBuilder.error(message=f"PDF 처리 실패: {str(e)}")
 
 
 @router.post("/run-pipeline", response_model=PipelineStartResponse)
@@ -56,15 +98,18 @@ async def create_pipeline(
 
         filename = image_file.filename or "unknown.png"
         # encoded_name = quote(filename)  # URL-safe 인코딩
+        encoded_file_name = str(uuid.uuid4()) + "_" + filename
+
         image_response = await common_service.save_image(
-            image_data, filename, image_file.content_type
+            image_data, encoded_file_name, image_file.content_type
         )
 
         chain_id = str(uuid.uuid4())
         # 2. ML 서버의 CELERY_CHAIN 호출
         await service.call_ml_server_ocr(
             chain_id=chain_id,
-            image_path=image_response.private_img,
+            private_image_path=image_response.private_img,
+            public_image_path=image_response.public_img,
             language=language,
             confidence_threshold=confidence_threshold,
             use_angle_cls=use_angle_cls,
@@ -78,15 +123,25 @@ async def create_pipeline(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/status/{chain_id}", response_model=PipelineStatusResponse)
-async def get_pipeline_status(chain_id: str, db: Session = Depends(get_db)):
-    pass
+@router.get("/status/{chain_id}")
+async def get_pipeline_status(
+        chain_id: str,
+        db: Session = Depends(get_db),
+        redis_service : RedisService = Depends(get_redis_service)
+    ):
+    redis_client : Redis = redis_service.get_redis_client()
+    result = redis_client.get("pipeline:context:"+chain_id)
+    logger.info(result)
+    return ResponseBuilder.success(
+        data=result,
+        message=""
+    )
 
-
-@router.get("/history", response_model=List[PipelineHistoryResponse])
+# response_model=List[PipelineHistoryResponse]
+@router.get("/history", )
 async def get_pipeline_history(
-    limit: int = 100, offset: int = 0, db: Session = Depends(get_db)
-) -> List[PipelineHistoryResponse]:
+    limit: int = 100, offset: int = 0, db: AsyncSession = Depends(get_db)
+) :
     """파이프라인 실행 이력 조회
 
     Args:
@@ -97,5 +152,13 @@ async def get_pipeline_history(
     Returns:
         파이프라인 실행 이력 리스트
     """
+    result = await chain_execution_crud.get_multi_with_task_logs(db)
+    list = []
 
-    return []
+    if result is None:
+        list = []
+    else:
+        list = [ChainExecutionResponse.model_validate(ocr) for ocr in result]
+    return ResponseBuilder.success(
+        data=list
+    )

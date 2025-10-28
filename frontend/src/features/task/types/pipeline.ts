@@ -1,18 +1,11 @@
-export interface Task {
+export interface TaskLog {
   id: number;
   task_id: string;
   task_name: string;
   status: string;
-  args: string;
-  kwargs: string | null;
-  result: string;
-  error: string | null;
-  started_at: string | null;
-  finished_at: string;
-  retries: number;
   chain_execution_id: number;
-  created_at: string;
-  updated_at: string;
+  started_at: string;
+  finished_at: string;
 }
 
 export interface InputData {
@@ -39,5 +32,5 @@ export interface ChainExecutionResponseDto {
   input_data: InputData;
   final_result: string | null;
   error_message: string | null;
-  task_logs: Task[];
+  task_logs: TaskLog[];
 }

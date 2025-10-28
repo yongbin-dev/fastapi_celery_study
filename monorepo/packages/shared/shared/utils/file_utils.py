@@ -53,24 +53,23 @@ async def load_uploaded_image(image_path: str) -> bytes:
     # Supabase가 설정되지 않은 경우 에러
     if supabase is None:
         raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. "
-            "환경 변수를 설정하세요."
+            "Supabase Storage가 설정되지 않았습니다. " "환경 변수를 설정하세요."
         )
 
     try:
         # URL인 경우 경로 추출
         path = image_path
-        if "/public/" in image_path:
-            # https://.../storage/v1/object/public/bucket_name/path/to/file
-            # -> path/to/file 추출
-            parts = image_path.split("/public/")
-            if len(parts) > 1:
-                # bucket_name/ 이후 부분만 사용
-                bucket_and_path = parts[1]
-                path = "/".join(bucket_and_path.split("/")[1:])
+        # if "/public/" in image_path:
+        #     # https://.../storage/v1/object/public/bucket_name/path/to/file
+        #     # -> path/to/file 추출
+        #     parts = image_path.split("/public/")
+        #     if len(parts) > 1:
+        #         # bucket_name/ 이후 부분만 사용
+        #         bucket_and_path = parts[1]
+        #         path = "/".join(bucket_and_path.split("/")[1:])
 
         # 경로 정규화 (앞의 슬래시 제거)
-        path = path.lstrip("/")
+        path = "/".join(path.split("/")[1:])
 
         logger.debug(f"이미지 다운로드 시도: {path}")
 
@@ -119,21 +118,18 @@ async def save_uploaded_image(
     # Supabase가 설정되지 않은 경우 에러
     if supabase is None:
         raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. "
-            "환경 변수를 설정하세요."
+            "Supabase Storage가 설정되지 않았습니다. " "환경 변수를 설정하세요."
         )
 
     try:
         now = datetime.now()
-        formatted_date = now.strftime("%Y-%m-%d")
+        formatted_date = now.strftime("%Y%m%d")
 
         contents = image_data
 
-        unique_file_name = str(uuid.uuid4()) + "_" + filename
-
         # filename 파라미터를 사용하여 업로드
         response = supabase.storage.from_(BUCKET_NAME).upload(
-            path=f"uploads/{formatted_date}/{unique_file_name}",
+            path=f"uploads/{formatted_date}/{filename}",
             file=contents,
             file_options={
                 "content-type": str(content_type or "application/octet-stream")
@@ -141,7 +137,7 @@ async def save_uploaded_image(
         )
 
         public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
-            f"uploads/{formatted_date}/{unique_file_name}"
+            f"uploads/{formatted_date}/{filename}"
         )
 
         return ImageResponse(private_img=response.fullPath, public_img=public_url)

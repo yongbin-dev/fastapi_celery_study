@@ -40,24 +40,22 @@ async def extract_text_sync(
 
         filename = image_file.filename or "unknown.png"
         encoded_name = quote(filename)  # URL-safe 인코딩
+        encoded_file_name = str(uuid.uuid4()) + "_" + encoded_name
+
         image_response = await common_service.save_image(
-            image_data, encoded_name, image_file.content_type
+            image_data, encoded_file_name, image_file.content_type
         )
 
         chain_id = str(uuid.uuid4())
         # 2. ML 서버의 OCR API 호출
         await service.call_ml_server_ocr(
             chain_id=chain_id,
-            image_path=image_response.public_img,
+            private_image_path=image_response.private_img,
+            public_image_path=image_response.public_img,
             language=language,
             confidence_threshold=confidence_threshold,
             use_angle_cls=use_angle_cls,
         )
-
-        # 3. OCR 결과를 DB에 저장
-        # ocr_execution = await common_service.save_ocr_execution_to_db(
-        #     db=db, image_response=image_response, ocr_result=ocr_result
-        # )
 
         return ResponseBuilder.success(
             data=image_response, message="OCR 텍스트 추출 완료"
@@ -66,6 +64,8 @@ async def extract_text_sync(
     except Exception as e:
         logger.error(f"OCR 처리 중 오류 발생: {str(e)}")
         return ResponseBuilder.error(message=f"OCR 처리 실패: {str(e)}")
+
+
 
 
 @router.get("/results")

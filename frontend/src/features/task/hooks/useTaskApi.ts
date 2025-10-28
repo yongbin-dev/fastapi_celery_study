@@ -25,19 +25,6 @@ export const useImageTask = () => {
   });
 };
 
-// 파이프라인 시작
-export const useStartPipeline = () => {
-  return useMutation({
-    mutationFn: taskApi.startPipeline,
-    onSuccess: (data) => {
-      console.log('파이프라인 시작 성공:', data.pipeline_id);
-    },
-    onError: (error) => {
-      console.error('파이프라인 시작 실패:', error);
-    },
-  });
-};
-
 // 파이프라인 상태 확인
 export const usePipelineStatus = (
   pipelineId: string,
@@ -68,6 +55,19 @@ export const useCancelPipeline = () => {
     },
     onError: (error) => {
       console.error('파이프라인 취소 실패:', error);
+    },
+  });
+};
+
+// PDF 추출
+export const useExtractPdf = () => {
+  return useMutation({
+    mutationFn: taskApi.extractPdf,
+    onSuccess: (data) => {
+      console.log('PDF 추출 성공:', data);
+    },
+    onError: (error) => {
+      console.error('PDF 추출 실패:', error);
     },
   });
 };

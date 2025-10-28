@@ -4,6 +4,7 @@ from ml_app.core.celery_client import get_celery_client
 from ml_app.models.ocr_model import get_ocr_model
 from shared.core.database import get_db
 from shared.core.logging import get_logger
+from shared.schemas.common import ImageResponse
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +21,8 @@ async def healthy():
 
 @router.post("/extract")
 async def run_ocr_image_extract(
-    image_path: str = Body(...),
+    public_image_path: str = Body(...),
+    private_image_path: str = Body(...),
     language: str = Body("korean"),
     confidence_threshold: float = Body(0.5),
     use_angle_cls: bool = Body(True),
@@ -29,16 +31,49 @@ async def run_ocr_image_extract(
 ):
     """image ocr"""
     # logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
-    image_data = await common_service.load_image(image_path)
+    image_data = await common_service.load_image(private_image_path)
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
     result = model.predict(image_data, confidence_threshold)
     return result
 
 
+
+@router.post("/extract-pdf")
+async def run_ocr_pdf_extract_async(
+    chain_id: str = Body(...),
+    image_response_list: list[ImageResponse] = Body(...),
+):
+    """
+    OCR 비동기 처리 (Celery 태스크)
+
+    태스크를 Celery에 전송하고 즉시 task_id를 반환합니다.
+    결과는 /ocr/result/{task_id}로 조회할 수 있습니다.
+    """
+
+    logger.info(f"image_response : {image_response_list}",  )
+    # logger.info(f"🚀 OCR 비동기 태스크 전송: {private_image_path}")
+
+    # Celery 클라이언트 가져오기
+    # celery_client = get_celery_client()
+
+    # 태스크 전송
+    # celery_client.send_task(
+    #     "tasks.start_pipeline",
+    #     file_path=private_image_path,
+    #     public_file_path=public_image_path,
+    #     options={},
+    # )
+
+    return ResponseBuilder.success(
+        data="",
+        message="태스크 전송 완료",
+    )
+
 @router.post("/extract-async")
 async def run_ocr_image_extract_async(
     chain_id: str = Body(...),
-    image_path: str = Body(...),
+    public_image_path: str = Body(...),
+    private_image_path: str = Body(...),
     language: str = Body("korean"),
     confidence_threshold: float = Body(0.5),
     use_angle_cls: bool = Body(True),
@@ -49,7 +84,7 @@ async def run_ocr_image_extract_async(
     태스크를 Celery에 전송하고 즉시 task_id를 반환합니다.
     결과는 /ocr/result/{task_id}로 조회할 수 있습니다.
     """
-    logger.info(f"🚀 OCR 비동기 태스크 전송: {image_path}")
+    logger.info(f"🚀 OCR 비동기 태스크 전송: {private_image_path}")
 
     # Celery 클라이언트 가져오기
     celery_client = get_celery_client()
@@ -57,7 +92,8 @@ async def run_ocr_image_extract_async(
     # 태스크 전송
     celery_client.send_task(
         "tasks.start_pipeline",
-        file_path=image_path,
+        file_path=private_image_path,
+        public_file_path=public_image_path,
         options={},
     )
 

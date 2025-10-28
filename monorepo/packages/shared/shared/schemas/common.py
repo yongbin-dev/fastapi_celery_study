@@ -2,7 +2,7 @@
 
 from typing import Any, Generic, Optional, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .response import PaginationMeta
 
@@ -25,3 +25,4 @@ class ApiResponse(BaseModel, Generic[T]):
 class ImageResponse(BaseModel):
     public_img: str = ""
     private_img: str = ""
+    model_config = ConfigDict(from_attributes=True)
