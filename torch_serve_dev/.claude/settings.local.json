@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(torch-model-archiver:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
