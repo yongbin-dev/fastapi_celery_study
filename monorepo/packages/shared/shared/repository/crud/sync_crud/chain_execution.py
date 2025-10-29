@@ -50,6 +50,7 @@ class CRUDChainExecution(
         *,
         chain_id: str,
         chain_name: str,
+        batch_id:str,
         total_tasks: int = 4,
         initiated_by: Optional[str] = None,
         input_data: Optional[dict] = None,
@@ -58,6 +59,7 @@ class CRUDChainExecution(
         chain_exec = ChainExecution(
             chain_id=chain_id,
             chain_name=chain_name,
+            batch_id=batch_id,
             total_tasks=total_tasks,
             status=ProcessStatus.PENDING.value,
             initiated_by=initiated_by,

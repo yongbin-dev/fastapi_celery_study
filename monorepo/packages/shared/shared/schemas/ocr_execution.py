@@ -8,7 +8,7 @@ class OCRExecutionCreate(BaseModel):
 
     chain_id: Optional[str] = Field(None, description="Celery chain ID (선택적)")
     image_path: str = Field(..., description="이미지 파일 경로")
-    public_path: str = Field(..., description="이미지 공개 경로")
+    public_path: str = Field(..., description="공개 이미지 파일 경로")
     status: str = Field(..., description="처리 상태 (success/failed)")
     error: Optional[str] = Field(None, description="에러 메시지")
 
@@ -18,7 +18,6 @@ class OCRExecutionCreate(BaseModel):
 class OCRExecutionResponse(BaseModel):
     chain_id: Optional[str] = Field(None, description="Celery chain ID (선택적)")
     image_path: str = Field(..., description="이미지 파일 경로")
-    public_path: str = Field(..., description="이미지 공개 경로")
     status: str = Field(..., description="처리 상태 (success/failed)")
     error: Optional[str] = Field(None, description="에러 메시지")
 

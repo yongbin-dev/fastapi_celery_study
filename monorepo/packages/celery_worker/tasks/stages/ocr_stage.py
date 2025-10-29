@@ -102,8 +102,8 @@ class OCRStage(PipelineStage):
         if not context.ocr_result:
             raise ValueError("OCR result is empty")
 
-        if not context.ocr_result.bbox:
-            raise ValueError("OCR failed to extract text")
+        # if not context.ocr_result.bbox:
+        #     raise ValueError("OCR failed to extract text")
 
     def save_db(self, context: PipelineContext):
         ocr_result = context.ocr_result

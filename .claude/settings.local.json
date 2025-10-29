@@ -34,7 +34,8 @@
       "Bash(git log -5 --pretty=format:'%s')",
       "mcp__serena__list_dir",
       "mcp__serena__activate_project",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

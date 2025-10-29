@@ -51,10 +51,7 @@ async def extract_text_sync_by_pdf(
             pdf_file_bytes=pdf_file_bytes
         )
 
-        chain_id = str(uuid.uuid4())
-
         await service.call_ml_server_pdf(
-            chain_id=chain_id,
             image_response_list=image_response_list
         )
 

@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import React, { useCallback, useRef, useState, type ChangeEvent } from 'react';
 
 import { OcrResultDisplay } from '../components';
 import { useExtractImage, useExtractText, useOcrResults } from '../hooks/useOcr';
 
+import { Upload } from 'lucide-react';
 import OcrImage from '../components/OcrImage';
 import type { OcrResponse } from '../types/ocr';
-import { Upload } from 'lucide-react';
 
 const OcrPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,7 +22,6 @@ const OcrPage: React.FC = () => {
     onSuccess: (data: any) => {
       refetch();
 
-      const privateImg = data.private_img;
       const publicIng = data.public_img;
       setSelectedImagePath(publicIng)
 
@@ -35,10 +34,6 @@ const OcrPage: React.FC = () => {
   const mutationImage = useExtractImage({
     onSuccess: (data: any) => {
       refetch();
-
-      const privateImg = data.private_img;
-      const publicIng = data.public_img;
-
 
       // console.log(data)
       // setSelectedResult(data);

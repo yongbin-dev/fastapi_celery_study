@@ -35,8 +35,6 @@ class LLMStage(PipelineStage):
         if not context.ocr_result:
             raise ValueError("OCR result is required for LLM analysis")
 
-        if not context.ocr_result.bbox:
-            raise ValueError("OCR bbox is empty")
 
     async def execute(self, context: PipelineContext) -> PipelineContext:
         """LLM으로 텍스트 구조화

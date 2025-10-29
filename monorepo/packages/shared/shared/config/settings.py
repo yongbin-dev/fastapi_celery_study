@@ -54,7 +54,8 @@ class Settings(BaseSettings):
 
     NEXT_PUBLIC_SUPABASE_URL: str = ""
     NEXT_PUBLIC_SUPABASE_ANON_KEY: str = ""
-    SUPABASE_STORAGE_BUCKET: str = "uploads"  # Supabase Storage 버킷 이름
+    SUPABASE_STORAGE_BUCKET: str = "yb_test_storage"  # Supabase Storage 버킷 이름
+    SUPABASE_STORAGE_PATH: str = "uploads"  # 버킷 내 저장 경로
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
     DB_POOL_SIZE: int = 20  # 데이터베이스 연결 풀 크기
     DB_MAX_OVERFLOW: int = 0  # 추가 연결 허용 개수
@@ -111,7 +112,7 @@ class Settings(BaseSettings):
     # 모델 서버 설정
     MODEL_SERVER_URL: str = "http://localhost:8002"
     MODEL_SERVER_TIMEOUT: int = 60
-
+    SUPABASE_SERVICE_ROLE_KEY : str=""
 
 # 전역 설정 객체
 settings = Settings()

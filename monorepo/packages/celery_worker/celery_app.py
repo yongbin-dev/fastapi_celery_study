@@ -21,7 +21,10 @@ celery_app = Celery(
     "celery_worker",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["tasks.pipeline_tasks"],  # 파이프라인 태스크 모듈
+    include=[
+        "tasks.pipeline_tasks",  # 파이프라인 태스크 모듈
+        "tasks.batch_tasks",     # 배치 태스크 모듈
+    ],
 )
 
 # Celery 설정

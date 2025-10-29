@@ -27,7 +27,6 @@ class OCRService(BaseService):
 
     async def call_ml_server_pdf(
         self,
-        chain_id: str,
         image_response_list: list[ImageResponse],
     ):
         """
@@ -46,13 +45,9 @@ class OCRService(BaseService):
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 url = f"{self.ml_server_url}/ocr/extract-pdf"
                 data = {
-                    "chain_id": chain_id,
-                    "image_response_list": [x.model_config for x in image_response_list]
+                    "chain_id": "test_chain",  # 임시 chain_id 추가
+                    "image_response_list": [x.dict() for x in image_response_list]
                 }
-
-                logger.info(
-                    f"ML 서버 OCR 호출 시작: {url}, 이미지 경로: {image_response_list}"
-                )
 
                 response = await client.post(url, json=data)
                 response.raise_for_status()
@@ -61,8 +56,12 @@ class OCRService(BaseService):
                 return result
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"ML 서버 OCR 호출 실패 (HTTP {e.response.status_code})")
-            raise Exception(f"ML 서버 OCR 호출 실패: {str(e)}")
+            error_detail = e.response.text
+            logger.error(
+                f"ML 서버 OCR 호출 실패 (HTTP {e.response.status_code})\n"
+                f"에러 상세: {error_detail}"
+            )
+            raise Exception(f"ML 서버 OCR 호출 실패: {error_detail}")
         except httpx.RequestError as e:
             logger.error(f"ML 서버 연결 실패: {str(e)}")
             raise Exception(f"ML 서버 연결 실패: {str(e)}")

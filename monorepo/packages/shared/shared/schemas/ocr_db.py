@@ -12,7 +12,6 @@ class OCRExtractDTO(BaseModel):
     """OCR 텍스트 추출 응답 스키마"""
 
     status: str = Field(..., description="태스크 상태")
-    image_path: Optional[str] = Field(default=None, description="전체 추출 텍스트")
     error: Optional[str] = Field(default=None, description="에러")
     text_boxes: List[OCRTextBoxCreate] = Field(
         default=[], description="추출된 텍스트 박스 목록"

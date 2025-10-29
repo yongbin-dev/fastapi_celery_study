@@ -10,6 +10,7 @@ from shared.schemas.enums import PipelineStatus
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
+from tasks.batch_tasks import start_batch_pipeline as start_batch
 
 logger = get_logger(__name__)
 
@@ -32,10 +33,11 @@ async def run_ocr_image_extract(
     db: AsyncSession = Depends(get_db),
 ):
     """image ocr"""
-    # logger.info(f"OCR 실행 시작: 이미지 크기 {len(image_data)} bytes")
+    logger.info(f"OCR 실행 시작: {private_image_path}")
     image_data = await common_service.load_image(private_image_path)
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
     result = model.predict(image_data, confidence_threshold)
+    logger.info(f"model_result: {result}")
     return result
 
 
@@ -52,20 +54,22 @@ async def run_ocr_pdf_extract_async(
     결과는 /ocr/result/{task_id}로 조회할 수 있습니다.
     """
 
-        # 2. 배치 파이프라인 시작
-    # options = {}  # 필요시 옵션 추가
-    # batch_id = start_batch(
-    #     batch_name=batch_name,
-    #     file_paths=file_paths,
-    #     options=options,
-    #     chunk_size=10,
-    #     initiated_by="ml_server",
-    # )
+    # ImageResponse 객체에서 private_img 경로만 추출
 
-    # logger.info(
-    #     f"배치 파이프라인 시작: batch_id={batch_id}, "
-    #     f"batch_name={batch_id}, files={len(image_response_list)}"
-    # )
+    # 2. 배치 파이프라인 시작
+    options = {}  # 필요시 옵션 추가
+    batch_id = start_batch(
+        batch_name=chain_id,
+        image_response_list=image_response_list,
+        options=options,
+        chunk_size=10,
+        initiated_by="ml_server",
+    )
+
+    logger.info(
+        f"배치 파이프라인 시작: batch_id={batch_id}, "
+        f"batch_name={batch_id}, files={len(image_response_list)}"
+    )
 
     return ResponseBuilder.success(
         data=PipelineStartResponse(

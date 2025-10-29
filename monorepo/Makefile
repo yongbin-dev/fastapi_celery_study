@@ -79,6 +79,11 @@ clean:
 	@find . -type f -name "*.py[co]" -delete
 	@find . -type d -name "__pycache__" -delete
 
+.PHONY: clear-data clean-data
+clear-data clean-data:
+	@echo "🗑️  모든 데이터를 삭제합니다 (Storage + Database)..."
+	@uv run python scripts/clear_all.py
+
 # ==============================================================================
 # 도움말
 # ==============================================================================
@@ -95,4 +100,6 @@ help:
 	@echo "  run-worker   - Celery 워커를 실행합니다."
 	@echo "  run-ml       - ML 서버를 실행합니다."
 	@echo "  clean        - 캐시 파일을 정리합니다."
+	@echo "  clear-data   - 모든 데이터를 삭제합니다 (Storage + Database)."
+	@echo "  clean-data   - clear-data와 동일합니다."
 

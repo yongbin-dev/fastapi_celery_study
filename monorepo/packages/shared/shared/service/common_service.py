@@ -61,7 +61,7 @@ class CommonService(BaseService):
                 image_responses.append(image_response)
                 logger.info(
                     f"'{original_filename}'의 {page_num + 1}"
-                    "번째 페이지를 이미지로 저장했습니다: {image_filename}"
+                    f"번째 페이지를 이미지로 저장했습니다: {image_filename}"
                 )
 
         return image_responses

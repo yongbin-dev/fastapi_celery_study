@@ -41,18 +41,6 @@ export const OcrResultDisplay: React.FC<OcrResultDisplayProps> = ({ result }) =>
               </p>
             </div>
           ))}
-          {result.text_boxes.map((box, index) => (
-            <div
-              key={index}
-              className="p-2 bg-white rounded border border-gray-200 text-sm"
-            >
-              <p className="text-gray-700">{box.text}</p>
-              <p className="text-xs text-gray-500">
-                신뢰도: {(box.confidence * 100).toFixed(0)}%
-              </p>
-            </div>
-          ))}
-
 
           {/* {result.text_boxes.length > 5 && (
             <p className="text-xs text-gray-500 text-center">
