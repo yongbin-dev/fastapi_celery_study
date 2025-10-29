@@ -13,18 +13,6 @@ export const useHistoryTasks = (params: TaskHistoryRequest) => {
   });
 };
 
-export const useImageTask = () => {
-  return useMutation({
-    mutationFn: taskApi.createModelTest,
-    onSuccess: (data) => {
-      console.log('AI 태스크 생성 성공:', data.task_id);
-    },
-    onError: (error) => {
-      console.error('AI 태스크 생성 실패:', error);
-    },
-  });
-};
-
 // 파이프라인 상태 확인
 export const usePipelineStatus = (
   pipelineId: string,

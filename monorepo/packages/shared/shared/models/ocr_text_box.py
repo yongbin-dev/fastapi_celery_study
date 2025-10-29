@@ -1,7 +1,7 @@
 # app/models/ocr_text_box.py
-from sqlalchemy import Column, Float, ForeignKey, Index, Integer, Text
+from sqlalchemy import Float, ForeignKey, Index, Integer, Text
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import mapped_column, relationship
 
 from .base import Base
 
@@ -15,8 +15,8 @@ class OCRTextBox(Base):
     __tablename__ = "ocr_text_boxes"
 
     # 기본 필드
-    id = Column(Integer, primary_key=True, comment="고유 식별자")
-    ocr_execution_id = Column(
+    id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
+    ocr_execution_id = mapped_column(
         Integer,
         ForeignKey("ocr_executions.id", ondelete="CASCADE"),
         nullable=False,
@@ -25,9 +25,9 @@ class OCRTextBox(Base):
     )
 
     # 텍스트 박스 정보
-    text = Column(Text, nullable=False, comment="추출된 텍스트")
-    confidence = Column(Float, nullable=False, comment="신뢰도 점수 (0.0 ~ 1.0)")
-    bbox = Column(
+    text = mapped_column(Text, nullable=False, comment="추출된 텍스트")
+    confidence = mapped_column(Float, nullable=False, comment="신뢰도 점수 (0.0 ~ 1.0)")
+    bbox = mapped_column(
         JSON,
         nullable=False,
         comment="바운딩 박스 좌표 JSON [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]",

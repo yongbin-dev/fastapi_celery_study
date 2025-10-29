@@ -1,9 +1,5 @@
 import { api } from '@/shared/utils/api';
-import type {
-  ModelTestRequest,
-  ModelTestResponse,
-  TaskHistoryRequest,
-} from '../types';
+import type { TaskHistoryRequest } from '../types';
 import type { ChainExecutionResponseDto } from '../types/pipeline';
 
 export const taskApi = {
@@ -24,26 +20,6 @@ export const taskApi = {
     const url = `/pipeline/history?${queryString ? `${queryString}` : ''}`;
 
     const response = await api.get<ChainExecutionResponseDto[]>(url);
-    return response.data;
-  },
-
-  // 모델 테스트 (이미지 두개 업로드)
-  createModelTest: async (
-    data: ModelTestRequest
-  ): Promise<ModelTestResponse> => {
-    const formData = new FormData();
-    formData.append('image1', data.image1);
-    formData.append('image2', data.image2);
-
-    const response = await api.post<ModelTestResponse>(
-      '/pipelines/model-test',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
     return response.data;
   },
 

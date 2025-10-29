@@ -1,10 +1,12 @@
 # app/domains/ocr/controllers/ocr_controller.py
+from app.domains.pipeline.schemas.pipeline_schemas import PipelineStartResponse
 from fastapi import APIRouter, Body, Depends
 from ml_app.core.celery_client import get_celery_client
 from ml_app.models.ocr_model import get_ocr_model
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.schemas.common import ImageResponse
+from shared.schemas.enums import PipelineStatus
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,24 +52,32 @@ async def run_ocr_pdf_extract_async(
     결과는 /ocr/result/{task_id}로 조회할 수 있습니다.
     """
 
-    logger.info(f"image_response : {image_response_list}",  )
-    # logger.info(f"🚀 OCR 비동기 태스크 전송: {private_image_path}")
+        # 2. 배치 파이프라인 시작
+    # options = {}  # 필요시 옵션 추가
+    # batch_id = start_batch(
+    #     batch_name=batch_name,
+    #     file_paths=file_paths,
+    #     options=options,
+    #     chunk_size=10,
+    #     initiated_by="ml_server",
+    # )
 
-    # Celery 클라이언트 가져오기
-    # celery_client = get_celery_client()
-
-    # 태스크 전송
-    # celery_client.send_task(
-    #     "tasks.start_pipeline",
-    #     file_path=private_image_path,
-    #     public_file_path=public_image_path,
-    #     options={},
+    # logger.info(
+    #     f"배치 파이프라인 시작: batch_id={batch_id}, "
+    #     f"batch_name={batch_id}, files={len(image_response_list)}"
     # )
 
     return ResponseBuilder.success(
-        data="",
-        message="태스크 전송 완료",
+        data=PipelineStartResponse(
+            context_id="",
+            status=PipelineStatus.STARTED,
+            message=f"배치 파이프라인 시작됨: {len(image_response_list)}개 이미지",
+        )
     )
+    # except Exception as e:
+    #     logger.error(f"배치 파이프라인 시작 실패: {str(e)}")
+    #     raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/extract-async")
 async def run_ocr_image_extract_async(

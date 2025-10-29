@@ -1,6 +1,6 @@
 # models/task_log.py
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy.orm import mapped_column, relationship
 
 from .base import Base
 
@@ -14,21 +14,21 @@ class TaskLog(Base):
     __tablename__ = "task_logs"
 
     # 기본 필드
-    id = Column(Integer, primary_key=True, comment="고유 식별자")
-    task_id = Column(
+    id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
+    task_id = mapped_column(
         String(255),
         unique=True,
         nullable=False,
         index=True,
         comment="Celery 작업 ID (UUID)",
     )
-    task_name = Column(
+    task_name = mapped_column(
         String(255),
         nullable=False,
         index=True,
         comment="작업 함수명 (예: app.tasks.send_email)",
     )
-    status = Column(
+    status = mapped_column(
         String(50),
         nullable=False,
         index=True,
@@ -36,22 +36,22 @@ class TaskLog(Base):
     )
 
     # 작업 파라미터
-    # args = Column(Text, comment="작업 위치 인자 (JSON 형식)")
-    # kwargs = Column(Text, comment="작업 키워드 인자 (JSON 형식)")
+    # args = mapped_column(Text, comment="작업 위치 인자 (JSON 형식)")
+    # kwargs = mapped_column(Text, comment="작업 키워드 인자 (JSON 형식)")
 
     # 결과 및 에러
-    # result = Column(Text, comment="작업 실행 결과 (JSON 형식)")
-    error = Column(String(512), comment="에러 메시지")
+    # result = mapped_column(Text, comment="작업 실행 결과 (JSON 형식)")
+    error = mapped_column(String(512), comment="에러 메시지")
 
     # 시간 추적
-    started_at = Column(DateTime, index=True, comment="작업 시작 시간")
-    finished_at = Column(DateTime, comment="작업 완료 시간")
+    started_at = mapped_column(DateTime, index=True, comment="작업 시작 시간")
+    finished_at = mapped_column(DateTime, comment="작업 완료 시간")
 
     # 재시도 정보
-    retries = Column(Integer, default=0, comment="재시도 횟수")
+    retries = mapped_column(Integer, default=0, comment="재시도 횟수")
 
     # 체인 실행과의 관계
-    chain_execution_id = Column(
+    chain_execution_id = mapped_column(
         Integer,
         ForeignKey("chain_executions.id", ondelete="SET NULL"),
         nullable=True,

@@ -162,3 +162,117 @@ async def get_pipeline_history(
     return ResponseBuilder.success(
         data=list
     )
+
+
+
+@router.post("/batch", response_model=PipelineStartResponse)
+async def start_batch_pipeline(
+    batch_name: str = Form(...),
+    files: list[UploadFile] = File(...),
+    common_service: CommonService = Depends(get_common_service),
+):
+    """배치 파이프라인 시작
+
+    여러 이미지를 배치로 처리합니다.
+
+    Args:
+        batch_name: 배치 이름
+        files: 업로드할 이미지 파일 목록
+        common_service: 공통 서비스
+
+    Returns:
+        배치 ID 및 시작 정보
+    """
+
+    pass
+
+
+@router.get("/batch/{batch_id}")
+async def get_batch_status(
+    batch_id: str,
+    db: Session = Depends(get_db),
+):
+    """배치 처리 상태 조회
+    Args:
+        batch_id: 배치 ID
+        db: DB 세션
+    Returns:
+        배치 처리 상태 정보
+    """
+    from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
+
+    try:
+        batch_execution = batch_execution_crud.get_by_batch_id(db, batch_id=batch_id)
+
+        if not batch_execution:
+            raise HTTPException(status_code=404, detail="배치를 찾을 수 없습니다")
+
+        # 진행률 계산
+        progress_percentage = batch_execution.get_progress_percentage()
+
+        # 예상 남은 시간 계산 (간단한 추정)
+        estimated_time_remaining = None
+        if batch_execution.started_at and batch_execution.completed_images > 0:
+            from datetime import datetime
+
+            elapsed = (datetime.now() - batch_execution.started_at).total_seconds()
+            avg_time_per_image = elapsed / batch_execution.completed_images
+            remaining_images = (
+                batch_execution.total_images - batch_execution.completed_images
+            )
+            estimated_time_remaining = avg_time_per_image * remaining_images
+
+        from shared.schemas.batch_execution import BatchStatusResponse
+
+        return ResponseBuilder.success(
+            data=BatchStatusResponse(
+                batch_id=batch_execution.batch_id,
+                status=batch_execution.status,
+                total_images=batch_execution.total_images,
+                completed_images=batch_execution.completed_images,
+                failed_images=batch_execution.failed_images,
+                progress_percentage=progress_percentage,
+                started_at=batch_execution.started_at,
+                finished_at=batch_execution.finished_at,
+                estimated_time_remaining=estimated_time_remaining,
+            )
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"배치 상태 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/batch")
+async def get_batch_list(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+):
+    """배치 목록 조회
+
+    Args:
+        limit: 최대 조회 개수
+        db: DB 세션
+
+    Returns:
+        배치 목록
+    """
+    from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
+    from shared.schemas.batch_execution import BatchExecutionResponse
+
+    try:
+        batches = batch_execution_crud.get_recent_batches(db, limit=limit)
+
+        batch_list = []
+        for batch in batches:
+            response = BatchExecutionResponse.model_validate(batch)
+            response.progress_percentage = batch.get_progress_percentage()
+            batch_list.append(response)
+
+        return ResponseBuilder.success(data=batch_list)
+
+    except Exception as e:
+        logger.error(f"배치 목록 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

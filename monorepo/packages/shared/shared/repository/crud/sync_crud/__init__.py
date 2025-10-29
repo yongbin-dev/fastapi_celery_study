@@ -7,6 +7,7 @@ SQLAlchemy Session을 사용하는 동기 CRUD 작업을 제공합니다.
 """
 
 from .base import CRUDBase
+from .batch_execution import CRUDBatchExecution, batch_execution_crud
 from .chain_execution import CRUDChainExecution, chain_execution_crud
 from .ocr_execution import CRUDOCRExecution, ocr_execution_crud
 from .ocr_text_box import CRUDOCRTextBox, ocr_text_box_crud
@@ -16,11 +17,13 @@ __all__ = [
     # Base CRUD classes
     "CRUDBase",
     # CRUD classes
+    "CRUDBatchExecution",
     "CRUDChainExecution",
     "CRUDOCRExecution",
     "CRUDOCRTextBox",
     "CRUDTaskLog",
     # CRUD instances (ready to use)
+    "batch_execution_crud",
     "chain_execution_crud",
     "ocr_execution_crud",
     "ocr_text_box_crud",

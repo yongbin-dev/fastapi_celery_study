@@ -1,3 +1,10 @@
+from .batch_execution import (
+    BatchExecutionCreate,
+    BatchExecutionResponse,
+    BatchExecutionUpdate,
+    BatchStartRequest,
+    BatchStatusResponse,
+)
 from .chain_execution import (
     ChainExecutionCreate,
     ChainExecutionResponse,
@@ -18,6 +25,12 @@ __all__ = [
     "ProcessStatus",
     # Stage models
     "StageInfo",
+    # Batch Execution
+    "BatchExecutionCreate",
+    "BatchExecutionUpdate",
+    "BatchExecutionResponse",
+    "BatchStartRequest",
+    "BatchStatusResponse",
     # Chain Execution
     "ChainExecutionCreate",
     "ChainExecutionUpdate",
