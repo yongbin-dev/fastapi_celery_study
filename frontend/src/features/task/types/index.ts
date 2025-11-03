@@ -40,3 +40,6 @@ export interface ChatPredictResponse {
   tokens_used?: number;
   processing_time?: number;
 }
+
+// pipeline 관련 타입 re-export
+export type { PipelineStatusResponse, ChainExecutionResponseDto } from './pipeline';

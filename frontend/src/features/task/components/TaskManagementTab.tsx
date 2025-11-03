@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { useCancelPipeline, usePipelineStatus, useExtractPdf, } from '../hooks';
-import { formatDate } from '@/shared/utils';
+import { useCancelPipeline, useExtractPdf, usePipelineStatus, useTestRunTask, } from '../hooks';
+import { TaskStatus } from '../types';
 
 interface TaskManagementTabProps {
 }
@@ -14,6 +14,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // React Query 훅들
+  const extractTestRunTaskMutation = useTestRunTask();
   const extractPdfMutation = useExtractPdf();
   const cancelPipelineMutation = useCancelPipeline();
 
@@ -32,6 +33,17 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
     if (event.target.files) {
       setSelectedFile(event.target.files[0]);
     }
+  };
+
+  const handleRunTestTask = () => {
+    extractTestRunTaskMutation.mutate(undefined , {
+      onSuccess: (data) => {
+        setPipelineId(data.task_id)
+      },
+      onError: (error) => {
+        alert('업로드 실패: ' + error.message);
+      }
+    });
   };
 
   const handleUpload = () => {
@@ -75,20 +87,12 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
 
   // 파이프라인 완료/실패 시 자동 새로고침 중단
   useEffect(() => {
+    
     if (pipelineStatus?.status === 'SUCCESS' || pipelineStatus?.status === 'FAILURE') {
       setIsAutoRefresh(false);
     }
   }, [pipelineStatus]);
 
-  const renderJson = (jsonString: string | null | undefined) => {
-    if (!jsonString) return <pre>N/A</pre>;
-    try {
-      const obj = JSON.parse(jsonString);
-      return <pre>{JSON.stringify(obj, null, 2)}</pre>;
-    } catch (e) {
-      return <pre>{jsonString}</pre>;
-    }
-  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -110,110 +114,102 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
         )}
 
         {/* 파이프라인 상태 표시 */}
-        {
-          pipelineStatus && (
-            <div className="mb-6 p-4 bg-white rounded-lg border">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold text-gray-800">파이프라인 진행 상황</h4>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${pipelineStatus.status === 'SUCCESS' ? 'bg-green-100 text-green-700' :
-                  pipelineStatus.status === 'FAILURE' ? 'bg-red-100 text-red-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                  {pipelineStatus.status}
-                </span>
-              </div>
-
-              {/* 전체 진행률 */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">전체 태스크</span>
-                  <span className="text-sm text-gray-500">{pipelineStatus.completed_tasks} / {pipelineStatus.total_tasks}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(pipelineStatus.completed_tasks / pipelineStatus.total_tasks) * 100}%` }}
-                  ></div>
+        {pipelineStatus && (
+          <div className="mb-4 p-4 rounded-lg border-2 transition-all duration-300">
+            {/* Pending 상태 */}
+            {pipelineStatus.status === TaskStatus.PENDING && (
+              <div className="bg-yellow-50 border-yellow-300">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="animate-spin h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-yellow-800 mb-1">처리 대기 중</h4>
+                    <p className="text-sm text-yellow-700">{pipelineStatus.message}</p>
+                    <div className="mt-2 pt-2 border-t border-yellow-200">
+                      <p className="text-xs text-yellow-600">
+                        <strong>Task ID:</strong> <span className="font-mono">{pipelineStatus.task_id}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* 체인 정보 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-blue-50 rounded">
-                <p className="text-sm text-blue-700"><strong>Chain ID:</strong> {pipelineStatus.chain_id}</p>
-                <p className="text-sm text-blue-700"><strong>Chain Name:</strong> {pipelineStatus.chain_name}</p>
-                <p className="text-sm text-blue-700"><strong>Created At:</strong> {formatDate(pipelineStatus.created_at)}</p>
-                <p className="text-sm text-blue-700"><strong>Started At:</strong> {formatDate(pipelineStatus.started_at)}</p>
-                <p className="text-sm text-blue-700"><strong>Finished At:</strong> {formatDate(pipelineStatus.finished_at)}</p>
-                <p className="text-sm text-blue-700"><strong>Initiated By:</strong> {pipelineStatus.initiated_by}</p>
-              </div>
-
-              <div className="mb-4 p-3 bg-gray-100 rounded">
-                <h5 className="font-medium text-gray-800 mb-2">Input Data</h5>
-                <div className="text-xs text-gray-600 overflow-x-auto">
-                  {renderJson(JSON.stringify(pipelineStatus.input_data))}
+            {/* Success 상태 */}
+            {pipelineStatus.status === TaskStatus.SUCCESS && (
+              <div className="bg-green-50 border-green-300">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-green-800 mb-1">처리 완료</h4>
+                    <p className="text-sm text-green-700">{pipelineStatus.message}</p>
+                    <div className="mt-2 pt-2 border-t border-green-200">
+                      <p className="text-xs text-green-600">
+                        <strong>Task ID:</strong> <span className="font-mono">{pipelineStatus.task_id}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-
-              {/* 태스크 목록 */}
-              <div>
-                <h5 className="font-medium text-gray-800 mb-4">Tasks</h5>
-                <div className="flow-root">
-                  <ul className="-mb-8">
-                    {pipelineStatus.task_logs.map((task, taskIdx) => (
-                      <li key={task.id}>
-                        <div className="relative pb-8">
-                          {taskIdx !== pipelineStatus.task_logs.length - 1 ? (
-                            <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                          ) : null}
-                          <div className="relative flex space-x-3">
-                            <div>
-                              <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${task.status === 'SUCCESS' ? 'bg-green-500' :
-                                task.status === 'FAILURE' ? 'bg-red-500' :
-                                  'bg-blue-500' // In-progress or pending
-                                }`}>
-                                {task.status === 'SUCCESS' ? (
-                                  <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                ) : task.status === 'FAILURE' ? (
-                                  <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                  </svg>
-                                ) : (
-                                  <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </span>
-                            </div>
-                            <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                              <div>
-                                <p className="text-sm text-gray-500">
-                                  {task.task_name}{' '}
-                                  <span className={`font-medium ${task.status === 'SUCCESS' ? 'text-green-600' :
-                                    task.status === 'FAILURE' ? 'text-red-600' :
-                                      'text-blue-600'
-                                    }`}>({task.status})</span>
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">Task ID: {task.task_id}</p>
-                              </div>
-                              <div className="text-right text-xs whitespace-nowrap text-gray-500">
-                                <p>Start: {formatDate(task.started_at)}</p>
-                                <p>Finish: {formatDate(task.finished_at)}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+            {/* Failure 상태 */}
+            {pipelineStatus.status ===  TaskStatus.FAILURE && (
+              <div className="bg-red-50 border-red-300">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-red-800 mb-1">처리 실패</h4>
+                    <p className="text-sm text-red-700">{pipelineStatus.message}</p>
+                    <div className="mt-2 pt-2 border-t border-red-200">
+                      <p className="text-xs text-red-600">
+                        <strong>Task ID:</strong> <span className="font-mono">{pipelineStatus.task_id}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-            </div>
-          )
-        }
+            {/* 기타 상태 (진행중 등) */}
+            {pipelineStatus.status !==  TaskStatus.PENDING &&
+             pipelineStatus.status !== TaskStatus.SUCCESS &&
+             pipelineStatus.status !== TaskStatus.FAILURE && (
+              <div className="bg-blue-50 border-blue-300">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="animate-pulse h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center">
+                      <div className="h-3 w-3 rounded-full bg-white"></div>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-blue-800 mb-1">
+                      상태: {pipelineStatus.status}
+                    </h4>
+                    <p className="text-sm text-blue-700">{pipelineStatus.message}</p>
+                    <div className="mt-2 pt-2 border-t border-blue-200">
+                      <p className="text-xs text-blue-600">
+                        <strong>Task ID:</strong> <span className="font-mono">{pipelineStatus.task_id}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="space-y-6">
 
@@ -312,6 +308,32 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
                     </>
                   )}
                 </button>
+
+              </div>
+
+              <div>
+                <button
+                  onClick={handleRunTestTask}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                >
+                  {extractTestRunTaskMutation.isPending ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>테스트 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      <span>테스트 파이프라인 시작</span>
+                    </>
+                  )}
+                </button>
+
               </div>
 
               {/* curl 명령어 */}

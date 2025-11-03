@@ -3,6 +3,7 @@ from app.domains.pipeline.schemas.pipeline_schemas import PipelineStartResponse
 from fastapi import APIRouter, Body, Depends
 from ml_app.core.celery_client import get_celery_client
 from ml_app.models.ocr_model import get_ocr_model
+from ml_app.schemas.response import TestResultDTO
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.schemas.common import ImageResponse
@@ -104,6 +105,7 @@ async def run_ocr_image_extract_async(
     celery_client = get_celery_client()
 
     # 태스크 전송
+
     celery_client.send_task(
         "tasks.start_pipeline",
         file_path=private_image_path,
@@ -116,11 +118,32 @@ async def run_ocr_image_extract_async(
         message="태스크 전송 완료",
     )
 
+@router.get("/test-async")
+async def run_test_task_async():
+
+    # Celery 클라이언트 가져오기
+    celery_client = get_celery_client()
+
+    result = celery_client.send_task(
+        "tasks.test_tasks",
+        options={},
+    )
+
+    task_id = result.id  # AsyncResult 객체에서 ID 문자열 추출
+    logger.info(f"Task ID: {task_id}")
+
+    return ResponseBuilder.success(
+        data={
+            "task_id": task_id  # 문자열 키와 문자열 값으로 변경
+        },
+        message="태스크 전송 완료",
+    )
+
 
 @router.get("/result/{task_id}")
 async def get_ocr_task_result(task_id: str):
     """
-    OCR 태스크 결과 조회
+    태스크 결과 조회
 
     Args:
         task_id: Celery 태스크 ID
@@ -140,14 +163,14 @@ async def get_ocr_task_result(task_id: str):
     if async_result.ready():
         # 완료됨
         if async_result.successful():
-            result = async_result.result
+            result = str(async_result.result)
             logger.info(f"✅ OCR 태스크 완료: task_id={task_id}")
             return ResponseBuilder.success(
-                data={
-                    "task_id": task_id,
-                    "status": "completed",
-                    "result": result,
-                },
+                data=TestResultDTO(
+                                task_id=task_id ,
+                                status = PipelineStatus.SUCCESS,
+                                result=result
+                            ),
                 message="태스크 완료",
             )
         else:
@@ -155,21 +178,42 @@ async def get_ocr_task_result(task_id: str):
             error = str(async_result.result)
             logger.error(f"❌ OCR 태스크 실패: task_id={task_id}, error={error}")
             return ResponseBuilder.success(
-                data={
-                    "task_id": task_id,
-                    "status": "failed",
-                    "error": error,
-                },
+                data=TestResultDTO(
+                    task_id=task_id ,
+                    status = PipelineStatus.FAILURE,
+                    result=error
+                ),
                 message="태스크 실패",
             )
     else:
         # 진행 중
         logger.info(f"⏳ OCR 태스크 진행 중: task_id={task_id}")
         return ResponseBuilder.success(
-            data={
-                "task_id": task_id,
-                "status": "pending",
-                "message": "태스크가 아직 처리 중입니다.",
-            },
+            data=TestResultDTO(
+                task_id=task_id ,
+                status = PipelineStatus.PENDING,
+                result=""
+            ),
             message="태스크 진행 중",
         )
+
+
+@router.get("/cancel/{task_id}")
+async def cancel_task_result(task_id: str):
+    """
+    태스크 취소
+
+    Args:
+        task_id: Celery 태스크 ID
+
+    """
+    logger.info(f"🔍 OCR 태스크 결과 조회: task_id={task_id}")
+
+    # Celery 클라이언트 가져오기
+    celery_client = get_celery_client()
+    result = celery_client.celery_app.control.revoke(
+        task_id,
+        terminate=True
+    )
+    logger.info(result)
+

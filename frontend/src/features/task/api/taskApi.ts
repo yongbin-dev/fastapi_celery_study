@@ -1,6 +1,6 @@
-import { api } from '@/shared/utils/api';
+import { api, ml_api } from '@/shared/utils/api';
 import type { TaskHistoryRequest } from '../types';
-import type { ChainExecutionResponseDto } from '../types/pipeline';
+import { type PipelineStatusResponse, type ChainExecutionResponseDto } from '../types/pipeline';
 
 export const taskApi = {
   getHistoryTasks: async (
@@ -23,21 +23,6 @@ export const taskApi = {
     return response.data;
   },
 
-  // 파이프라인 상태 확인
-  getPipelineStatus: async (
-    pipelineId: string
-  ): Promise<ChainExecutionResponseDto> => {
-    const response = await api.get<ChainExecutionResponseDto>(
-      `/pipeline/status/${pipelineId}`
-    );
-    return response.data;
-  },
-
-  // 파이프라인 취소
-  cancelPipeline: async (pipelineId: string): Promise<void> => {
-    await api.delete(`/pipeline/ai-pipeline/${pipelineId}/cancel`);
-  },
-
   // PDF 추출
   extractPdf: async (file: File): Promise<any> => {
     const formData = new FormData();
@@ -50,4 +35,30 @@ export const taskApi = {
     });
     return response.data;
   },
+
+
+  // PDF 추출
+  testRunTask: async (): Promise<any> => {
+    const response = await ml_api.get<any>('/ocr/test-async',  {
+      headers: {
+      },
+    });
+    return response.data;
+  },
+
+  // 파이프라인 상태 확인
+  getPipelineStatus: async (
+    pipelineId: string
+  ): Promise<PipelineStatusResponse> => {
+    const response = await ml_api.get<PipelineStatusResponse>(
+      `/ocr/result/${pipelineId}`
+    );
+    return response.data;
+  },
+
+
+  cancelTasks: async (pipelineId: string): Promise<void> => {
+    await ml_api.get(`/ocr/cancel/${pipelineId}`);
+  },
+
 };

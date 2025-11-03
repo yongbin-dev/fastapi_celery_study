@@ -7,13 +7,11 @@ import uuid
 
 from app.domains.ocr.services.ocr_service import OCRService, get_ocr_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from redis import Redis
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.repository.crud.async_crud import chain_execution_crud
 from shared.schemas.chain_execution import ChainExecutionResponse
 from shared.service.common_service import CommonService, get_common_service
-from shared.service.redis_service import RedisService, get_redis_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -119,20 +117,6 @@ async def create_pipeline(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
-
-@router.get("/status/{chain_id}")
-async def get_pipeline_status(
-        chain_id: str,
-        db: Session = Depends(get_db),
-        redis_service : RedisService = Depends(get_redis_service)
-    ):
-    redis_client : Redis = redis_service.get_redis_client()
-    result = redis_client.get("pipeline:context:"+chain_id)
-    logger.info(result)
-    return ResponseBuilder.success(
-        data=result,
-        message=""
-    )
 
 # response_model=List[PipelineHistoryResponse]
 @router.get("/history", )

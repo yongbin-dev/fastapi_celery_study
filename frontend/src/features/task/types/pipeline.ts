@@ -1,3 +1,5 @@
+import { TaskStatus } from ".";
+
 export interface TaskLog {
   id: number;
   task_id: string;
@@ -33,4 +35,12 @@ export interface ChainExecutionResponseDto {
   final_result: string | null;
   error_message: string | null;
   task_logs: TaskLog[];
+}
+
+// 파이프라인 상태 응답 (간단한 버전)
+export interface PipelineStatusResponse {
+  task_id: string;
+  status: TaskStatus;
+  message: string;
+  result : string;
 }

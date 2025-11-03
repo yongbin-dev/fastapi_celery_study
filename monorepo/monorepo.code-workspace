@@ -32,7 +32,7 @@
       },
       {
         "name": "celery",
-        "depth": 2,
+        "depth": 5,
         "includeAllSymbols": true
       }
     ],

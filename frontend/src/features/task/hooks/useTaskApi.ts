@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/taskApi';
 import type { TaskHistoryRequest } from '../types';
-import type { ChainExecutionResponseDto } from '../types/pipeline';
+import type { ChainExecutionResponseDto, PipelineStatusResponse } from '../types/pipeline';
 
 // 파이프라인 이력 조회
 export const useHistoryTasks = (params: TaskHistoryRequest) => {
@@ -19,7 +19,7 @@ export const usePipelineStatus = (
   enabled = false,
   refetchInterval?: number
 ) => {
-  return useQuery<ChainExecutionResponseDto>({
+  return useQuery<PipelineStatusResponse>({
     queryKey: ['pipeline-status', pipelineId],
     queryFn: () => taskApi.getPipelineStatus(pipelineId),
     enabled: enabled && !!pipelineId,
@@ -33,7 +33,7 @@ export const useCancelPipeline = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: taskApi.cancelPipeline,
+    mutationFn: taskApi.cancelTasks,
     onSuccess: (_, pipelineId) => {
       console.log('파이프라인 취소 성공');
       // 관련된 쿼리들을 무효화
@@ -47,7 +47,7 @@ export const useCancelPipeline = () => {
   });
 };
 
-// PDF 추출
+
 export const useExtractPdf = () => {
   return useMutation({
     mutationFn: taskApi.extractPdf,
@@ -57,5 +57,13 @@ export const useExtractPdf = () => {
     onError: (error) => {
       console.error('PDF 추출 실패:', error);
     },
+  });
+};
+
+// PDF 추출
+export const useTestRunTask = () => {
+  return useMutation({
+    mutationFn: taskApi.testRunTask,
+    
   });
 };
