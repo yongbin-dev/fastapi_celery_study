@@ -17,6 +17,7 @@ dependencies = [
     "celery>=5.3.0",  # Celery 태스크 호출
     "kombu>=5.3.0",
     "vllm==0.6.6",
+    # grpcio-reflection은 protobuf 4.x를 요구하므로 제외 (디버깅용이므로 필수 아님)
 ]
 
 

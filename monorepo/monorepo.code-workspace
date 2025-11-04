@@ -140,10 +140,10 @@
         "args": [
           "ml_app.main:app",
           "--reload",
-          "--host",
-          "0.0.0.0",
-          "--port",
-          "8002"
+          // "--host",
+          // "0.0.0.0",
+          // "--port",
+          // "8002"
         ],
         "justMyCode": false,
         "envFile": "${workspaceFolder:Root}/.env.development",
@@ -154,6 +154,28 @@
         "cwd": "${workspaceFolder:Root}/packages/ml_server",
         "python": "${workspaceFolder:Root}/.venv/bin/python"
       }
+      // {
+      //   "name": "🤖 ML Server (ml_server)",
+      //   "type": "debugpy",
+      //   "request": "launch",
+      //   "module": "uvicorn",
+      //   "args": [
+      //     "ml_app.main:app",
+      //     "--reload",
+      //     "--host",
+      //     "0.0.0.0",
+      //     "--port",
+      //     "8002"
+      //   ],
+      //   "justMyCode": false,
+      //   "envFile": "${workspaceFolder:Root}/.env.development",
+      //   "env": {
+      //     "ENVIRONMENT": "development"
+      //   },
+      //   "console": "integratedTerminal",
+      //   "cwd": "${workspaceFolder:Root}/packages/ml_server",
+      //   "python": "${workspaceFolder:Root}/.venv/bin/python"
+      // }
     ],
     "compounds": [
       {

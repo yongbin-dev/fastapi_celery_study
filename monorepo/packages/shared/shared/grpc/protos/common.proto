@@ -1,0 +1,36 @@
+// packages/shared/shared/grpc/protos/common.proto
+syntax = "proto3";
+
+package common;
+
+// 타임스탬프
+message Timestamp {
+    int64 seconds = 1;
+    int32 nanos = 2;
+}
+
+// 바운딩 박스 (텍스트 영역 좌표)
+message BoundingBox {
+    repeated float coordinates = 1;  // [x1, y1, x2, y2, x3, y3, x4, y4]
+}
+
+// 메타데이터
+message Metadata {
+    map<string, string> data = 1;
+}
+
+// 에러 정보
+message ErrorInfo {
+    string code = 1;
+    string message = 2;
+    string details = 3;
+}
+
+// 상태 코드
+enum Status {
+    STATUS_UNKNOWN = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_PENDING = 3;
+    STATUS_IN_PROGRESS = 4;
+}
