@@ -45,15 +45,20 @@ class AsyncCRUDChainExecution(
         *,
         chain_id: str,
         chain_name: str,
+        batch_id: Optional[str] = None,
         total_tasks: int = 4,
         initiated_by: Optional[str] = None,
         input_data: Optional[dict] = None,
     ) -> ChainExecution:
         """새 체인 실행 생성"""
         try:
+            # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
+            batch_id = batch_id if batch_id else None
+
             chain_exec = ChainExecution(
                 chain_id=chain_id,
                 chain_name=chain_name,
+                batch_id=batch_id,
                 total_tasks=total_tasks,
                 status=ProcessStatus.PENDING.value,
                 initiated_by=initiated_by,

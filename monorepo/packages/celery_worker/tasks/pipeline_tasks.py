@@ -5,7 +5,7 @@
 
 import json
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from celery import chain
 from celery_app import celery_app
@@ -63,6 +63,7 @@ def load_context_from_redis(context_id: str) -> PipelineContext:
         data_dict = data
 
     return PipelineContext(**data_dict)  # type: ignore
+
 
 # 각 단계별 Celery 태스크
 @celery_app.task(
@@ -130,15 +131,15 @@ def llm_stage_task(self, context_id: str) -> str:
 
 @celery_app.task(bind=True, name="tasks.start_pipeline")
 def start_pipeline_task(
-    self, image_response: ImageResponse, batch_id : str ,  options: Dict[str, Any]
+    self, image_response: ImageResponse, batch_id: str, options: Dict[str, Any]
 ) -> str:
     """파이프라인 시작 (Celery Task)"""
-    return start_pipeline(image_response, batch_id,options)
+    return start_pipeline(image_response, batch_id, options)
 
 
 # 파이프라인 시작 함수
 def start_pipeline(
-    image_response: ImageResponse, batch_id : str ,  options: Dict[str, Any]
+    image_response: ImageResponse, batch_id: Optional[str], options: Dict[str, Any] = {}
 ) -> str:
     """CR 추출 파이프라인 시작
 
@@ -155,6 +156,10 @@ def start_pipeline(
     # 2. DB에 ChainExecution 생성
     from shared.repository.crud.sync_crud.chain_execution import chain_execution_crud
 
+    logger.info(image_response)
+
+    # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
+    batch_id = batch_id if batch_id else None
 
     with get_db_manager().get_sync_session() as session:
         if not session:
@@ -169,7 +174,6 @@ def start_pipeline(
             initiated_by="api_server",
             input_data={"file_path": image_response.private_img, "options": options},
         )
-
 
     # 3. Context 생성 및 Redis 저장
     context = PipelineContext(
