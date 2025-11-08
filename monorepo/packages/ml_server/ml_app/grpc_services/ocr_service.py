@@ -4,7 +4,7 @@
 import grpc
 from ml_app.models.ocr_model import get_ocr_model
 from shared.core.logging import get_logger
-from shared.grpc.generated import common_pb2, ocr_pb2, ocr_pb2_grpc
+from shared.grpc.generated import common_pb2, ocr_pb2, ocr_pb2_grpc  # type: ignore
 from shared.service.common_service import CommonService
 
 logger = get_logger(__name__)
@@ -159,7 +159,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
 
         logger.info(f"gRPC 배치 OCR 완료: {batch_id}")
 
-    async def check_healthy(
+    async def check_health(
         self,
         request: ocr_pb2.HealthCheckRequest,
         context: grpc.aio.ServicerContext

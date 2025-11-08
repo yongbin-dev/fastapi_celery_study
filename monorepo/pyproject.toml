@@ -14,16 +14,24 @@ shared = { workspace = true }
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-exclude = [".git", ".venv", ".mypy_cache", ".pytest_cache", "__pycache__"]
+exclude = [
+    ".git",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache",
+    "__pycache__",
+    # "**/grpc/generated/**",  # gRPC 생성 파일 제외
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+ignore = []
 
-[tool.pyright]
-typeCheckingMode = "basic"
-pythonVersion = "3.12"
-include = ["packages/*"]
-exclude = [".git", ".venv", ".pytest_cache", "__pycache__"]
+[tool.ruff.lint.per-file-ignores]
+# gRPC 생성 파일은 모든 룰 무시
+"**/grpc/generated/*" = ["E", "F", "I", "N", "W"]
+
+# Pyright 설정은 제거됨 - VSCode에서는 Pylance 사용
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
@@ -34,6 +42,5 @@ addopts = ["--strict-markers", "--verbose"]
 
 [dependency-groups]
 dev = [
-    "pyright>=1.1.406",
     "ruff>=0.14.0",
 ]

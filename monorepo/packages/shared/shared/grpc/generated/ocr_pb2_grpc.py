@@ -72,17 +72,17 @@ class OCRServiceServicer(object):
 def add_OCRServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ExtractText': grpc.unary_unary_rpc_method_handler(
-                    servicer.ExtractText,
+                    servicer.extract_text,  # Python snake_case method
                     request_deserializer=ocr__pb2.OCRRequest.FromString,
                     response_serializer=ocr__pb2.OCRResponse.SerializeToString,
             ),
             'ExtractTextBatch': grpc.unary_stream_rpc_method_handler(
-                    servicer.ExtractTextBatch,
+                    servicer.extract_text_batch,  # Python snake_case method
                     request_deserializer=ocr__pb2.OCRBatchRequest.FromString,
                     response_serializer=ocr__pb2.OCRBatchProgress.SerializeToString,
             ),
             'CheckHealth': grpc.unary_unary_rpc_method_handler(
-                    servicer.CheckHealth,
+                    servicer.check_health,  # Python snake_case method
                     request_deserializer=ocr__pb2.HealthCheckRequest.FromString,
                     response_serializer=ocr__pb2.HealthCheckResponse.SerializeToString,
             ),
@@ -90,7 +90,7 @@ def add_OCRServiceServicer_to_server(servicer, server):
     generic_handler = grpc.method_handlers_generic_handler(
             'ocr.OCRService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('ocr.OCRService', rpc_method_handlers)
+    # server.add_registered_method_handlers('ocr.OCRService', rpc_method_handlers)  # Commented for grpcio 1.59.5 compatibility
 
 
  # This class is part of an EXPERIMENTAL API.

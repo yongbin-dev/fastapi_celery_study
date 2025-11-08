@@ -24,7 +24,7 @@ STATUS_PENDING: Status
 STATUS_IN_PROGRESS: Status
 
 class Timestamp(_message.Message):
-    __slots__ = ("seconds", "nanos")
+    __slots__: tuple[str, ...] = ("seconds", "nanos")
     SECONDS_FIELD_NUMBER: _ClassVar[int]
     NANOS_FIELD_NUMBER: _ClassVar[int]
     seconds: int
@@ -32,15 +32,15 @@ class Timestamp(_message.Message):
     def __init__(self, seconds: _Optional[int] = ..., nanos: _Optional[int] = ...) -> None: ...
 
 class BoundingBox(_message.Message):
-    __slots__ = ("coordinates",)
+    __slots__: tuple[str, ...] = ("coordinates",)
     COORDINATES_FIELD_NUMBER: _ClassVar[int]
     coordinates: _containers.RepeatedScalarFieldContainer[float]
     def __init__(self, coordinates: _Optional[_Iterable[float]] = ...) -> None: ...
 
 class Metadata(_message.Message):
-    __slots__ = ("data",)
+    __slots__: tuple[str, ...] = ("data",)
     class DataEntry(_message.Message):
-        __slots__ = ("key", "value")
+        __slots__: tuple[str, ...] = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: str
@@ -51,7 +51,7 @@ class Metadata(_message.Message):
     def __init__(self, data: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class ErrorInfo(_message.Message):
-    __slots__ = ("code", "message", "details")
+    __slots__: tuple[str, ...] = ("code", "message", "details")
     CODE_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     DETAILS_FIELD_NUMBER: _ClassVar[int]

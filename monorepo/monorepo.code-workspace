@@ -18,6 +18,24 @@
     // Pylance가 shared 패키지를 인식하도록 설정
     "python.analysis.extraPaths": ["${workspaceFolder}/packages/shared"],
 
+    // Pylance 제외 설정 (gRPC generated 파일)
+    "python.analysis.exclude": [
+      "**/grpc/generated/**",
+      "**/__pycache__",
+      "**/.venv"
+    ],
+    "python.analysis.ignore": [
+      "**/grpc/generated/**/*.py",
+      "**/grpc/generated/**/*.pyi"
+    ],
+
+    // Pylance 타입 체크 설정
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+      "reportGeneralTypeIssues": "none",
+      "reportOptionalMemberAccess": "none"
+    },
+
     // Pylance 설정
     "python.analysis.packageIndexDepths": [
       {
@@ -37,11 +55,17 @@
       }
     ],
 
-    // 포매팅 설정
+    // Ruff 설정 (린팅 + 포매팅)
+    "ruff.enable": true,
+    "ruff.organizeImports": true,
+
+    // 포매팅 설정 (Ruff 사용)
     "[python]": {
       "editor.formatOnSave": true,
+      "editor.defaultFormatter": "charliermarsh.ruff",
       "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit"
       }
     },
 
