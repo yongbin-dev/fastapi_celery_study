@@ -12,6 +12,7 @@ from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks.batch_tasks import start_batch_pipeline as start_batch
+from tasks.pipeline_tasks import start_pipeline as start_pipeline
 
 logger = get_logger(__name__)
 
@@ -40,7 +41,6 @@ async def run_ocr_image_extract(
     result = model.predict(image_data, confidence_threshold)
     logger.info(f"model_result: {result}")
     return result
-
 
 
 @router.post("/extract-pdf")
@@ -79,9 +79,6 @@ async def run_ocr_pdf_extract_async(
             message=f"배치 파이프라인 시작됨: {len(image_response_list)}개 이미지",
         )
     )
-    # except Exception as e:
-    #     logger.error(f"배치 파이프라인 시작 실패: {str(e)}")
-    #     raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/extract-async")
@@ -101,41 +98,17 @@ async def run_ocr_image_extract_async(
     """
     logger.info(f"🚀 OCR 비동기 태스크 전송: {private_image_path}")
 
-    # Celery 클라이언트 가져오기
-    celery_client = get_celery_client()
-
     # 태스크 전송
-
-    celery_client.send_task(
-        "tasks.start_pipeline",
-        file_path=private_image_path,
-        public_file_path=public_image_path,
+    start_pipeline(
+        image_response=ImageResponse(
+            public_img=public_image_path, private_img=private_image_path
+        ),
+        batch_id=None,
         options={},
     )
 
     return ResponseBuilder.success(
         data="",
-        message="태스크 전송 완료",
-    )
-
-@router.get("/test-async")
-async def run_test_task_async():
-
-    # Celery 클라이언트 가져오기
-    celery_client = get_celery_client()
-
-    result = celery_client.send_task(
-        "tasks.test_tasks",
-        options={},
-    )
-
-    task_id = result.id  # AsyncResult 객체에서 ID 문자열 추출
-    logger.info(f"Task ID: {task_id}")
-
-    return ResponseBuilder.success(
-        data={
-            "task_id": task_id  # 문자열 키와 문자열 값으로 변경
-        },
         message="태스크 전송 완료",
     )
 
@@ -167,10 +140,8 @@ async def get_ocr_task_result(task_id: str):
             logger.info(f"✅ OCR 태스크 완료: task_id={task_id}")
             return ResponseBuilder.success(
                 data=TestResultDTO(
-                                task_id=task_id ,
-                                status = PipelineStatus.SUCCESS,
-                                result=result
-                            ),
+                    task_id=task_id, status=PipelineStatus.SUCCESS, result=result
+                ),
                 message="태스크 완료",
             )
         else:
@@ -179,9 +150,7 @@ async def get_ocr_task_result(task_id: str):
             logger.error(f"❌ OCR 태스크 실패: task_id={task_id}, error={error}")
             return ResponseBuilder.success(
                 data=TestResultDTO(
-                    task_id=task_id ,
-                    status = PipelineStatus.FAILURE,
-                    result=error
+                    task_id=task_id, status=PipelineStatus.FAILURE, result=error
                 ),
                 message="태스크 실패",
             )
@@ -190,9 +159,7 @@ async def get_ocr_task_result(task_id: str):
         logger.info(f"⏳ OCR 태스크 진행 중: task_id={task_id}")
         return ResponseBuilder.success(
             data=TestResultDTO(
-                task_id=task_id ,
-                status = PipelineStatus.PENDING,
-                result=""
+                task_id=task_id, status=PipelineStatus.PENDING, result=""
             ),
             message="태스크 진행 중",
         )
@@ -211,9 +178,5 @@ async def cancel_task_result(task_id: str):
 
     # Celery 클라이언트 가져오기
     celery_client = get_celery_client()
-    result = celery_client.celery_app.control.revoke(
-        task_id,
-        terminate=True
-    )
+    result = celery_client.celery_app.control.revoke(task_id, terminate=True)
     logger.info(result)
-

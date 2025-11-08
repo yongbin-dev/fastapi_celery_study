@@ -17,6 +17,7 @@ class Status(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     STATUS_FAILURE: _ClassVar[Status]
     STATUS_PENDING: _ClassVar[Status]
     STATUS_IN_PROGRESS: _ClassVar[Status]
+
 STATUS_UNKNOWN: Status
 STATUS_SUCCESS: Status
 STATUS_FAILURE: Status
@@ -29,7 +30,9 @@ class Timestamp(_message.Message):
     NANOS_FIELD_NUMBER: _ClassVar[int]
     seconds: int
     nanos: int
-    def __init__(self, seconds: _Optional[int] = ..., nanos: _Optional[int] = ...) -> None: ...
+    def __init__(
+        self, seconds: _Optional[int] = ..., nanos: _Optional[int] = ...
+    ) -> None: ...
 
 class BoundingBox(_message.Message):
     __slots__: tuple[str, ...] = ("coordinates",)
@@ -45,7 +48,10 @@ class Metadata(_message.Message):
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: str
         value: str
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+        def __init__(
+            self, key: _Optional[str] = ..., value: _Optional[str] = ...
+        ) -> None: ...
+
     DATA_FIELD_NUMBER: _ClassVar[int]
     data: _containers.ScalarMap[str, str]
     def __init__(self, data: _Optional[_Mapping[str, str]] = ...) -> None: ...
@@ -58,4 +64,9 @@ class ErrorInfo(_message.Message):
     code: str
     message: str
     details: str
-    def __init__(self, code: _Optional[str] = ..., message: _Optional[str] = ..., details: _Optional[str] = ...) -> None: ...
+    def __init__(
+        self,
+        code: _Optional[str] = ...,
+        message: _Optional[str] = ...,
+        details: _Optional[str] = ...,
+    ) -> None: ...

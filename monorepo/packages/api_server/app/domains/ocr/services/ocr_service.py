@@ -46,7 +46,7 @@ class OCRService(BaseService):
                 url = f"{self.ml_server_url}/ocr/extract-pdf"
                 data = {
                     "chain_id": "test_chain",  # 임시 chain_id 추가
-                    "image_response_list": [x.dict() for x in image_response_list]
+                    "image_response_list": [x.dict() for x in image_response_list],
                 }
 
                 response = await client.post(url, json=data)
@@ -58,6 +58,7 @@ class OCRService(BaseService):
         except httpx.HTTPStatusError as e:
             error_detail = e.response.text
             logger.error(
+                f"{self.ml_server_url}  "
                 f"ML 서버 OCR 호출 실패 (HTTP {e.response.status_code})\n"
                 f"에러 상세: {error_detail}"
             )
@@ -68,7 +69,6 @@ class OCRService(BaseService):
         except Exception as e:
             logger.error(f"ML 서버 OCR 호출 중 예외 발생: {str(e)}")
             raise
-
 
     async def call_ml_server_ocr(
         self,

@@ -110,14 +110,14 @@ class Settings(BaseSettings):
     OCR_REC: str = ""
 
     # 모델 서버 설정
-    MODEL_SERVER_URL: str = "http://localhost:8002"
-    OCR_MODEL_SERVER_URL: str = "http://localhost:8001"  # OCR 전용 서버 URL
+    MODEL_SERVER_URL: str = "http://localhost:8002/api/model"  # OCR 전용 서버 URL
     MODEL_SERVER_TIMEOUT: int = 60
     ML_SERVER_PORT: int = 8002
-    SUPABASE_SERVICE_ROLE_KEY : str=""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
-    USE_GRPC : str = "true"
-    GRPC_PORT : int = 50051
+    USE_GRPC: str = "true"
+    GRPC_PORT: int = 50051
+
 
 # 전역 설정 객체
 settings = Settings()

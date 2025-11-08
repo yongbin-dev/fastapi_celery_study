@@ -35,7 +35,6 @@ class LLMStage(PipelineStage):
         if not context.ocr_result:
             raise ValueError("OCR result is required for LLM analysis")
 
-
     async def execute(self, context: PipelineContext) -> PipelineContext:
         """LLM으로 텍스트 구조화
 
@@ -148,5 +147,4 @@ Return as JSON.
                 raise ValueError(f"Missing required fields: {missing_fields}")
 
     def save_db(self, context: PipelineContext):
-
         pass
