@@ -15,14 +15,22 @@ logger = get_logger(__name__)
 
 class CommonService(BaseService):
     """공통 서비스 클래스"""
+
     async def save_pdf(
         self,
         original_filename: str,
         pdf_file_bytes: bytes,
-        ) ->  list[ImageResponse]:
+    ) -> list[ImageResponse]:
         """
-        PDF의 각 페이지를 이미지로 변환하여 저장하고,
+        PDF 파일 원본과 각 페이지를 이미지로 변환하여 같은 폴더에 저장하고,
         저장된 이미지 경로 리스트를 반환합니다.
+
+        저장 구조:
+            {uuid}_{파일명}/
+                ├── original.pdf (원본 PDF)
+                ├── page_1.png
+                ├── page_2.png
+                └── ...
 
         Args:
             pdf_file_bytes (bytes): PDF 파일의 바이트 데이터
@@ -32,12 +40,26 @@ class CommonService(BaseService):
             list[ImageResponse]: 각 페이지에 대해 저장된 이미지 정보
         """
         image_responses = []
+
         # 확장자를 안전하게 제거
-        if '.' in original_filename:
-            base_filename = original_filename.rsplit('.', 1)[0]
+        if "." in original_filename:
+            base_filename = original_filename.rsplit(".", 1)[0]
+        else:
+            base_filename = original_filename
 
-        encoded_base_filename = str(uuid.uuid4()) + "_" + base_filename
+        # UUID 기반 폴더명 생성
+        folder_name = f"{uuid.uuid4()}"
 
+        # 1. 원본 PDF를 같은 폴더에 저장
+        pdf_filename = f"{folder_name}/{base_filename}.pdf"
+        await self.save_image(
+            image_data=pdf_file_bytes,
+            filename=pdf_filename,
+            content_type="application/pdf",
+        )
+        logger.info(f"원본 PDF 저장 완료: {pdf_filename}")
+
+        # 2. PDF의 각 페이지를 이미지로 변환하여 저장
         with fitz.open(stream=pdf_file_bytes, filetype="pdf") as doc:
             for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
@@ -49,14 +71,14 @@ class CommonService(BaseService):
 
                 img_bytes = pix.tobytes("png")
 
-                # 이미지 파일명 생성 (e.g., original_filename_page_1.png)
-                image_filename = f"{encoded_base_filename}/page_{page_num + 1}.png"
+                # 이미지 파일명 생성 (같은 폴더에 저장)
+                image_filename = f"{folder_name}/page_{page_num + 1}.png"
 
                 # 이미지 저장
                 image_response = await self.save_image(
                     image_data=img_bytes,
                     filename=image_filename,
-                    content_type="image/png"
+                    content_type="image/png",
                 )
                 image_responses.append(image_response)
                 logger.info(

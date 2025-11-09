@@ -11,7 +11,8 @@ from shared.schemas.enums import PipelineStatus
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks.pipeline_tasks import start_pipeline as start_pipeline
+from tasks.batch_tasks import start_batch_pipeline_from_pdf
+from tasks.pipeline_tasks import start_pipeline
 
 logger = get_logger(__name__)
 
@@ -44,7 +45,6 @@ async def run_ocr_image_extract(
 
 @router.post("/extract-pdf")
 async def run_ocr_pdf_extract_async(
-    chain_id: str = Body(...),
     pdf_file: UploadFile = File(...),
     common_service: CommonService = Depends(get_common_service),
 ):
@@ -53,36 +53,16 @@ async def run_ocr_pdf_extract_async(
 
     PDF 파일을 업로드받아 이미지로 변환 후 OCR을 수행합니다.
     """
-    logger.info(f"PDF OCR 처리 시작: chain_id={chain_id}, filename={pdf_file.filename}")
+    file_bytes = await pdf_file.read()
 
-    # PDF 파일 읽기
-    filename = await pdf_file.filename
-    pdf_file_bytes = await pdf_file.read()
-
-    image_response_list = await common_service.save_pdf(
-        original_filename=filename, pdf_file_bytes=pdf_file_bytes
+    start_batch_pipeline_from_pdf(
+        pdf_file_bytes=file_bytes,
+        original_filename=pdf_file.filename or "",
     )
-
-    result_img = []
-    for image_response in image_response_list:
-        image_data = await common_service.load_image(
-            image_path=image_response.private_img
-        )
-
-        result_img.append(image_data)
-
-    model = get_ocr_model()
-
-    result = model.predict_batch(
-        result_img,
-        confidence_threshold=0.5,
-    )
-
-    logger.info(result)
 
     return ResponseBuilder.success(
         data=PipelineStartResponse(
-            context_id=chain_id,
+            context_id="",
             status=PipelineStatus.STARTED,
             message=f"PDF 파일 OCR 처리 시작됨: {pdf_file.filename}",
         )

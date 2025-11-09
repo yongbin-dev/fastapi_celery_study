@@ -43,9 +43,8 @@ class OCRService(BaseService):
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                url = f"{self.ml_server_url}/ocr/extract-images"
+                url = f"{self.ml_server_url}/ocr/extract-pdf"
                 data = {
-                    "chain_id": "test_chain",  # 임시 chain_id 추가
                     "image_response_list": [x.dict() for x in image_response_list],
                 }
 

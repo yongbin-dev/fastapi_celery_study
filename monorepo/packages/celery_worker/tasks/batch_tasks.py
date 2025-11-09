@@ -1,6 +1,7 @@
 """배치 파이프라인 Celery 태스크
 
 여러 이미지를 배치로 처리하는 Celery 태스크 모음
+PDF 파일을 이미지로 변환 후 배치 처리도 지원
 """
 
 import uuid
@@ -12,6 +13,7 @@ from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
 from shared.pipeline.exceptions import RetryableError
 from shared.schemas.common import ImageResponse
+from shared.service.common_service import CommonService
 
 logger = get_logger(__name__)
 
@@ -214,3 +216,119 @@ def start_batch_pipeline(
     logger.info(f"배치 태스크 시작됨: batch_id={batch_id}")
 
     return batch_id
+
+
+@celery_app.task(
+    bind=True,
+    name="pipeline.process_pdf_batch",
+    max_retries=3,
+    autoretry_for=(ConnectionError, TimeoutError, RetryableError),
+    retry_backoff=True,
+    retry_backoff_max=600,
+    retry_jitter=True,
+)
+def process_pdf_batch_task(
+    self,
+    pdf_file_bytes: bytes,
+    original_filename: str,
+    options: Dict[str, Any] = {},
+    chunk_size: int = 10,
+) -> str:
+    """PDF를 이미지로 변환 후 배치 파이프라인 실행 (Celery Task)
+
+    Args:
+        self: Celery task instance
+        pdf_file_bytes: PDF 파일 바이트 데이터
+        original_filename: 원본 파일명
+        options: 파이프라인 옵션
+        chunk_size: 청크당 이미지 수
+
+    Returns:
+        batch_id: 배치 고유 ID
+    """
+    import asyncio
+
+    logger.info(f"📄 PDF 배치 처리 태스크 시작: filename={original_filename}")
+
+    try:
+        # 1. PDF를 이미지로 변환
+        async def convert_pdf_to_images():
+            common_service = CommonService()
+            image_response_list = await common_service.save_pdf(
+                original_filename=original_filename,
+                pdf_file_bytes=pdf_file_bytes
+            )
+            return image_response_list
+
+        # asyncio로 PDF 변환 실행
+        image_response_list = asyncio.run(convert_pdf_to_images())
+
+        logger.info(
+            f"✅ PDF 변환 완료: {len(image_response_list)}개 이미지 생성"
+        )
+
+        # 2. 배치 파이프라인 시작
+        batch_name = f"pdf_{original_filename}_{uuid.uuid4().hex[:8]}"
+        batch_id = start_batch_pipeline(
+            batch_name=batch_name,
+            image_response_list=image_response_list,
+            options=options,
+            chunk_size=chunk_size,
+            initiated_by="pdf_batch_task",
+        )
+
+        logger.info(
+            f"🚀 PDF 배치 파이프라인 시작: batch_id={batch_id}, "
+            f"images={len(image_response_list)}"
+        )
+
+        return batch_id
+
+    except Exception as e:
+        logger.error(
+            f"❌ PDF 배치 처리 실패: filename={original_filename}, "
+            f"error={str(e)}"
+        )
+        raise
+
+
+def start_batch_pipeline_from_pdf(
+    pdf_file_bytes: bytes,
+    original_filename: str,
+    options: Dict[str, Any] = {},
+    chunk_size: int = 10,
+) -> str:
+    """PDF 파일을 받아서 배치 파이프라인 시작 (동기 함수)
+
+    PDF를 이미지로 변환한 후 배치 파이프라인을 시작합니다.
+    Celery 태스크로 비동기 실행됩니다.
+
+    Args:
+        pdf_file_bytes: PDF 파일 바이트 데이터
+        original_filename: 원본 파일명
+        options: 파이프라인 옵션
+        chunk_size: 청크당 이미지 수
+
+    Returns:
+        task_id: Celery 태스크 ID (결과 조회용)
+    """
+    logger.info(
+        f"📄 PDF 배치 파이프라인 시작 요청: filename={original_filename}"
+    )
+
+    # Celery 태스크로 비동기 실행
+    result = process_pdf_batch_task.apply_async(
+        kwargs={
+            "pdf_file_bytes": pdf_file_bytes,
+            "original_filename": original_filename,
+            "options": options,
+            "chunk_size": chunk_size,
+        }
+    )
+
+    logger.info(
+        f"📤 PDF 배치 태스크 전송 완료: task_id={result.id}, "
+        f"filename={original_filename}"
+    )
+
+    return result.id
