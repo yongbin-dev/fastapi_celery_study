@@ -27,6 +27,29 @@ async def lifespan(app: FastAPI):
     # 시작 시
     logger.info("🚀 ML 서버 시작")
 
+    # OCR 모델 사전 로딩
+    try:
+        from ml_app.models.ocr_model import get_ocr_model
+        logger.info("📦 OCR 모델 로딩 시작...")
+
+        # settings에서 기본값 가져오기
+        ocr_model = get_ocr_model(
+            use_angle_cls=settings.OCR_USE_ANGLE_CLS,
+            lang=settings.OCR_LANG
+        )
+
+        if ocr_model.is_loaded:
+            logger.info(
+                f"✅ OCR 모델 로딩 완료 - "
+                f"엔진: {settings.OCR_ENGINE}, "
+                f"언어: {settings.OCR_LANG}, "
+                f"각도보정: {settings.OCR_USE_ANGLE_CLS}"
+            )
+        else:
+            logger.warning("⚠️  OCR 모델 로딩 실패")
+    except Exception as e:
+        logger.error(f"❌ OCR 모델 로딩 중 에러 발생: {str(e)}", exc_info=True)
+
     grpc_task = None
     if USE_GRPC:
         # gRPC 서버를 별도 태스크로 시작

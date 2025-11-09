@@ -41,7 +41,6 @@ class OCREngineFactory:
         """
         engine_type = engine_type.lower()
 
-        logger.info(cls._engines)
         if engine_type not in cls._engines:
             logger.error(f"지원하지 않는 OCR 엔진: {engine_type}")
             logger.info(f"사용 가능한 엔진: {list(cls._engines.keys())}")

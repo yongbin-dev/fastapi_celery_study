@@ -1,4 +1,6 @@
 # app/domains/ocr/services/engines/easyocr_engine.py
+from typing import List
+
 from shared.core.logging import get_logger
 from shared.schemas import OCRExtractDTO, OCRTextBoxCreate
 
@@ -90,3 +92,14 @@ class EasyOCREngine(BaseOCREngine):
         except Exception as e:
             logger.error(f"EasyOCR predict 실행 중 오류: {str(e)}")
             return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))
+
+    def predict_batch(
+        self, image_data_list: List[bytes], confidence_threshold: float
+    ) -> List[OCRExtractDTO]:
+        if not self.is_loaded or self.model is None:
+            return [
+                OCRExtractDTO(text_boxes=[], status="failed", error="Model not loaded")
+            ]
+
+        result = self.model.readtext_batched(image_data_list)
+        return result

@@ -156,8 +156,6 @@ def start_pipeline(
     # 2. DB에 ChainExecution 생성
     from shared.repository.crud.sync_crud.chain_execution import chain_execution_crud
 
-    logger.info(image_response)
-
     # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
     batch_id = batch_id if batch_id else None
 

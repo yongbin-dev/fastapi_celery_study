@@ -108,6 +108,8 @@ class Settings(BaseSettings):
     OCR_ENGINE: str = "easyocr"
     OCR_DET: str = ""
     OCR_REC: str = ""
+    OCR_USE_ANGLE_CLS: bool = True  # OCR 각도 보정 사용 여부
+    OCR_LANG: str = "korean"  # OCR 기본 언어
 
     # 모델 서버 설정
     MODEL_SERVER_URL: str = "http://localhost:8002/api/model"  # OCR 전용 서버 URL

@@ -1,7 +1,7 @@
 # app/domains/ocr/services/ocr_model.py
 # OCRResultDTO는 api_server의 도메인 스키마이므로 직접 정의하거나 shared로 이동 필요
 # from shared.schemas.ocr import OCRResultDTO
-from typing import Optional
+from typing import List, Optional
 
 from ml_app.engines import OCREngineFactory
 from ml_app.engines.base import BaseOCREngine
@@ -51,11 +51,18 @@ class OCRModel(BaseModel):
         """OCR 텍스트 추출 실행"""
         if not self.is_loaded or self.engine is None:
             return OCRExtractDTO(
-                text_boxes=[],  status="failed", error="Model not loaded"
+                text_boxes=[], status="failed", error="Model not loaded"
             )
 
         # 엔진에 위임
         return self.engine.predict(input_data, confidence_threshold)
+
+    def predict_batch(
+        self, input_data: List[bytes], confidence_threshold: float = 0.5
+    ) -> List[OCRExtractDTO]:
+        """OCR 텍스트 추출 실행"""
+        # 엔진에 위임
+        return self.engine.predict_batch(input_data, confidence_threshold)
 
 
 # 싱글톤 인스턴스

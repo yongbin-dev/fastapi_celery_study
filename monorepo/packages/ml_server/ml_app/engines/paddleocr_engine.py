@@ -1,4 +1,6 @@
 # app/domains/ocr/services/engines/paddleocr_engine.py
+from typing import List
+
 import cv2
 import numpy as np
 from shared.config import settings
@@ -96,3 +98,14 @@ class PaddleOCREngine(BaseOCREngine):
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
             return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))
+
+    def predict_batch(
+        self, image_data_list: List[bytes], confidence_threshold: float
+    ) -> List[OCRExtractDTO]:
+        if not self.is_loaded or self.model is None:
+            return [
+                OCRExtractDTO(text_boxes=[], status="failed", error="Model not loaded")
+            ]
+
+        result = self.model.ocr(image_data_list)
+        return result

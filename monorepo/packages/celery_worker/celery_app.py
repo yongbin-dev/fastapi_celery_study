@@ -23,8 +23,7 @@ celery_app = Celery(
     backend=settings.REDIS_URL,
     include=[
         "tasks.pipeline_tasks",  # 파이프라인 태스크 모듈
-        "tasks.batch_tasks",     # 배치 태스크 모듈
-        "tasks.test_tasks"
+        "tasks.batch_tasks",  # 배치 태스크 모듈
     ],
 )
 

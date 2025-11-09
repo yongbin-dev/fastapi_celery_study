@@ -2,7 +2,6 @@
 """파일 처리 유틸리티"""
 
 import os
-import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
@@ -53,7 +52,7 @@ async def load_uploaded_image(image_path: str) -> bytes:
     # Supabase가 설정되지 않은 경우 에러
     if supabase is None:
         raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. " "환경 변수를 설정하세요."
+            "Supabase Storage가 설정되지 않았습니다. 환경 변수를 설정하세요."
         )
 
     try:
@@ -118,7 +117,7 @@ async def save_uploaded_image(
     # Supabase가 설정되지 않은 경우 에러
     if supabase is None:
         raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. " "환경 변수를 설정하세요."
+            "Supabase Storage가 설정되지 않았습니다. 환경 변수를 설정하세요."
         )
 
     try:
