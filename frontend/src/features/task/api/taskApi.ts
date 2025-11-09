@@ -28,7 +28,7 @@ export const taskApi = {
     const formData = new FormData();
     formData.append('pdf_file', file);
 
-    const response = await api.post<any>('/pipeline/extract/pdf', formData, {
+    const response = await ml_api.post<any>('/ocr/extract-pdf', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
