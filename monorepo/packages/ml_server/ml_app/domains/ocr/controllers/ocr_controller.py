@@ -39,14 +39,12 @@ async def run_ocr_image_extract(
     image_data = await common_service.load_image(private_image_path)
     model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
     result = model.predict(image_data, confidence_threshold)
-    logger.info(f"model_result: {result}")
     return result
 
 
 @router.post("/extract-pdf")
 async def run_ocr_pdf_extract_async(
     pdf_file: UploadFile = File(...),
-    common_service: CommonService = Depends(get_common_service),
 ):
     """
     PDF 파일 OCR 비동기 처리
@@ -95,23 +93,6 @@ async def run_ocr_images_extract_async(
     )
 
     logger.info(result)
-
-    # ImageResponse 객체에서 private_img 경로만 추출
-
-    # 2. 배치 파이프라인 시작
-    # options = {}  # 필요시 옵션 추가
-    # batch_id = start_batch(
-    #     batch_name=chain_id,
-    #     image_response_list=image_response_list,
-    #     options=options,
-    #     chunk_size=10,
-    #     initiated_by="ml_server",
-    # )
-
-    # logger.info(
-    #     f"배치 파이프라인 시작: batch_id={batch_id}, "
-    #     f"batch_name={batch_id}, files={len(image_response_list)}"
-    # )
 
     return ResponseBuilder.success(
         data=PipelineStartResponse(

@@ -31,7 +31,7 @@ def process_chunk_task(
     self,
     batch_id: str,
     chunk_index: int,
-    image_response_dicts: List[Dict[str, str]],
+    image_response_list: List[ImageResponse],
     options: Dict[str, Any],
 ) -> Dict[str, Any]:
     """청크 단위 파이프라인 처리
@@ -51,7 +51,7 @@ def process_chunk_task(
 
     logger.info(
         f"청크 처리 시작: batch_id={batch_id}, chunk={chunk_index}, "
-        f"images={len(image_response_dicts)}"
+        f"images={len(image_response_list)}"
     )
 
     completed_count = 0
@@ -59,20 +59,19 @@ def process_chunk_task(
     results = []
 
     # 각 이미지에 대해 개별 파이프라인 실행
-    for idx, image_dict in enumerate(image_response_dicts):
+    for idx, image_response in enumerate(image_response_list):
         try:
-            # dict를 ImageResponse 객체로 복원
-            image_response = ImageResponse(**image_dict)
-
             # 개별 파이프라인 실행
             context_id = start_pipeline(image_response, batch_id, options)
             file_path = image_response.private_img
             completed_count += 1
-            results.append({
-                "file_path": file_path,
-                "context_id": context_id,
-                "status": "success",
-            })
+            results.append(
+                {
+                    "file_path": file_path,
+                    "context_id": context_id,
+                    "status": "success",
+                }
+            )
 
             logger.info(
                 f"이미지 처리 완료: batch={batch_id}, chunk={chunk_index}, "
@@ -80,13 +79,14 @@ def process_chunk_task(
             )
 
         except Exception as e:
-            file_path = image_dict.get("private_img", "unknown")
             failed_count += 1
-            results.append({
-                "file_path": file_path,
-                "status": "failed",
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "file_path": image_response.private_img,
+                    "status": "failed",
+                    "error": str(e),
+                }
+            )
 
             logger.error(
                 f"이미지 처리 실패: batch={batch_id}, chunk={chunk_index}, "
@@ -255,17 +255,14 @@ def process_pdf_batch_task(
         async def convert_pdf_to_images():
             common_service = CommonService()
             image_response_list = await common_service.save_pdf(
-                original_filename=original_filename,
-                pdf_file_bytes=pdf_file_bytes
+                original_filename=original_filename, pdf_file_bytes=pdf_file_bytes
             )
             return image_response_list
 
         # asyncio로 PDF 변환 실행
         image_response_list = asyncio.run(convert_pdf_to_images())
 
-        logger.info(
-            f"✅ PDF 변환 완료: {len(image_response_list)}개 이미지 생성"
-        )
+        logger.info(f"✅ PDF 변환 완료: {len(image_response_list)}개 이미지 생성")
 
         # 2. 배치 파이프라인 시작
         batch_name = f"pdf_{original_filename}_{uuid.uuid4().hex[:8]}"
@@ -286,8 +283,7 @@ def process_pdf_batch_task(
 
     except Exception as e:
         logger.error(
-            f"❌ PDF 배치 처리 실패: filename={original_filename}, "
-            f"error={str(e)}"
+            f"❌ PDF 배치 처리 실패: filename={original_filename}, error={str(e)}"
         )
         raise
 
@@ -312,9 +308,7 @@ def start_batch_pipeline_from_pdf(
     Returns:
         task_id: Celery 태스크 ID (결과 조회용)
     """
-    logger.info(
-        f"📄 PDF 배치 파이프라인 시작 요청: filename={original_filename}"
-    )
+    logger.info(f"📄 PDF 배치 파이프라인 시작 요청: filename={original_filename}")
 
     # Celery 태스크로 비동기 실행
     result = process_pdf_batch_task.apply_async(

@@ -28,6 +28,15 @@ Content-Type: application/json
 
 ###
 
+
+### 3. 기본 OCR 추출 (한글, 기본 설정)
+GET http://localhost:8002/api/model/ocr/worker/status
+Content-Type: application/json
+
+
+###
+
+
 ### 3. 기본 OCR 추출 (한글, 기본 설정)
 POST http://localhost:8002/api/model/ocr/extract
 Content-Type: application/x-www-form-urlencoded
