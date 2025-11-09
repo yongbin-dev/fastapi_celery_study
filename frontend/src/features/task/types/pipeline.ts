@@ -44,3 +44,28 @@ export interface PipelineStatusResponse {
   message: string;
   result : string;
 }
+
+// 파이프라인 리스트 관련 타입
+export interface Task {
+  id: string;
+  name: string;
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  progress?: number;
+  createdAt?: string;
+}
+
+export interface Batch {
+  id: string;
+  name: string;
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  tasks: Task[];
+  createdAt?: string;
+}
+
+export interface Pipeline {
+  id: string;
+  name: string;
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  batches: Batch[];
+  createdAt?: string;
+}
