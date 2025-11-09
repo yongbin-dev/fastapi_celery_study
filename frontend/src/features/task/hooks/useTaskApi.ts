@@ -59,11 +59,3 @@ export const useExtractPdf = () => {
     },
   });
 };
-
-// PDF 추출
-export const useTestRunTask = () => {
-  return useMutation({
-    mutationFn: taskApi.testRunTask,
-    
-  });
-};
