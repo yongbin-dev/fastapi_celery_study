@@ -1,6 +1,6 @@
 # app/domains/ocr/controllers/ocr_controller.py
 from app.domains.pipeline.schemas.pipeline_schemas import PipelineStartResponse
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, File, UploadFile
 from ml_app.core.celery_client import get_celery_client
 from ml_app.models.ocr_model import get_ocr_model
 from ml_app.schemas.response import TestResultDTO
@@ -11,7 +11,6 @@ from shared.schemas.enums import PipelineStatus
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks.batch_tasks import start_batch_pipeline as start_batch
 from tasks.pipeline_tasks import start_pipeline as start_pipeline
 
 logger = get_logger(__name__)
@@ -46,31 +45,93 @@ async def run_ocr_image_extract(
 @router.post("/extract-pdf")
 async def run_ocr_pdf_extract_async(
     chain_id: str = Body(...),
-    image_response_list: list[ImageResponse] = Body(...),
+    pdf_file: UploadFile = File(...),
+    common_service: CommonService = Depends(get_common_service),
 ):
     """
-    OCR 비동기 처리 (Celery 태스크)
+    PDF 파일 OCR 비동기 처리
 
-    태스크를 Celery에 전송하고 즉시 task_id를 반환합니다.
-    결과는 /ocr/result/{task_id}로 조회할 수 있습니다.
+    PDF 파일을 업로드받아 이미지로 변환 후 OCR을 수행합니다.
     """
+    logger.info(f"PDF OCR 처리 시작: chain_id={chain_id}, filename={pdf_file.filename}")
+
+    # PDF 파일 읽기
+    filename = await pdf_file.filename
+    pdf_file_bytes = await pdf_file.read()
+
+    image_response_list = await common_service.save_pdf(
+        original_filename=filename, pdf_file_bytes=pdf_file_bytes
+    )
+
+    result_img = []
+    for image_response in image_response_list:
+        image_data = await common_service.load_image(
+            image_path=image_response.private_img
+        )
+
+        result_img.append(image_data)
+
+    model = get_ocr_model()
+
+    result = model.predict_batch(
+        result_img,
+        confidence_threshold=0.5,
+    )
+
+    logger.info(result)
+
+    return ResponseBuilder.success(
+        data=PipelineStartResponse(
+            context_id=chain_id,
+            status=PipelineStatus.STARTED,
+            message=f"PDF 파일 OCR 처리 시작됨: {pdf_file.filename}",
+        )
+    )
+
+
+@router.post("/extract-images")
+async def run_ocr_images_extract_async(
+    image_response_list: list[ImageResponse] = Body(...),
+    common_service=Depends(get_common_service),
+):
+    """
+    이미지 리스트 OCR 비동기 처리
+
+    여러 이미지를 배치로 처리합니다.
+    """
+
+    result_img = []
+    for image_response in image_response_list:
+        image_data = await common_service.load_image(
+            image_path=image_response.private_img
+        )
+
+        result_img.append(image_data)
+
+    model = get_ocr_model()
+    result = model.predict_batch(
+        result_img,
+        confidence_threshold=0.5,
+    )
+
+    logger.info(result)
 
     # ImageResponse 객체에서 private_img 경로만 추출
 
     # 2. 배치 파이프라인 시작
-    options = {}  # 필요시 옵션 추가
-    batch_id = start_batch(
-        batch_name=chain_id,
-        image_response_list=image_response_list,
-        options=options,
-        chunk_size=10,
-        initiated_by="ml_server",
-    )
+    # options = {}  # 필요시 옵션 추가
+    # batch_id = start_batch(
+    #     batch_name=chain_id,
+    #     image_response_list=image_response_list,
+    #     options=options,
+    #     chunk_size=10,
+    #     initiated_by="ml_server",
+    # )
 
-    logger.info(
-        f"배치 파이프라인 시작: batch_id={batch_id}, "
-        f"batch_name={batch_id}, files={len(image_response_list)}"
-    )
+    # logger.info(
+    #     f"배치 파이프라인 시작: batch_id={batch_id}, "
+    #     f"batch_name={batch_id}, files={len(image_response_list)}"
+    # )
 
     return ResponseBuilder.success(
         data=PipelineStartResponse(
