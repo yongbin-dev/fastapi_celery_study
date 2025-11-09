@@ -4,13 +4,11 @@ from fastapi import APIRouter, Body, Depends, File, UploadFile
 from ml_app.core.celery_client import get_celery_client
 from ml_app.models.ocr_model import get_ocr_model
 from ml_app.schemas.response import TestResultDTO
-from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.schemas.common import ImageResponse
 from shared.schemas.enums import PipelineStatus
-from shared.service.common_service import CommonService, get_common_service
+from shared.service.common_service import get_common_service
 from shared.utils.response_builder import ResponseBuilder
-from sqlalchemy.ext.asyncio import AsyncSession
 from tasks.batch_tasks import start_batch_pipeline_from_pdf
 from tasks.pipeline_tasks import start_pipeline
 
@@ -22,24 +20,6 @@ router = APIRouter(prefix="/ocr", tags=["OCR"])
 @router.get("/healthy")
 async def healthy():
     return ResponseBuilder.success(data="정상", message="")
-
-
-@router.post("/extract")
-async def run_ocr_image_extract(
-    public_image_path: str = Body(...),
-    private_image_path: str = Body(...),
-    language: str = Body("korean"),
-    confidence_threshold: float = Body(0.5),
-    use_angle_cls: bool = Body(True),
-    common_service: CommonService = Depends(get_common_service),
-    db: AsyncSession = Depends(get_db),
-):
-    """image ocr"""
-    logger.info(f"OCR 실행 시작: {private_image_path}")
-    image_data = await common_service.load_image(private_image_path)
-    model = get_ocr_model(use_angle_cls=use_angle_cls, lang=language)
-    result = model.predict(image_data, confidence_threshold)
-    return result
 
 
 @router.post("/extract-pdf")

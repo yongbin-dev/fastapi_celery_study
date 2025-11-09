@@ -5,7 +5,7 @@ import grpc
 from ml_app.models.ocr_model import get_ocr_model
 from shared.core.logging import get_logger
 from shared.grpc.generated import common_pb2, ocr_pb2, ocr_pb2_grpc  # type: ignore
-from shared.service.common_service import CommonService
+from shared.service.common_service import CommonService, get_common_service
 
 logger = get_logger(__name__)
 
@@ -14,7 +14,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
     """OCR gRPC 서비스"""
 
     def __init__(self):
-        self.common_service = CommonService()
+        self.common_service: CommonService = get_common_service()
         logger.info("OCR gRPC 서비스 초기화 완료")
 
     async def extract_text(
@@ -148,33 +148,6 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
         )
 
         logger.info(result)
-
-    # request.image_paths
-    # for idx, image_path in enumerate(request.image_paths):
-    #     # 개별 OCR 요청 생성
-    #     ocr_request = ocr_pb2.OCRRequest(
-    #         public_image_path=image_path.public_path,
-    #         private_image_path=image_path.private_path,
-    #         language=request.language,
-    #         confidence_threshold=request.confidence_threshold,
-    #         use_angle_cls=request.use_angle_cls
-    #     )
-
-    #     # OCR 실행
-    #     result = await self.ExtractText(ocr_request, context)
-
-    #     # 진행 상황 전송
-    #     progress = ocr_pb2.OCRBatchProgress(
-    #         batch_id=batch_id,
-    #         total_images=total,
-    #         processed_images=idx + 1,
-    #         current_result=result,
-    #         progress_percentage=(idx + 1) / total * 100
-    #     )
-
-    #     yield progress
-
-    # logger.info(f"gRPC 배치 OCR 완료: {batch_id}")
 
     async def check_health(
         self, request: ocr_pb2.HealthCheckRequest, context: grpc.aio.ServicerContext
