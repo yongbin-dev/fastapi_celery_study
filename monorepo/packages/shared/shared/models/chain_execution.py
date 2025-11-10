@@ -22,6 +22,9 @@ class ChainExecution(Base):
     chain_id = mapped_column(
         String(255), nullable=True, index=True, comment="체인 고유 ID"
     )
+    celery_task_id = mapped_column(
+        String(255), nullable=True, index=True, comment="Celery Task ID (첫 번째 task)"
+    )
     chain_name = mapped_column(
         String(255),
         nullable=False,

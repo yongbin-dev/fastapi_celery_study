@@ -37,6 +37,7 @@ class ChainExecutionResponse(BaseModel):
     total_tasks: int
     completed_tasks: int
     failed_tasks: int
+    batch_id: Optional[str]
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
     initiated_by: Optional[str]
@@ -44,12 +45,10 @@ class ChainExecutionResponse(BaseModel):
     final_result: Optional[Dict[str, Any]]
     error_message: Optional[str]
     task_logs: List[TaskLogResponse] = Field(
-        default_factory=list,
-        description="관련 작업 로그 목록"
+        default_factory=list, description="관련 작업 로그 목록"
     )
 
     model_config = ConfigDict(from_attributes=True)
-
 
 
 # Forward reference 해결을 위한 모델 업데이트
