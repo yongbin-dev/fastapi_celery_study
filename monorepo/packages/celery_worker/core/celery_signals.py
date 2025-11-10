@@ -40,14 +40,32 @@ def task_prerun_handler(sender=None, task_id=None, task=None, args=None, **kwarg
     # context_id 추출 (첫 번째 인자)
     if not args or len(args) == 0:
         return
-    context_id = args[0]
 
-    logger.info(f"prerun context_id : {context_id}")
+    context = args[0]
+
+    # context가 딕셔너리인지 확인
+    if not isinstance(context, dict):
+        logger.warning(
+            f"Task {task.name}의 첫 번째 인자가 딕셔너리가 아닙니다. "
+            f"type: {type(context)}, value: {context}"
+        )
+        return
+
+    chain_id = context.get("chain_id")
+    batch_id = context.get("batch_id")
+
+    if not chain_id:
+        logger.warning(
+            f"Task {task.name}의 context에 chain_id가 없습니다. context: {context}"
+        )
+        return
+
+    logger.info(f"prerun context : {batch_id} , {chain_id}")
     with get_db_manager().get_sync_session() as session:
         if not session:
             raise RuntimeError("DB 세션 생성 실패")
         # ChainExecution 조회 (context_id가 chain_id)
-        chain_exec = chain_execution_crud.get_by_chain_id(session, chain_id=context_id)
+        chain_exec = chain_execution_crud.get_by_chain_id(session, chain_id=chain_id)
 
         if chain_exec is not None:
             chain_exec_resp = ChainExecutionResponse.model_validate(chain_exec)

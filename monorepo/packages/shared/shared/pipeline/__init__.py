@@ -4,9 +4,11 @@
 - PipelineContext: 파이프라인 실행 상태 및 데이터 관리
 - PipelineStage: 스테이지 추상 기본 클래스
 - PipelineOrchestrator: 파이프라인 실행 조율
+- PipelineCacheService: Redis 기반 컨텍스트 캐시 서비스
 - Exceptions: 파이프라인 관련 예외 처리
 """
 
+from .cache import PipelineCacheService, get_pipeline_cache_service
 from .context import LLMResult, OCRResult, PipelineContext
 from .exceptions import PipelineError, StageError
 from .orchestrator import PipelineOrchestrator
@@ -18,6 +20,8 @@ __all__ = [
     "LLMResult",
     "PipelineStage",
     "PipelineOrchestrator",
+    "PipelineCacheService",
+    "get_pipeline_cache_service",
     "StageError",
     "PipelineError",
 ]

@@ -13,7 +13,7 @@ from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
 from shared.pipeline.exceptions import RetryableError
 from shared.schemas.common import ImageResponse
-from shared.service.common_service import CommonService
+from shared.service.common_service import get_common_service
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def process_chunk_task(
     self,
     batch_id: str,
     chunk_index: int,
-    image_response_list: List[ImageResponse],
+    image_response_list: List[Dict[str, Any]],
     options: Dict[str, Any],
 ) -> Dict[str, Any]:
     """청크 단위 파이프라인 처리
@@ -59,8 +59,11 @@ def process_chunk_task(
     results = []
 
     # 각 이미지에 대해 개별 파이프라인 실행
-    for idx, image_response in enumerate(image_response_list):
+    for idx, image_dict in enumerate(image_response_list):
         try:
+            # dict를 ImageResponse 객체로 복원
+            image_response = ImageResponse(**image_dict)
+
             # 개별 파이프라인 실행
             context_id = start_pipeline(image_response, batch_id, options)
             file_path = image_response.private_img
@@ -132,6 +135,7 @@ def process_chunk_task(
 
 
 def start_batch_pipeline(
+    batch_id: str,
     batch_name: str,
     image_response_list: List[ImageResponse],
     options: Dict[str, Any],
@@ -150,10 +154,6 @@ def start_batch_pipeline(
     """
     from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
 
-    # 1. Batch ID 생성
-    batch_id = str(uuid.uuid4())
-
-    # 2. DB에 BatchExecution 생성
     with get_db_manager().get_sync_session() as session:
         if not session:
             raise RuntimeError("DB 세션 생성 실패")
@@ -194,7 +194,7 @@ def start_batch_pipeline(
         process_chunk_task.s(
             batch_id=batch_id,
             chunk_index=idx,
-            image_response_dicts=chunk_files,
+            image_response_list=chunk_files,
             options=options,
         )
         for idx, chunk_files in enumerate(chunks)
@@ -229,6 +229,7 @@ def start_batch_pipeline(
 )
 def process_pdf_batch_task(
     self,
+    batch_id: str,
     pdf_file_bytes: bytes,
     original_filename: str,
     options: Dict[str, Any] = {},
@@ -253,7 +254,7 @@ def process_pdf_batch_task(
     try:
         # 1. PDF를 이미지로 변환
         async def convert_pdf_to_images():
-            common_service = CommonService()
+            common_service = get_common_service()
             image_response_list = await common_service.save_pdf(
                 original_filename=original_filename, pdf_file_bytes=pdf_file_bytes
             )
@@ -266,7 +267,8 @@ def process_pdf_batch_task(
 
         # 2. 배치 파이프라인 시작
         batch_name = f"pdf_{original_filename}_{uuid.uuid4().hex[:8]}"
-        batch_id = start_batch_pipeline(
+        task_id = start_batch_pipeline(
+            batch_id=batch_id,
             batch_name=batch_name,
             image_response_list=image_response_list,
             options=options,
@@ -275,11 +277,11 @@ def process_pdf_batch_task(
         )
 
         logger.info(
-            f"🚀 PDF 배치 파이프라인 시작: batch_id={batch_id}, "
+            f"🚀 PDF 배치 파이프라인 시작: task_id={task_id} batch_id={batch_id}, "
             f"images={len(image_response_list)}"
         )
 
-        return batch_id
+        return task_id
 
     except Exception as e:
         logger.error(
@@ -289,6 +291,7 @@ def process_pdf_batch_task(
 
 
 def start_batch_pipeline_from_pdf(
+    batch_id: str,
     pdf_file_bytes: bytes,
     original_filename: str,
     options: Dict[str, Any] = {},
@@ -313,6 +316,7 @@ def start_batch_pipeline_from_pdf(
     # Celery 태스크로 비동기 실행
     result = process_pdf_batch_task.apply_async(
         kwargs={
+            "batch_id": batch_id,
             "pdf_file_bytes": pdf_file_bytes,
             "original_filename": original_filename,
             "options": options,
@@ -324,5 +328,4 @@ def start_batch_pipeline_from_pdf(
         f"📤 PDF 배치 태스크 전송 완료: task_id={result.id}, "
         f"filename={original_filename}"
     )
-
     return result.id

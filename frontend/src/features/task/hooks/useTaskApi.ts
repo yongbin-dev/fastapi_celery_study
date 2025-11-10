@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { taskApi } from '../api/taskApi';
 import type { TaskHistoryRequest } from '../types';
-import type { ChainExecutionResponseDto, PipelineStatusResponse } from '../types/pipeline';
+import type { ChainExecutionResponseDto, PipelineStatusResponse, BatchStatusResponse } from '../types/pipeline';
 
 // 파이프라인 이력 조회
 export const useHistoryTasks = (params: TaskHistoryRequest) => {
@@ -27,6 +27,22 @@ export const usePipelineStatus = (
     staleTime: 1000, // 1초
   });
 };
+
+
+// Batch 상태 확인
+export const useBatchPipelineStatus = (
+  batchId: string,
+  refetchInterval?: number
+) => {
+  return useQuery<BatchStatusResponse>({
+    queryKey: ['batch-status', batchId],
+    queryFn: () => taskApi.getBatchPipelineStatus(batchId),
+    enabled:  !!batchId,
+    refetchInterval,
+    staleTime: 1000, // 1초
+  });
+};
+
 
 // 파이프라인 취소
 export const useCancelPipeline = () => {

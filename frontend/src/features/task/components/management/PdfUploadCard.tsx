@@ -1,19 +1,62 @@
 import type { UseMutationResult } from '@tanstack/react-query';
-import React from 'react';
+import React, { useState } from 'react';
 
 interface PdfUploadCardProps {
   selectedFile: File | null;
-  onFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onFileSelect: (file: File | null) => void;
   onUpload: () => void;
   extractPdfMutation: UseMutationResult<any, Error, File, unknown>;
+  isLoading?: boolean;
 }
 
 export const PdfUploadCard: React.FC<PdfUploadCardProps> = ({
   selectedFile,
-  onFileChange,
+  onFileSelect,
   onUpload,
   extractPdfMutation,
+  isLoading = false,
 }) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    onFileSelect(file);
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      // PDF 파일인지 확인
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        onFileSelect(file);
+      } else {
+        alert('PDF 파일만 업로드 가능합니다.');
+      }
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
       <div className="flex items-center mb-3">
@@ -27,16 +70,28 @@ export const PdfUploadCard: React.FC<PdfUploadCardProps> = ({
       <div className="ml-11 space-y-4">
         {/* 파일 업로드 영역 */}
         <div className="relative">
-          <label className="block">
-            <div className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${selectedFile
-              ? 'border-blue-400 bg-blue-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-              }`}>
+          <label className={`block ${isLoading ? 'cursor-not-allowed' : ''}`}>
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${
+                isLoading
+                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                  : isDragging
+                  ? 'border-blue-500 bg-blue-100 cursor-pointer'
+                  : selectedFile
+                  ? 'border-blue-400 bg-blue-50 cursor-pointer'
+                  : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50 cursor-pointer'
+              }`}
+              onDragEnter={isLoading ? undefined : handleDragEnter}
+              onDragLeave={isLoading ? undefined : handleDragLeave}
+              onDragOver={isLoading ? undefined : handleDragOver}
+              onDrop={isLoading ? undefined : handleDrop}
+            >
               <input
                 type="file"
                 accept=".pdf"
-                onChange={onFileChange}
+                onChange={handleFileChange}
                 className="hidden"
+                disabled={isLoading}
               />
 
               {/* 아이콘 */}
@@ -88,16 +143,16 @@ export const PdfUploadCard: React.FC<PdfUploadCardProps> = ({
         <div>
           <button
             onClick={onUpload}
-            disabled={!selectedFile || extractPdfMutation.isPending}
+            disabled={!selectedFile || isLoading}
             className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
           >
-            {extractPdfMutation.isPending ? (
+            {isLoading ? (
               <>
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>업로드 중...</span>
+                <span>처리 중...</span>
               </>
             ) : (
               <>

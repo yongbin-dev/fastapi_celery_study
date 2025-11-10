@@ -1,55 +1,23 @@
 
 import React, { useEffect, useState } from 'react';
-import { useExtractPdf, usePipelineStatus } from '../hooks';
+import { useBatchPipelineStatus, useExtractPdf, usePipelineStatus } from '../hooks';
 import { PdfUploadCard } from './management/PdfUploadCard';
 import { PipelineListCard } from './management/PipelineListCard';
 import { TaskStatusCard } from './management/TaskStatusCard';
 import { UsageGuideCard } from './management/UsageGuideCard';
-import type { Pipeline } from '../types/pipeline';
 
 interface TaskManagementTabProps {
 }
 
-// TODO: API 연동 시 제거 - 테스트용 목 데이터
-const mockPipelines: Pipeline[] = [
-  {
-    id: 'pipeline-001',
-    name: 'OCR 처리 파이프라인',
-    status: 'RUNNING',
-    createdAt: '2025-11-09T10:00:00Z',
-    batches: [
-      {
-        id: 'batch-001',
-        name: 'Batch #1 - 문서 전처리',
-        status: 'SUCCESS',
-        createdAt: '2025-11-09T10:00:00Z',
-        tasks: [
-          { id: 'task-001', name: 'PDF 로드', status: 'SUCCESS', progress: 100 },
-          { id: 'task-002', name: '이미지 추출', status: 'SUCCESS', progress: 100 },
-          { id: 'task-003', name: '이미지 정규화', status: 'SUCCESS', progress: 100 },
-        ],
-      },
-      {
-        id: 'batch-002',
-        name: 'Batch #2 - OCR 실행',
-        status: 'RUNNING',
-        createdAt: '2025-11-09T10:05:00Z',
-        tasks: [
-          { id: 'task-004', name: 'OCR 모델 로드', status: 'SUCCESS', progress: 100 },
-          { id: 'task-005', name: 'OCR 처리 (1/10)', status: 'RUNNING', progress: 45 },
-          { id: 'task-006', name: 'OCR 처리 (2/10)', status: 'PENDING' },
-          { id: 'task-007', name: 'OCR 처리 (3/10)', status: 'PENDING' },
-        ],
-      },
-    ],
-  },
-];
-
 export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
 }) => {
-  const [pipelineId] = useState<string>('');
+  const [pipelineId ,] = useState<string>('');
+
+  const [batchId , setBatchId] = useState<string>('');
   const [isAutoRefresh, setIsAutoRefresh] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [shouldPollBatch, setShouldPollBatch] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false); // 수동 로딩 상태 관리
 
   // React Query 훅들
   const extractPdfMutation = useExtractPdf();
@@ -63,19 +31,70 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
     isAutoRefresh ? 2000 : undefined
   );
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setSelectedFile(event.target.files[0]);
+  // 배치 상태 조회 (shouldPollBatch가 true일 때만 폴링)
+  const {
+    data: batchStatus,
+  } = useBatchPipelineStatus(
+    batchId,
+    shouldPollBatch && !!batchId ? 2000 : undefined
+  );
+
+  // 배치 데이터 로딩 상태 판단
+  // 1. 처리 중이거나
+  // 2. PDF 업로드 중이거나
+  // 3. batchId는 있지만 batchStatus가 없거나
+  // 4. batchStatus는 있지만 total_count가 0 (아직 데이터가 준비되지 않음)
+  const isLoadingBatchData =
+    isProcessing ||
+    extractPdfMutation.isPending ||
+    (!!batchId && !batchStatus) ||
+    (!!batchStatus && batchStatus.total_count === 0);
+
+  // 배치 데이터가 실제로 로드되면 처리 상태 종료
+  useEffect(() => {
+    if (batchStatus && batchStatus.total_count > 0 && isProcessing) {
+      console.log('배치 데이터 로드 완료 (total_count:', batchStatus.total_count, '), 처리 상태 종료');
+      setIsProcessing(false);
     }
+  }, [batchStatus, isProcessing]);
+
+  // 디버깅용 로그
+
+
+  // 배치 작업이 모두 완료되었는지 확인 및 폴링 제어
+  useEffect(() => {
+    if (!batchStatus?.contexts || batchStatus.contexts.length === 0) {
+      return;
+    }
+
+    // 모든 context의 status를 확인하여 완료/실패 여부 판단
+    const allFinished = batchStatus.contexts.every(context => {
+      const status = context.status;
+      return status == "SUCCESS"
+    });
+
+    if (allFinished && shouldPollBatch) {
+      console.log('배치 작업이 모두 완료되어 폴링을 중단합니다.');
+      setShouldPollBatch(false);
+    }
+  }, [batchStatus, shouldPollBatch]);
+
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
   };
 
   const handleUpload = () => {
     if (selectedFile) {
+      setIsProcessing(true); // 처리 시작
       extractPdfMutation.mutate(selectedFile, {
         onSuccess: (data) => {
-          alert('PDF 업로드 성공: ' + JSON.stringify(data, null, 2));
+          console.log('PDF 업로드 성공, batchId:', data);
+          setBatchId(data);
+          setShouldPollBatch(true); // 새로운 배치 시작 시 폴링 재시작
         },
         onError: (error) => {
+          console.error('PDF 업로드 실패:', error);
+          setIsProcessing(false); // 에러 시 처리 상태 종료
           alert('업로드 실패: ' + error.message);
         }
       });
@@ -89,6 +108,9 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
     }
   }, [pipelineStatus]);
 
+  useEffect(()=>{
+    console.log(batchStatus)
+  } , [batchStatus])
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -107,13 +129,15 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
 
           <PdfUploadCard
             selectedFile={selectedFile}
-            onFileChange={handleFileChange}
+            onFileSelect={handleFileSelect}
             onUpload={handleUpload}
             extractPdfMutation={extractPdfMutation}
+            isLoading={isLoadingBatchData}
           />
 
           <PipelineListCard
-            pipelines={mockPipelines}
+            batchStatus={batchStatus}
+            isLoading={isLoadingBatchData}
           />
 
           <UsageGuideCard />

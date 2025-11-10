@@ -3,7 +3,6 @@ ML Server Main Application
 AI/ML 모델 추론을 담당하는 서버
 """
 
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -28,54 +27,18 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 ML 서버 시작")
 
     # OCR 모델 사전 로딩
-    try:
-        from ml_app.models.ocr_model import get_ocr_model
-        logger.info("📦 OCR 모델 로딩 시작...")
-
-        # settings에서 기본값 가져오기
-        ocr_model = get_ocr_model(
-            use_angle_cls=settings.OCR_USE_ANGLE_CLS,
-            lang=settings.OCR_LANG
-        )
-
-        if ocr_model.is_loaded:
-            logger.info(
-                f"✅ OCR 모델 로딩 완료 - "
-                f"엔진: {settings.OCR_ENGINE}, "
-                f"언어: {settings.OCR_LANG}, "
-                f"각도보정: {settings.OCR_USE_ANGLE_CLS}"
-            )
-        else:
-            logger.warning("⚠️  OCR 모델 로딩 실패")
-    except Exception as e:
-        logger.error(f"❌ OCR 모델 로딩 중 에러 발생: {str(e)}", exc_info=True)
-
-    grpc_task = None
-    if USE_GRPC:
-        # gRPC 서버를 별도 태스크로 시작
-        from ml_app.grpc_services.server import serve
-        grpc_task = asyncio.create_task(serve())
-        logger.info("✅ gRPC 서버 태스크 시작")
-    else:
-        logger.info("⚠️  gRPC 비활성화 (USE_GRPC=false)")
 
     yield
 
     # 종료 시
     logger.info("🛑 ML 서버 종료")
-    if grpc_task:
-        grpc_task.cancel()
-        try:
-            await grpc_task
-        except asyncio.CancelledError:
-            logger.info("gRPC 서버 태스크 종료")
 
 
 app = FastAPI(
     title="ML Model Server",
     version="1.0.0",
     description="AI/ML 모델 추론 서버 - OCR, LLM 등",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 

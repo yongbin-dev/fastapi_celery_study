@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { type TaskHistoryRequest } from '../types';
 import { useHistoryTasks } from '../hooks';
 import type { ChainExecutionResponseDto } from '../types/pipeline';
-import { TaskGroup } from './history';
+import { TaskGroup, BatchGroup } from './history';
 
 export const TaskHistoryTab: React.FC = () => {
   const [searchParams, setSearchParams] = useState<TaskHistoryRequest>({
@@ -14,6 +14,24 @@ export const TaskHistoryTab: React.FC = () => {
   });
 
   const { data: pipelines = [], isLoading, refetch } = useHistoryTasks(searchParams);
+
+  // Batch로 그룹핑
+  const groupedData = useMemo(() => {
+    const batches = new Map<number, ChainExecutionResponseDto[]>();
+    const noBatchChains: ChainExecutionResponseDto[] = [];
+
+    pipelines.forEach((pipeline: ChainExecutionResponseDto) => {
+      if (pipeline.batch_id) {
+        const batchChains = batches.get(pipeline.batch_id) || [];
+        batchChains.push(pipeline);
+        batches.set(pipeline.batch_id, batchChains);
+      } else {
+        noBatchChains.push(pipeline);
+      }
+    });
+
+    return { batches, noBatchChains };
+  }, [pipelines]);
   const handleSearchChange = (field: string, value: string | number) => {
     setSearchParams(prev => ({
       ...prev,
@@ -119,7 +137,18 @@ export const TaskHistoryTab: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y">
-            {pipelines.map((pipeline: ChainExecutionResponseDto) => (
+            {/* Batch가 있는 경우 */}
+            {Array.from(groupedData.batches.entries()).map(([batchId, chains]) => (
+              <BatchGroup
+                key={`batch-${batchId}`}
+                batchId={batchId}
+                batchName={chains[0]?.batch_name || ''}
+                chains={chains}
+              />
+            ))}
+
+            {/* Batch가 없는 Chain들 */}
+            {groupedData.noBatchChains.map((pipeline: ChainExecutionResponseDto) => (
               <TaskGroup
                 key={pipeline.id}
                 pipeline={pipeline}

@@ -52,7 +52,7 @@ class LLMStage(PipelineStage):
         if ocr_result is None:
             return context
 
-        ocr_bbox = ocr_result.bbox
+        ocr_bbox = ocr_result.text_boxes
 
         # TODO: 실제 LLM API 호출 구현
         # 현재는 Mock 데이터 반환

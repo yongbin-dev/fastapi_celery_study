@@ -9,20 +9,6 @@ from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
 
-class PipelineStartResponse(BaseModel):
-    """파이프라인 시작 응답
-
-    Attributes:
-        context_id: 파이프라인 컨텍스트 ID
-        status: 초기 상태
-        message: 응답 메시지
-    """
-
-    context_id: str = Field(..., description="파이프라인 컨텍스트 ID")
-    status: str = Field(..., description="초기 상태")
-    message: str = Field(..., description="응답 메시지")
-
-
 class TaskInfo(BaseModel):
     """Task 정보
 

@@ -25,6 +25,8 @@ export interface ChainExecutionResponseDto {
   chain_name: string;
   status: string;
   total_tasks: number;
+  batch_id?: number | null;
+  batch_name?: string | null;
   completed_tasks: number;
   failed_tasks: number;
   created_at: string;
@@ -43,6 +45,24 @@ export interface PipelineStatusResponse {
   status: TaskStatus;
   message: string;
   result : string;
+}
+
+// Batch 내 Context 정보
+export interface BatchContext {
+  chain_id: string;
+  batch_id: string;
+  current_stage: string | null;
+  status: string;
+  private_img: string;
+  public_file_path: string;
+  options: Record<string, any>;
+}
+
+// Batch 상태 응답
+export interface BatchStatusResponse {
+  batch_id: string;
+  total_count: number;
+  contexts: BatchContext[];
 }
 
 // 파이프라인 리스트 관련 타입

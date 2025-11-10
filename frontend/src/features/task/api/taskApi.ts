@@ -1,6 +1,6 @@
 import { api, ml_api } from '@/shared/utils/api';
 import type { TaskHistoryRequest } from '../types';
-import { type PipelineStatusResponse, type ChainExecutionResponseDto } from '../types/pipeline';
+import { type PipelineStatusResponse, type ChainExecutionResponseDto, type BatchStatusResponse } from '../types/pipeline';
 
 export const taskApi = {
   getHistoryTasks: async (
@@ -28,7 +28,7 @@ export const taskApi = {
     const formData = new FormData();
     formData.append('pdf_file', file);
 
-    const response = await ml_api.post<any>('/ocr/extract-pdf', formData, {
+    const response = await ml_api.post<any>('/task/extract-pdf', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -37,14 +37,6 @@ export const taskApi = {
   },
 
 
-  // PDF 추출
-  testRunTask: async (): Promise<any> => {
-    const response = await ml_api.get<any>('/ocr/test-async',  {
-      headers: {
-      },
-    });
-    return response.data;
-  },
 
   // 파이프라인 상태 확인
   getPipelineStatus: async (
@@ -52,6 +44,17 @@ export const taskApi = {
   ): Promise<PipelineStatusResponse> => {
     const response = await ml_api.get<PipelineStatusResponse>(
       `/ocr/result/${pipelineId}`
+    );
+    return response.data;
+  },
+
+
+  // Batch 상태 확인
+  getBatchPipelineStatus: async (
+    batch_id: string
+  ): Promise<BatchStatusResponse> => {
+    const response = await ml_api.get<BatchStatusResponse>(
+      `/task/batch/${batch_id}`
     );
     return response.data;
   },

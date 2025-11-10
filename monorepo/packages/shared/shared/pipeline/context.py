@@ -9,7 +9,8 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
-from shared.schemas.ocr_db import OCRTextBoxCreate
+from shared.schemas.enums import ProcessStatus
+from shared.schemas.ocr_db import OCRExtractDTO, OCRTextBoxCreate
 
 
 class OCRResult(BaseModel):
@@ -56,8 +57,9 @@ class PipelineContext(BaseModel):
     """파이프라인 실행 컨텍스트
 
     Attributes:
-        context_id: 고유 컨텍스트 ID
-        input_file_path: 입력 파일 경로
+        batch_id: batch ID
+        chain_id :  chain ID
+        private_img: 입력 파일 경로
         options: 파이프라인 옵션 (OCR 엔진, LLM 모델 등)
         ocr_result: OCR 단계 결과
         llm_result: LLM 분석 결과
@@ -71,21 +73,26 @@ class PipelineContext(BaseModel):
     """
 
     # 기본 정보
-    context_id: str = Field(..., description="고유 컨텍스트 ID")
-    input_file_path: str = Field(..., description="입력 파일 경로")
+    batch_id: str = Field(description="batch ID", default="")
+    chain_id: str = Field(..., description="Chain ID")
+    private_img: str = Field(..., description="입력 파일 경로")
     public_file_path: str = Field(..., description="공개 파일 경로")
 
     options: Dict[str, Any] = Field(default_factory=dict, description="파이프라인 옵션")
 
     # 단계별 결과 (Pydantic 스키마 사용)
-    ocr_result: Optional[OCRResult] = Field(default=None, description="OCR 단계 결과")
+    ocr_result: Optional[OCRExtractDTO] = Field(
+        default=None, description="OCR 단계 결과"
+    )
     llm_result: Optional[LLMResult] = Field(default=None, description="LLM 분석 결과")
     # layout_result: Optional[Dict[str, Any]] = Field(
     #     default=None, description="레이아웃 분석 결과"
     # )
 
     # 상태 관리
-    status: str = Field(default="pending", description="현재 파이프라인 상태")
+    status: str = Field(
+        default=ProcessStatus.PENDING, description="현재 파이프라인 상태"
+    )
     current_stage: Optional[str] = Field(
         default=None, description="현재 실행 중인 스테이지"
     )
