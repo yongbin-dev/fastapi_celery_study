@@ -3,66 +3,27 @@
 각 스테이지를 Celery 태스크로 래핑하여 비동기 실행 및 재시도 지원
 """
 
-import json
+import time
 import uuid
 from typing import Any, Dict, Optional
 
 from celery import chain
 from celery_app import celery_app
 from shared.core.database import get_db_manager
-
-# Redis 서비스 인스턴스
-# 로깅 설정
 from shared.core.logging import get_logger
+from shared.pipeline.cache import get_pipeline_cache_service
 from shared.pipeline.context import PipelineContext
 from shared.pipeline.exceptions import RetryableError
 from shared.schemas.common import ImageResponse
-from shared.service.redis_service import get_redis_service
+from shared.schemas.enums import ProcessStatus
+from tasks.stages.llm_stage import LLMStage
 
-from .stages.llm_stage import LLMStage
 from .stages.ocr_stage import OCRStage
 
 logger = get_logger(__name__)
 
-redis_service = get_redis_service().get_redis_client()
-
-
-# Context 저장/로드 헬퍼
-def save_context_to_redis(context: PipelineContext, ttl: int = 86400) -> None:
-    """Context를 Redis에 저장 (24시간 TTL)
-
-    Args:
-        context: 파이프라인 컨텍스트
-        ttl: Time To Live (초)
-    """
-    key = f"pipeline:context:{context.context_id}"
-    redis_service.set(key, context.model_dump_json(), ex=ttl)
-
-
-def load_context_from_redis(context_id: str) -> PipelineContext:
-    """Redis에서 Context 로드
-
-    Args:
-        context_id: 컨텍스트 ID
-
-    Returns:
-        파이프라인 컨텍스트
-
-    Raises:
-        ValueError: Context가 Redis에 없을 때
-    """
-    key = f"pipeline:context:{context_id}"
-    data = redis_service.get(key)
-    if not data:
-        raise ValueError(f"Context {context_id} not found in Redis")
-
-    # JSON 문자열을 딕셔너리로 파싱
-    if isinstance(data, str):
-        data_dict = json.loads(data)
-    else:
-        data_dict = data
-
-    return PipelineContext(**data_dict)  # type: ignore
+# PipelineCacheService 인스턴스
+cache_service = get_pipeline_cache_service()
 
 
 # 각 단계별 Celery 태스크
@@ -75,18 +36,27 @@ def load_context_from_redis(context_id: str) -> PipelineContext:
     retry_backoff_max=600,
     retry_jitter=True,
 )
-def ocr_stage_task(self, context_id: str) -> str:
+def ocr_stage_task(self, context_dict: Dict[str, str]) -> Dict[str, str]:
     """OCR 단계 실행
 
     Args:
         self: Celery task instance
-        context_id: 컨텍스트 ID
+        context_dict: batch_id와 chain_id를 포함하는 딕셔너리
 
     Returns:
         컨텍스트 ID (다음 단계로 전달)
     """
+    # 딕셔너리에서 batch_id와 chain_id 추출
+    batch_id = context_dict["batch_id"]
+    chain_id = context_dict["chain_id"]
+
     # Redis에서 context 로드
-    context = load_context_from_redis(context_id)
+    context = cache_service.load_context(batch_id, chain_id)
+
+    # 취소 상태 확인
+    if context.status == ProcessStatus.REVOKED:
+        logger.warning(f"⚠️ 작업 {chain_id}가 취소되었습니다 (OCR stage)")
+        raise Exception(f"작업이 취소되었습니다: {chain_id}")
 
     # OCR 실행 (동기로 실행 - run_sync 필요 없음, async 함수를 직접 호출)
     import asyncio
@@ -95,9 +65,9 @@ def ocr_stage_task(self, context_id: str) -> str:
     context = asyncio.run(stage.run(context))
 
     # Redis에 저장
-    save_context_to_redis(context)
+    cache_service.save_context(context)
 
-    return context_id  # 다음 단계로 전달
+    return {"batch_id": batch_id, "chain_id": chain_id}  # 다음 단계로 전달
 
 
 @celery_app.task(
@@ -108,7 +78,7 @@ def ocr_stage_task(self, context_id: str) -> str:
     retry_backoff=True,
     retry_backoff_max=600,
 )
-def llm_stage_task(self, context_id: str) -> str:
+def llm_stage_task(self, context_dict: Dict[str, str]) -> Dict[str, str]:
     """LLM 분석 단계 실행
 
     Args:
@@ -118,15 +88,66 @@ def llm_stage_task(self, context_id: str) -> str:
     Returns:
         컨텍스트 ID
     """
-    context = load_context_from_redis(context_id)
 
+    # 딕셔너리에서 batch_id와 chain_id 추출
+    batch_id = context_dict["batch_id"]
+    chain_id = context_dict["chain_id"]
+
+    # Redis에서 context 로드
+    context = cache_service.load_context(batch_id, chain_id)
+
+    # 취소 상태 확인
+    if context.status == ProcessStatus.REVOKED:
+        logger.warning(f"⚠️ 작업 {chain_id}가 취소되었습니다 (LLM stage)")
+        raise Exception(f"작업이 취소되었습니다: {chain_id}")
+
+    # OCR 실행 (동기로 실행 - run_sync 필요 없음, async 함수를 직접 호출)
     import asyncio
 
     stage = LLMStage()
     context = asyncio.run(stage.run(context))
 
-    save_context_to_redis(context)
-    return context_id
+    logger.info(f"{chain_id} sleep start")
+    time.sleep(30)
+    logger.info(f"{chain_id} sleep end")
+
+    # Redis에 저장
+    cache_service.save_context(context)
+
+    return {"batch_id": batch_id, "chain_id": chain_id}  # 다음 단계로 전달
+
+
+@celery_app.task(
+    bind=True,
+    name="pipeline.finish_stage_task",
+    max_retries=3,
+    autoretry_for=(ConnectionError, TimeoutError, RetryableError),
+    retry_backoff=True,
+    retry_backoff_max=600,
+)
+def finish_stage_task(self, context_dict: Dict[str, str]) -> Dict[str, str]:
+    """LLM 분석 단계 실행
+
+    Args:
+        self: Celery task instance
+        context_id: 컨텍스트 ID
+
+    Returns:
+        컨텍스트 ID
+    """
+
+    # 딕셔너리에서 batch_id와 chain_id 추출
+    batch_id = context_dict["batch_id"]
+    chain_id = context_dict["chain_id"]
+
+    # Redis에서 context 로드
+    context = cache_service.load_context(batch_id, chain_id)
+
+    context.status = ProcessStatus.SUCCESS
+    # Redis에 저장
+    cache_service.save_context(context)
+
+    return {"batch_id": batch_id, "chain_id": chain_id}  # 다음 단계로 전달
 
 
 @celery_app.task(bind=True, name="tasks.start_pipeline")
@@ -141,7 +162,7 @@ def start_pipeline_task(
 def start_pipeline(
     image_response: ImageResponse, batch_id: Optional[str], options: Dict[str, Any] = {}
 ) -> str:
-    """CR 추출 파이프라인 시작
+    """파이프라인 시작
 
     Args:
         file_path: 입력 파일 경로
@@ -150,7 +171,7 @@ def start_pipeline(
     Returns:
         context_id: 파이프라인 실행 추적 ID (=chain_id)
     """
-    # 1. Chain ID 생성 (context_id와 동일)
+    # 1. Chain ID 생성
     chain_id = str(uuid.uuid4())
 
     # 2. DB에 ChainExecution 생성
@@ -163,7 +184,7 @@ def start_pipeline(
         if not session:
             raise RuntimeError("DB 세션 생성 실패")
 
-        chain_execution_crud.create_chain_execution(
+        chain_exec = chain_execution_crud.create_chain_execution(
             db=session,
             chain_id=chain_id,
             batch_id=batch_id,
@@ -173,23 +194,35 @@ def start_pipeline(
             input_data={"file_path": image_response.private_img, "options": options},
         )
 
-    # 3. Context 생성 및 Redis 저장
-    context = PipelineContext(
-        context_id=chain_id,
-        input_file_path=image_response.private_img,
-        public_file_path=image_response.public_img,
-        options=options,
-    )
+        # 3. Context 생성 및 Redis 저장
+        context = PipelineContext(
+            batch_id=batch_id or "",
+            chain_id=chain_id,
+            private_img=image_response.private_img,
+            public_file_path=image_response.public_img,
+            options=options,
+        )
 
-    save_context_to_redis(context)
+        cache_service.save_context(context)
 
-    # 4. Celery chain으로 단계 연결
-    workflow = chain(
-        ocr_stage_task.s(context.context_id),
-        llm_stage_task.s(),
-    )
+        # 4. Celery chain으로 단계 연결
+        workflow = chain(
+            ocr_stage_task.s(
+                {"batch_id": context.batch_id, "chain_id": context.chain_id}
+            ),
+            llm_stage_task.s(),
+            finish_stage_task.s(),
+        )
 
-    # 5. 비동기 실행
-    workflow.apply_async()
+        # 5. 비동기 실행
+        result = workflow.apply_async()
 
-    return context.context_id
+        # 6. Celery task ID를 DB에 저장
+        chain_execution_crud.update_celery_task_id(
+            db=session,
+            chain_execution=chain_exec,
+            celery_task_id=result.id
+        )
+        logger.info(f"✅ Celery task ID 저장 완료: {result.id} (chain_id: {chain_id})")
+
+        return context.chain_id

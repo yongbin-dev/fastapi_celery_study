@@ -94,7 +94,6 @@ class CRUDChainExecution(
         db.refresh(chain_execution)
         return chain_execution
 
-    #
     def update_status(
         self, db: Session, *, chain_execution: ChainExecution, status: ProcessStatus
     ) -> ChainExecution:
@@ -109,6 +108,16 @@ class CRUDChainExecution(
         ]:
             chain_execution.finished_at = datetime.now()
 
+        db.add(chain_execution)
+        db.commit()
+        db.refresh(chain_execution)
+        return chain_execution
+
+    def update_celery_task_id(
+        self, db: Session, *, chain_execution: ChainExecution, celery_task_id: str
+    ) -> ChainExecution:
+        """Celery task ID 업데이트"""
+        chain_execution.celery_task_id = celery_task_id
         db.add(chain_execution)
         db.commit()
         db.refresh(chain_execution)
