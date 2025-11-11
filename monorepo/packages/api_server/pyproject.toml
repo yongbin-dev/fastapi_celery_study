@@ -17,6 +17,8 @@ dependencies = [
     "python-multipart>=0.0.6",
     "psutil>=7.0.0",
     "levenshtein>=0.27.1",
+    "celery>=5.3.0",  # Celery 태스크 호출용
+    "kombu>=5.3.0",
 ]
 
 [tool.hatch.build.targets.wheel]

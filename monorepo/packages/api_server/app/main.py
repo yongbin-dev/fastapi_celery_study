@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from shared.config import settings
 from shared.core import get_logger
 from shared.core.auto_router import setup_auto_routers
-from shared.core.database import close_db, init_db
+from shared.core.database import close_db
 from shared.handler.exceptions_handler import (
     general_exception_handler,
 )
@@ -17,6 +17,7 @@ from shared.middleware.response_middleware import ResponseLogMiddleware
 from shared.utils.response_builder import ResponseBuilder
 
 logger = get_logger(__name__)
+
 
 # 애플리케이션 시작/종료 이벤트 처리
 @asynccontextmanager
@@ -32,17 +33,6 @@ async def lifespan(app: FastAPI):
 
     logger.info("🚀 FastAPI 애플리케이션 시작")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
-
-    # 데이터베이스 초기화 (선택사항)
-    try:
-        await init_db()
-        logger.info("✅ 데이터베이스 연결 초기화 완료")
-    except Exception as e:
-        logger.error(f"❌ 데이터베이스 연결 실패: {e}")
-        logger.error("💥 DB 연결 없이는 애플리케이션을 시작할 수 없습니다. 종료합니다.")
-        import sys
-
-        sys.exit(1)
 
     yield  # 애플리케이션 실행
 
@@ -75,6 +65,7 @@ app = FastAPI(
         Exception: general_exception_handler,
     },
 )
+
 
 # 미들웨어 등록 (순서 중요: 역순으로 실행됨)
 def setup_middleware():
@@ -110,7 +101,7 @@ def setup_routers():
         app=app,
         domains_path=domains_path,
         exclude_domains=[],  # 제외할 도메인이 있으면 여기에 추가
-        global_prefix="/api/v1"
+        global_prefix="/api/v1",
     )
 
     # 등록된 router 정보 로깅

@@ -1,5 +1,5 @@
-# Dockerfile.ocr-cpu - OCR CPU 버전 (ml-base 기반)
-# ml-base에 paddlepaddle + paddleocr + easyocr 추가
+# Dockerfile.gpu - OCR GPU 버전 (ml-base 기반)
+# ml-base에 paddlepaddle-gpu + paddleocr + easyocr 추가
 
 FROM backend-ml-base:latest
 
@@ -12,11 +12,18 @@ ARG DOMAIN_EXTRA=ocr-gpu
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra ${DOMAIN_EXTRA} --no-dev
 
-# 3. 소스 코드 복사
-COPY ml_app ./ml_app
+# 3. shared 패키지 복사 및 재설치 (base 이미지의 shared가 덮어씌워질 수 있으므로)
+COPY packages/shared /app/shared
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -e /app/shared
 
-# 4. 환경 변수
-ENV FLAGS_use_gpu=False
+# 4. 소스 코드 복사
+COPY packages/ml_server/ml_app ./ml_app
 
-# 5. 컨테이너 시작
-CMD ["sh", "-c", "uv run uvicorn ml_app.main:app --host ${HOST} --port ${PORT}"]
+# 5. 환경 변수 설정
+ENV FLAGS_use_gpu=True \
+    HOST=0.0.0.0 \
+    PORT=8001
+
+# 6. 컨테이너 시작
+CMD ["/app/.venv/bin/uvicorn", "ml_app.main:app", "--host", "0.0.0.0", "--port", "8001"]

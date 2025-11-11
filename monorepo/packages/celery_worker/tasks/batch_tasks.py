@@ -59,13 +59,14 @@ def process_chunk_task(
 
     # 각 이미지에 대해 개별 파이프라인 실행
     for idx, image_dict in enumerate(image_response_list):
+        file_path = None  # 예외 처리를 위해 먼저 초기화
         try:
             # dict를 ImageResponse 객체로 복원
             image_response = ImageResponse(**image_dict)
+            file_path = image_response.private_img
 
             # 개별 파이프라인 실행
             start_pipeline(image_response, batch_id, options)
-            file_path = image_response.private_img
             completed_count += 1
 
             logger.info(
@@ -78,7 +79,7 @@ def process_chunk_task(
 
             logger.error(
                 f"이미지 처리 실패: batch={batch_id}, chunk={chunk_index}, "
-                f"idx={idx}, file={file_path}, error={str(e)}"
+                f"idx={idx}, file={file_path or 'unknown'}, error={str(e)}"
             )
 
     # 배치 통계 업데이트

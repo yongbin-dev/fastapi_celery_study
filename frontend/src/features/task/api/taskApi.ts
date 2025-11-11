@@ -1,4 +1,4 @@
-import { api, ml_api } from '@/shared/utils/api';
+import { api } from '@/shared/utils/api';
 import type { TaskHistoryRequest } from '../types';
 import { type PipelineStatusResponse, type ChainExecutionResponseDto, type BatchStatusResponse } from '../types/pipeline';
 
@@ -28,7 +28,7 @@ export const taskApi = {
     const formData = new FormData();
     formData.append('pdf_file', file);
 
-    const response = await ml_api.post<any>('/task/extract-pdf', formData, {
+    const response = await api.post<any>('/task/extract-pdf', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -42,7 +42,7 @@ export const taskApi = {
   getPipelineStatus: async (
     pipelineId: string
   ): Promise<PipelineStatusResponse> => {
-    const response = await ml_api.get<PipelineStatusResponse>(
+    const response = await api.get<PipelineStatusResponse>(
       `/ocr/result/${pipelineId}`
     );
     return response.data;
@@ -53,7 +53,7 @@ export const taskApi = {
   getBatchPipelineStatus: async (
     batch_id: string
   ): Promise<BatchStatusResponse> => {
-    const response = await ml_api.get<BatchStatusResponse>(
+    const response = await api.get<BatchStatusResponse>(
       `/task/batch/${batch_id}`
     );
     return response.data;
@@ -61,7 +61,7 @@ export const taskApi = {
 
 
   cancelTasks: async (chainId: string): Promise<void> => {
-    await ml_api.delete<any>(`/task/cancel/${chainId}`);
+    await api.delete<any>(`/task/cancel/${chainId}`);
   },
 
 };

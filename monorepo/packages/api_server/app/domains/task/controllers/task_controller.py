@@ -1,8 +1,8 @@
 # app/domains/task/controllers/task_controller.py
 import uuid
 
+from celery import Celery
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from ml_app.core.celery_client import get_celery_client
 from shared.config import settings
 from shared.core.database import get_db
 from shared.core.logging import get_logger
@@ -186,18 +186,22 @@ async def cancel_task_result(
 
     Args:
         chain_id: chain_id
-        session: 데이터베이스 세션 (향후 구현에 사용)
-        cache_service: 파이프라인 캐시 서비스 (향후 구현에 사용)
+        session: 데이터베이스 세션
+        cache_service: 파이프라인 캐시 서비스
 
     """
-    logger.info(f"🔍 OCR 태스크 취소 요청: chain_id={chain_id}")
-    celery_client = get_celery_client()
+    logger.info(f"🔍 태스크 취소 요청: chain_id={chain_id}")
+
+    # Celery 앱 인스턴스 생성
+    celery_app = Celery(broker=settings.REDIS_URL, backend=settings.REDIS_URL)
 
     chain_exec = await chain_execution_crud.get_by_chain_id(session, chain_id=chain_id)
     if chain_exec is None:
-        raise Exception()
+        raise HTTPException(
+            status_code=404, detail=f"Chain ID {chain_id}를 찾을 수 없습니다"
+        )
 
-    celery_client.celery_app.control.revoke(chain_exec.celery_task_id, terminate=True)
+    celery_app.control.revoke(chain_exec.celery_task_id, terminate=True)
 
     return ResponseBuilder.error(
         message="태스크 취소 기능은 아직 구현되지 않았습니다.",
@@ -211,7 +215,6 @@ async def get_active_tasks():
     Returns:
         현재 실행 중인 태스크 목록
     """
-    from celery import Celery
     from shared.schemas.task_status import ActiveTaskInfo, ActiveTasksResponse
 
     try:
@@ -268,7 +271,6 @@ async def get_reserved_tasks():
     Returns:
         대기 중인 태스크 목록
     """
-    from celery import Celery
     from shared.schemas.task_status import ReservedTaskInfo, ReservedTasksResponse
 
     try:
@@ -326,7 +328,6 @@ async def get_scheduled_tasks():
     Returns:
         예약된 태스크 목록
     """
-    from celery import Celery
     from shared.schemas.task_status import ScheduledTaskInfo, ScheduledTasksResponse
 
     try:
@@ -399,7 +400,7 @@ async def get_all_tasks_status():
 
     try:
         # Celery 앱 인스턴스 생성
-        celery_app = get_celery_client().celery_app
+        celery_app = Celery(broker=settings.REDIS_URL, backend=settings.REDIS_URL)
         inspect = celery_app.control.inspect()
 
         # 모든 태스크 정보 조회

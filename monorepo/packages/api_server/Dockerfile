@@ -16,19 +16,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # 의존성 파일 복사
-COPY api_server/pyproject.toml ./
+COPY packages/api_server/pyproject.toml ./
 
 # 공통 의존성 설치 (캐시 활용)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --python 3.12 --no-dev
 
 # shared 패키지 복사 및 설치
-COPY shared /app/shared
+COPY packages/shared /app/shared
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install -e /app/shared
 
+# celery_worker의 tasks 모듈 복사 (Celery 태스크 호출용)
+COPY packages/celery_worker/tasks /app/tasks
+COPY packages/celery_worker/core /app/core
+COPY packages/celery_worker/celery_app.py /app/celery_app.py
+
 # 소스 코드 복사
-COPY api_server/app ./app
+COPY packages/api_server/app ./app
+COPY packages/api_server/main.py ./main.py
 
 # 환경 변수
 ENV PYTHONPATH=/app \
