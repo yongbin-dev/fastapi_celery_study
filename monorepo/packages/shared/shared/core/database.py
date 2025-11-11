@@ -44,6 +44,8 @@ class DatabaseManager:
             connect_args={
                 "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": settings.DB_CONNECT_TIMEOUT,
+                # pgbouncer 호환성을 위해 prepared statement 캐시 비활성화
+                "statement_cache_size": 0,
             },
             **COMMON_ENGINE_CONFIG,
         )
@@ -82,6 +84,8 @@ class DatabaseManager:
             connect_args={
                 "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": 5,
+                # pgbouncer 호환성을 위해 prepared statement 캐시 비활성화
+                "statement_cache_size": 0,
             },
         )
 
