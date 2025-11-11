@@ -142,7 +142,7 @@
         "type": "debugpy",
         "request": "launch",
         "module": "celery",
-        "args": ["-A", "core.celery_app", "flower", "--port=5555"],
+        "args": ["-A", "celery_app", "flower", "--port=5555"],
         "jinja": true,
         "justMyCode": false,
         "envFile": "${workspaceFolder:Root}/.env.development",

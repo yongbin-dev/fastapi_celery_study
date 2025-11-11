@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     # Pipeline 설정
     PIPELINE_TTL: int = 3600  # Redis에서 파이프라인 데이터 TTL (초)
 
+    # 파일 업로드 설정
+    MAX_PDF_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB (bytes)
+    ALLOWED_PDF_CONTENT_TYPES: List[str] = ["application/pdf"]
+
     # 로깅 설정
     LOG_LEVEL: str = "INFO"
     LOG_TO_FILE: bool = True
@@ -126,7 +130,7 @@ class Settings(BaseSettings):
     #   - prefork: GPU 사용 시 권장 (프로세스 격리, concurrency=1-2)
     #   - gevent: I/O 작업용 (GPU 작업과 호환 불가)
     #   - threads: 멀티스레드 (GPU 작업 비권장)
-    CELERY_WORKER_POOL: str = "solo"
+    CELERY_WORKER_POOL: str = "prefork"
     CELERY_WORKER_CONCURRENCY: int = 1
     CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 100

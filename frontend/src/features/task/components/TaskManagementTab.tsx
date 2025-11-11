@@ -54,7 +54,6 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
   // 배치 데이터가 실제로 로드되면 처리 상태 종료
   useEffect(() => {
     if (batchStatus && batchStatus.total_count > 0 && isProcessing) {
-      console.log('배치 데이터 로드 완료 (total_count:', batchStatus.total_count, '), 처리 상태 종료');
       setIsProcessing(false);
     }
   }, [batchStatus, isProcessing]);
@@ -89,8 +88,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
       setIsProcessing(true); // 처리 시작
       extractPdfMutation.mutate(selectedFile, {
         onSuccess: (data) => {
-          console.log('PDF 업로드 성공, batchId:', data);
-          setBatchId(data);
+          setBatchId(data.batch_id);
           setShouldPollBatch(true); // 새로운 배치 시작 시 폴링 재시작
         },
         onError: (error) => {

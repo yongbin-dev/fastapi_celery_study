@@ -45,16 +45,6 @@ image_path=https://ifhenrlmwkfsxibiwggf.supabase.co/storage/v1/object/public/yb_
 
 ###
 
-
-### 3. 기본 OCR 추출 (한글, 기본 설정)
-POST http://localhost:8002/api/model/ocr/extract-async
-Content-Type: application/x-www-form-urlencoded
-
-image_path=https://ifhenrlmwkfsxibiwggf.supabase.co/storage/v1/object/public/yb_test_storage/uploads/2025-10-21/12954acb-fb8a-4b5e-adab-2df55be6f748_ocr_test.png
-
-###
-
-
 ### 4. OCR 추출 - 높은 신뢰도 임계값
 POST http://localhost:8002/api/model/ocr/extract
 Content-Type: application/x-www-form-urlencoded

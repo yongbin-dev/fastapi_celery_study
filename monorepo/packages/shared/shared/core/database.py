@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.orm import Session, sessionmaker
 
 from shared.config import settings
-from shared.models.base import Base
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -44,8 +43,9 @@ class DatabaseManager:
             connect_args={
                 "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": settings.DB_CONNECT_TIMEOUT,
-                # pgbouncer 호환성을 위해 prepared statement 캐시 비활성화
+                # pgbouncer 호환성을 위해 prepared statement 완전 비활성화
                 "statement_cache_size": 0,
+                "prepared_statement_cache_size": 0,
             },
             **COMMON_ENGINE_CONFIG,
         )
@@ -84,8 +84,9 @@ class DatabaseManager:
             connect_args={
                 "server_settings": {"timezone": settings.DB_TIMEZONE},
                 "command_timeout": 5,
-                # pgbouncer 호환성을 위해 prepared statement 캐시 비활성화
+                # pgbouncer 호환성을 위해 prepared statement 완전 비활성화
                 "statement_cache_size": 0,
+                "prepared_statement_cache_size": 0,
             },
         )
 
@@ -172,21 +173,22 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 # 초기화 및 종료 함수
 async def init_db() -> None:
+    """
+    데이터베이스 연결을 초기화하고 연결 테스트를 수행합니다.
+
+    테이블 생성은 마이그레이션 도구(Alembic) 또는 별도의 초기화 스크립트를 사용하세요.
+    """
     db_manager = get_db_manager()
     try:
         # 타임아웃 설정으로 빠른 실패
         async with asyncio.timeout(settings.DB_CONNECT_TIMEOUT):
             async with db_manager.async_engine.begin() as conn:
-                # 연결 테스트 먼저 수행
+                # 연결 테스트 수행
                 await conn.execute(text("SELECT 1"))
                 logger.info("🔗 데이터베이스 연결 테스트 성공")
-
-                if settings.ENVIRONMENT == "development":
-                    logger.info("개발 환경: 데이터베이스 테이블 생성 중...")
-                    await conn.run_sync(Base.metadata.create_all)
-                    logger.info("데이터베이스 테이블 생성 완료")
-                else:
-                    logger.info("프로덕션 환경: 테이블 생성 건너뜀 (마이그레이션 사용)")
+                logger.info(
+                    "💡 테이블 생성은 마이그레이션 도구를 사용하세요 (pgbouncer 호환성)"
+                )
     except asyncio.TimeoutError:
         logger.error(f"데이터베이스 연결 타임아웃 ({settings.DB_CONNECT_TIMEOUT}초)")
         raise

@@ -33,7 +33,7 @@ def process_chunk_task(
     chunk_index: int,
     image_response_list: List[Dict[str, Any]],
     options: Dict[str, Any],
-) -> Dict[str, Any]:
+):
     """청크 단위 파이프라인 처리
     Args:
         self: Celery task instance
@@ -46,8 +46,8 @@ def process_chunk_task(
     """
     from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
 
-    # pipeline_tasks에서 start_pipeline_sync import (순차 실행)
-    from .pipeline_tasks import start_pipeline_sync
+    # pipeline_tasks에서 start_pipeline import
+    from .pipeline_tasks import start_pipeline
 
     logger.info(
         f"청크 처리 시작: batch_id={batch_id}, chunk={chunk_index}, "
@@ -56,26 +56,17 @@ def process_chunk_task(
 
     completed_count = 0
     failed_count = 0
-    results = []
 
-    # 각 이미지에 대해 개별 파이프라인 실행 (순차적으로)
+    # 각 이미지에 대해 개별 파이프라인 실행
     for idx, image_dict in enumerate(image_response_list):
         try:
             # dict를 ImageResponse 객체로 복원
             image_response = ImageResponse(**image_dict)
 
-            # 개별 파이프라인 실행 (동기 순차 방식)
-            # OCR → LLM이 완료된 후 다음 이미지로 진행
-            context_id = start_pipeline_sync(image_response, batch_id, options)
+            # 개별 파이프라인 실행
+            start_pipeline(image_response, batch_id, options)
             file_path = image_response.private_img
             completed_count += 1
-            results.append(
-                {
-                    "file_path": file_path,
-                    "context_id": context_id,
-                    "status": "success",
-                }
-            )
 
             logger.info(
                 f"이미지 처리 완료: batch={batch_id}, chunk={chunk_index}, "
@@ -84,13 +75,6 @@ def process_chunk_task(
 
         except Exception as e:
             failed_count += 1
-            results.append(
-                {
-                    "file_path": image_response.private_img,
-                    "status": "failed",
-                    "error": str(e),
-                }
-            )
 
             logger.error(
                 f"이미지 처리 실패: batch={batch_id}, chunk={chunk_index}, "
@@ -125,14 +109,6 @@ def process_chunk_task(
         f"청크 처리 완료: batch_id={batch_id}, chunk={chunk_index}, "
         f"completed={completed_count}, failed={failed_count}"
     )
-
-    return {
-        "batch_id": batch_id,
-        "chunk_index": chunk_index,
-        "completed": completed_count,
-        "failed": failed_count,
-        "results": results,
-    }
 
 
 def start_batch_pipeline(
