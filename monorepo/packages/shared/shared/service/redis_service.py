@@ -1,15 +1,16 @@
 # app/services/redis_service.py
 
+from typing import Optional
 
 import redis
 
-from ..core.logging import get_logger
-
-logger = get_logger(__name__)
+from ..config import settings
 
 
 class RedisService:
     """Redis를 사용한 파이프라인 상태 관리 구현체"""
+
+    _redis_client: Optional[redis.Redis] = None
 
     def __init__(
         self,
@@ -35,10 +36,16 @@ class RedisService:
 
 
 def get_redis_service():
-    return RedisService(redis_host="localhost", redis_port=6379, redis_db=0)
-
-
-def get_client():
     return RedisService(
-        redis_host="localhost", redis_port=6379, redis_db=0
+        redis_host=settings.REDIS_HOST,
+        redis_port=settings.REDIS_PORT,
+        redis_db=int(settings.REDIS_DB),
+    )
+
+
+def get_redis_client_sync():
+    return RedisService(
+        redis_host=settings.REDIS_HOST,
+        redis_port=settings.REDIS_PORT,
+        redis_db=int(settings.REDIS_DB),
     ).get_redis_client()

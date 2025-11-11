@@ -81,6 +81,7 @@ services:
       CELERY_BROKER_URL: "redis://redis:6379/1"
       CELERY_RESULT_BACKEND: "redis://redis:6379/2"
       OCR_MODEL_SERVER_URL: "http://ml_server:8001"
+      ML_SERVER_GRPC_ADDRESS: "ml_server:50051"
     networks:
       - app-network
     depends_on:

@@ -1,7 +1,9 @@
 # config.py
 import os
 from typing import List
+from urllib.parse import urlparse
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 from ..core.logging import get_logger  # noqa: E402
@@ -46,7 +48,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
-    REDIS_DB: str = "s"
+    REDIS_DB: str = "0"
 
     # Database 설정
     DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/dbname"
@@ -123,6 +125,7 @@ class Settings(BaseSettings):
 
     USE_GRPC: str = "true"
     GRPC_PORT: int = 50051
+    ML_SERVER_GRPC_ADDRESS: str = "localhost:50051"
 
     # CELERY Worker 설정
     # Pool 타입:
@@ -135,6 +138,20 @@ class Settings(BaseSettings):
     CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 100
     CELERY_WORKER_LOGLEVEL: str = "INFO"
+
+    @model_validator(mode="after")
+    def set_redis_details_from_url(self) -> "Settings":
+        """
+        Parse REDIS_HOST and REDIS_PORT from REDIS_URL.
+        """
+        if self.REDIS_URL:
+            parsed_url = urlparse(self.REDIS_URL)
+            self.REDIS_HOST = parsed_url.hostname or "localhost"
+            self.REDIS_PORT = parsed_url.port or 6379
+            if parsed_url.path:
+                # /0 -> 0
+                self.REDIS_DB = parsed_url.path.lstrip("/")
+        return self
 
 
 # 전역 설정 객체
