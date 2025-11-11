@@ -108,12 +108,11 @@ def llm_stage_task(self, context_dict: Dict[str, str]) -> Dict[str, str]:
     context = asyncio.run(stage.run(context))
 
     logger.info(f"{chain_id} sleep start")
-    time.sleep(30)
+    time.sleep(5)
     logger.info(f"{chain_id} sleep end")
 
     # Redis에 저장
     cache_service.save_context(context)
-
     return {"batch_id": batch_id, "chain_id": chain_id}  # 다음 단계로 전달
 
 
@@ -158,14 +157,15 @@ def start_pipeline_task(
     return start_pipeline(image_response, batch_id, options)
 
 
-# 파이프라인 시작 함수
+# 파이프라인 시작 함수 (비동기 chain 방식)
 def start_pipeline(
     image_response: ImageResponse, batch_id: Optional[str], options: Dict[str, Any] = {}
 ) -> str:
-    """파이프라인 시작
+    """파이프라인 시작 (비동기 chain 방식)
 
     Args:
-        file_path: 입력 파일 경로
+        image_response: 이미지 응답 객체
+        batch_id: 배치 ID
         options: 파이프라인 옵션
 
     Returns:
@@ -219,10 +219,92 @@ def start_pipeline(
 
         # 6. Celery task ID를 DB에 저장
         chain_execution_crud.update_celery_task_id(
-            db=session,
-            chain_execution=chain_exec,
-            celery_task_id=result.id
+            db=session, chain_execution=chain_exec, celery_task_id=result.id
         )
         logger.info(f"✅ Celery task ID 저장 완료: {result.id} (chain_id: {chain_id})")
 
         return context.chain_id
+
+
+def start_pipeline_sync(
+    image_response: ImageResponse, batch_id: Optional[str], options: Dict[str, Any] = {}
+) -> str:
+    """파이프라인 시작 (동기 순차 실행 방식)
+
+    각 스테이지를 순차적으로 실행하여 OCR → LLM 순서를 보장합니다.
+    배치 처리 시 각 항목이 완전히 처리된 후 다음 항목으로 넘어갑니다.
+
+    Args:
+        image_response: 이미지 응답 객체
+        batch_id: 배치 ID
+        options: 파이프라인 옵션
+
+    Returns:
+        context_id: 파이프라인 실행 추적 ID (=chain_id)
+    """
+    import asyncio
+
+    # 1. Chain ID 생성
+    chain_id = str(uuid.uuid4())
+
+    # 2. DB에 ChainExecution 생성
+    from shared.repository.crud.sync_crud.chain_execution import chain_execution_crud
+
+    # batch_id가 빈 문자열이면 None으로 변환
+    batch_id = batch_id if batch_id else None
+
+    with get_db_manager().get_sync_session() as session:
+        if not session:
+            raise RuntimeError("DB 세션 생성 실패")
+
+        chain_exec = chain_execution_crud.create_chain_execution(
+            db=session,
+            chain_id=chain_id,
+            batch_id=batch_id,
+            chain_name="workflow",
+            total_tasks=2,  # OCR, LLM
+            initiated_by="api_server",
+            input_data={"file_path": image_response.private_img, "options": options},
+        )
+
+    # 3. Context 생성 및 Redis 저장
+    context = PipelineContext(
+        batch_id=batch_id or "",
+        chain_id=chain_id,
+        private_img=image_response.private_img,
+        public_file_path=image_response.public_img,
+        options=options,
+    )
+
+    cache_service.save_context(context)
+
+    try:
+        # 4. 각 스테이지를 순차적으로 실행
+        logger.info(f"🚀 파이프라인 시작 (동기): chain_id={chain_id}")
+
+        # OCR Stage
+        logger.info(f"📸 OCR Stage 시작: chain_id={chain_id}")
+        ocr_stage = OCRStage()
+        context = asyncio.run(ocr_stage.run(context))
+        cache_service.save_context(context)
+        logger.info(f"✅ OCR Stage 완료: chain_id={chain_id}")
+
+        # LLM Stage
+        logger.info(f"🤖 LLM Stage 시작: chain_id={chain_id}")
+        llm_stage = LLMStage()
+        context = asyncio.run(llm_stage.run(context))
+        cache_service.save_context(context)
+        logger.info(f"✅ LLM Stage 완료: chain_id={chain_id}")
+
+        # 완료 처리
+        context.status = ProcessStatus.SUCCESS
+        cache_service.save_context(context)
+        logger.info(f"🎉 파이프라인 완료: chain_id={chain_id}")
+
+    except Exception as e:
+        logger.error(f"❌ 파이프라인 실패: chain_id={chain_id}, error={str(e)}")
+        context.status = ProcessStatus.FAILURE
+        cache_service.save_context(context)
+        raise
+
+    return context.chain_id

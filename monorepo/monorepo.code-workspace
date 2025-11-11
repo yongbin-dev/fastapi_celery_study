@@ -128,13 +128,7 @@
           "--recursive",
           "--",
           "${workspaceFolder:Root}/.venv/bin/python",
-          "-m",
-          "celery",
-          "-A",
-          "celery_app",
-          "worker",
-          "--loglevel=INFO",
-          "--pool=solo"
+          "worker.py"
         ],
         "jinja": true,
         "justMyCode": false,

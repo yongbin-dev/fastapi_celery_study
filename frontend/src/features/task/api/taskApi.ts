@@ -60,8 +60,8 @@ export const taskApi = {
   },
 
 
-  cancelTasks: async (pipelineId: string): Promise<void> => {
-    await ml_api.get(`/ocr/cancel/${pipelineId}`);
+  cancelTasks: async (chainId: string): Promise<void> => {
+    await ml_api.delete<any>(`/task/cancel/${chainId}`);
   },
 
 };

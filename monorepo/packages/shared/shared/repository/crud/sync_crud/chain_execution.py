@@ -62,6 +62,7 @@ class CRUDChainExecution(
         chain_exec = ChainExecution(
             chain_id=chain_id,
             chain_name=chain_name,
+            celery_task_id=None,
             batch_id=batch_id,
             total_tasks=total_tasks,
             status=ProcessStatus.PENDING.value,

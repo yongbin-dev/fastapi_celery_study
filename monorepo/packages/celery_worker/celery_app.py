@@ -35,8 +35,16 @@ celery_app.conf.update(
     timezone="Asia/Seoul",
     enable_utc=True,
     result_expires=3600,
-    worker_prefetch_multiplier=1,
+    worker_prefetch_multiplier=settings.CELERY_WORKER_PREFETCH_MULTIPLIER,
+    worker_max_tasks_per_child=settings.CELERY_WORKER_MAX_TASKS_PER_CHILD,
     task_acks_late=True,
+)
+
+logger.info(
+    f"🔧 Celery prefetch_multiplier: {settings.CELERY_WORKER_PREFETCH_MULTIPLIER}"
+)
+logger.info(
+    f"🔧 Celery max_tasks_per_child: {settings.CELERY_WORKER_MAX_TASKS_PER_CHILD}"
 )
 
 

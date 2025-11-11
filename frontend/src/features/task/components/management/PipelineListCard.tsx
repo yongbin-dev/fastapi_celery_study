@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import type { BatchStatusResponse } from '../../types/pipeline';
+import type { UseMutationResult } from '@tanstack/react-query';
 
 interface PipelineListCardProps {
   batchStatus?: BatchStatusResponse;
   isLoading?: boolean;
+  cancelPdfMutation: UseMutationResult<void, Error, string, any>
+;
 }
 
 // 상태 배지 컴포넌트
@@ -39,6 +42,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 export const PipelineListCard: React.FC<PipelineListCardProps> = ({
   batchStatus,
   isLoading = false,
+  cancelPdfMutation
 }) => {
   const [selectedContexts, setSelectedContexts] = useState<Set<string>>(new Set());
 
@@ -74,12 +78,11 @@ export const PipelineListCard: React.FC<PipelineListCardProps> = ({
       alert('취소할 작업을 선택해주세요.');
       return;
     }
-
+// /cancel/{chain_id}
     const confirmed = window.confirm(`선택한 ${selectedContexts.size}개의 작업을 취소하시겠습니까?`);
     if (confirmed) {
-      console.log('취소할 Chain IDs:', Array.from(selectedContexts));
+      Array.from(selectedContexts).forEach(id => cancelPdfMutation.mutate(id))
       // TODO: API 호출
-      alert(`${selectedContexts.size}개의 작업 취소 요청이 전송되었습니다. (API 연동 예정)`);
       setSelectedContexts(new Set());
     }
   };

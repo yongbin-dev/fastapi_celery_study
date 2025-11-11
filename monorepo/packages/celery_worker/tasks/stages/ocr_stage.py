@@ -3,15 +3,20 @@
 ML 서버를 호출하여 이미지/PDF 파일에서 텍스트를 추출합니다.
 """
 
+import grpc
 from celery.beat import get_logger
-from engines.models.ocr_model import get_ocr_model
+
+# from models.ocr_model import get_ocr_model
 from shared.config import settings
 from shared.core.database import get_db_manager
+from shared.grpc.generated import common_pb2
 from shared.pipeline.context import PipelineContext
+from shared.pipeline.exceptions import RetryableError
 from shared.pipeline.stage import PipelineStage
 from shared.repository.crud.sync_crud import ocr_execution_crud, ocr_text_box_crud
 from shared.schemas import OCRExecutionCreate
-from shared.schemas.ocr_db import OCRTextBoxCreate
+from shared.schemas.enums import ProcessStatus
+from shared.schemas.ocr_db import OCRExtractDTO, OCRTextBoxCreate
 from shared.service.common_service import get_common_service
 
 logger = get_logger(__name__)
@@ -28,7 +33,6 @@ class OCRStage(PipelineStage):
 
     def __init__(self):
         super().__init__()
-        self.model = get_ocr_model()
         self.common_service = get_common_service()
         self.ml_server_url = settings.MODEL_SERVER_URL
 
@@ -45,7 +49,7 @@ class OCRStage(PipelineStage):
             raise ValueError("private_img is required")
 
     async def execute(self, context: PipelineContext) -> PipelineContext:
-        """ML 서버에 OCR 요청 (HTTP 또는 gRPC)
+        """ML 서버에 OCR 요청 gRPC
 
         Args:
             context: 파이프라인 컨텍스트
@@ -57,29 +61,68 @@ class OCRStage(PipelineStage):
             RetryableError: 네트워크 오류 또는 서버 오류
             ValueError: 클라이언트 오류
         """
-
-        if self.model is None:
-            raise Exception()
-
-        image_data = await self.common_service.load_image(
-            image_path=context.private_img
-        )
-
-        result = self.model.predict(
-            image_data,
-            confidence_threshold=0.5,
-        )
-
-        context.ocr_result = result
-
-        logger.info("HTTP OCR 완료")
+        await self._execute_grpc(context)
         return context
-        # if USE_GRPC:
-        #     logger.info("gRPC 모드로 OCR 실행")
-        #     return await self._execute_grpc(context)
-        # else:
-        #     logger.info("HTTP 모드로 OCR 실행")
-        #     return await self._execute_http(context)
+
+    async def _execute_grpc(self, context: PipelineContext) -> PipelineContext:
+        """gRPC로 OCR 실행 (신규 방식)"""
+        from tasks.grpc_clients.ocr_client import OCRGrpcClient
+
+        try:
+            # gRPC 클라이언트를 컨텍스트 매니저로 사용 (매 요청마다 새 연결 생성)
+            async with OCRGrpcClient() as client:
+                # gRPC 호출
+                response = await client.extract_text(
+                    public_image_path=context.public_file_path,
+                    private_image_path=context.private_img,
+                    language="korean",
+                    confidence_threshold=0.5,
+                    use_angle_cls=True,
+                )
+
+                # 성공 여부 확인
+                if response.status != common_pb2.STATUS_SUCCESS:
+                    error_msg = (
+                        response.error.message if response.error else "Unknown error"
+                    )
+                    raise ValueError(f"gRPC OCR failed: {error_msg}")
+
+                # Protobuf → OCRResult 변환
+                text_boxes = []
+                for box in response.text_boxes:
+                    # bbox를 [[x1,y1], [x2,y2], ...] 형식으로 변환
+                    coords = list(box.bbox.coordinates)
+                    bbox_pairs = []
+                    for i in range(0, len(coords), 2):
+                        if i + 1 < len(coords):
+                            bbox_pairs.append([coords[i], coords[i + 1]])
+
+                    text_box_dict = {
+                        "text": box.text,
+                        "confidence": box.confidence,
+                        "bbox": bbox_pairs,
+                    }
+                    text_boxes.append(text_box_dict)
+
+                context.ocr_result = OCRExtractDTO(
+                    text_boxes=text_boxes,
+                    status=ProcessStatus.STARTED,
+                )
+
+            logger.info("gRPC OCR 완료")
+            return context
+
+        except grpc.RpcError as e:
+            # gRPC 오류 처리
+            if e.code() in [
+                grpc.StatusCode.UNAVAILABLE,
+                grpc.StatusCode.DEADLINE_EXCEEDED,
+            ]:
+                # 재시도 가능한 오류
+                raise RetryableError("OCRStage", f"gRPC error: {e.details()}") from e
+            else:
+                # 재시도 불가능한 오류
+                raise ValueError(f"gRPC OCR failed: {e.details()}") from e
 
     def validate_output(self, context: PipelineContext) -> None:
         """출력 검증: OCR 결과에 텍스트가 있는지 확인

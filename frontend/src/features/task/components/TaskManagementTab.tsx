@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useBatchPipelineStatus, useExtractPdf, usePipelineStatus } from '../hooks';
+import { useBatchPipelineStatus, useCancelPdf, useExtractPdf, usePipelineStatus } from '../hooks';
 import { PdfUploadCard } from './management/PdfUploadCard';
 import { PipelineListCard } from './management/PipelineListCard';
 import { TaskStatusCard } from './management/TaskStatusCard';
@@ -21,6 +21,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
 
   // React Query 훅들
   const extractPdfMutation = useExtractPdf();
+  const cancelPdfMutation = useCancelPdf();
 
   // 파이프라인 상태 조회 (자동 새로고침이 활성화된 경우에만 폴링)
   const {
@@ -138,6 +139,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
           <PipelineListCard
             batchStatus={batchStatus}
             isLoading={isLoadingBatchData}
+            cancelPdfMutation={cancelPdfMutation}
           />
 
           <UsageGuideCard />

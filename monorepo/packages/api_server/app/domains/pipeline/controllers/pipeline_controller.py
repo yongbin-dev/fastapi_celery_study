@@ -181,15 +181,10 @@ async def cancel_pipeline(
             from shared.config import settings
 
             # Celery 앱 인스턴스 생성
-            celery_app = Celery(
-                broker=settings.REDIS_URL,
-                backend=settings.REDIS_URL
-            )
+            celery_app = Celery(broker=settings.REDIS_URL, backend=settings.REDIS_URL)
 
             celery_app.control.revoke(
-                chain_execution.celery_task_id,
-                terminate=True,
-                signal='SIGKILL'
+                chain_execution.celery_task_id, terminate=True, signal="SIGKILL"
             )
             logger.info(f"✅ Celery task 취소 요청: {chain_execution.celery_task_id}")
 
@@ -200,20 +195,16 @@ async def cancel_pipeline(
                 context = cache_service.load_context(batch_id, chain_id)
                 context.update_status(ProcessStatus.REVOKED)
                 cache_service.save_context(context)
-                logger.info(f"✅ Redis context 상태 업데이트: REVOKED")
+                logger.info("✅ Redis context 상태 업데이트: REVOKED")
         except Exception as e:
             logger.warning(f"Redis context 업데이트 실패 (무시): {str(e)}")
 
         # 4. DB 상태 업데이트
         chain_execution_crud.update_status(
-            db=db,
-            chain_execution=chain_execution,
-            status=ProcessStatus.REVOKED
+            db=db, chain_execution=chain_execution, status=ProcessStatus.REVOKED
         )
 
-        return ResponseBuilder.success(
-            message=f"작업 {chain_id}가 취소되었습니다"
-        )
+        return ResponseBuilder.success(message=f"작업 {chain_id}가 취소되었습니다")
 
     except HTTPException:
         raise

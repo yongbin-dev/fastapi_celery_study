@@ -75,3 +75,15 @@ export const useExtractPdf = () => {
     },
   });
 };
+
+export const useCancelPdf = () => {
+  return useMutation({
+    mutationFn: taskApi.cancelTasks,
+    onSuccess: (data) => {
+      console.log('PDF 추출 성공:', data);
+    },
+    onError: (error) => {
+      console.error('PDF 추출 실패:', error);
+    },
+  });
+};
