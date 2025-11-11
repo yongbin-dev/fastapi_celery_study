@@ -16,6 +16,17 @@ export interface TaskHistoryRequest {
   task_name: string;
   limit: number;
 }
+
+// 태스크 상태 응답 타입
+export interface TaskStatusResponse {
+  task_id: string;
+  step: number;
+  task_name: string;
+  status: TaskStatus;
+  progress: number;
+  result?: string;
+  traceback?: string;
+}
 // 모델 관련 타입들
 export interface ServerInfo {
   url: string;

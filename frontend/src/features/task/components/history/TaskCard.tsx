@@ -3,7 +3,7 @@ import type { TaskStatusResponse } from '../../types';
 
 interface TaskCardProps {
   task: TaskStatusResponse;
-  getStatusBadge: (status: string) => void
+  getStatusBadge: (status: string) => string;
 }
 
 export const TaskCard: React.FC<TaskCardProps> = ({
