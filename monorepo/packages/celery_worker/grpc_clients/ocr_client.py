@@ -15,9 +15,7 @@ class OCRGrpcClient:
     """OCR gRPC 클라이언트"""
 
     def __init__(self, server_address: Optional[str] = None):
-        self.server_address = server_address or getattr(
-            settings, 'ML_SERVER_GRPC_ADDRESS', 'localhost:50051'
-        )
+        self.server_address = settings.ML_SERVER_GRPC_ADDRESS
         self._channel: Optional[grpc.aio.Channel] = None
         self._stub: Optional[ocr_pb2_grpc.OCRServiceStub] = None
 
@@ -36,10 +34,10 @@ class OCRGrpcClient:
             self._channel = grpc.aio.insecure_channel(
                 self.server_address,
                 options=[
-                    ('grpc.max_send_message_length', 100 * 1024 * 1024),
-                    ('grpc.max_receive_message_length', 100 * 1024 * 1024),
-                    ('grpc.keepalive_time_ms', 10000),
-                ]
+                    ("grpc.max_send_message_length", 100 * 1024 * 1024),
+                    ("grpc.max_receive_message_length", 100 * 1024 * 1024),
+                    ("grpc.keepalive_time_ms", 10000),
+                ],
             )
             self._stub = ocr_pb2_grpc.OCRServiceStub(self._channel)
             logger.info(f"gRPC 채널 연결: {self.server_address}")
@@ -59,7 +57,7 @@ class OCRGrpcClient:
         language: str = "korean",
         confidence_threshold: float = 0.5,
         use_angle_cls: bool = True,
-        timeout: float = 300.0
+        timeout: float = 300.0,
     ) -> ocr_pb2.OCRResponse:
         """OCR 텍스트 추출
 
@@ -89,15 +87,12 @@ class OCRGrpcClient:
             private_image_path=private_image_path,
             language=language,
             confidence_threshold=confidence_threshold,
-            use_angle_cls=use_angle_cls
+            use_angle_cls=use_angle_cls,
         )
 
         # gRPC 호출
         try:
-            response = await self._stub.ExtractText(
-                request,
-                timeout=timeout
-            )
+            response = await self._stub.ExtractText(request, timeout=timeout)
 
             logger.info(
                 f"gRPC OCR 완료: {len(response.text_boxes)} 텍스트 박스, "
@@ -116,7 +111,7 @@ class OCRGrpcClient:
         Returns:
             헬스 체크 응답
         """
-        if not self._stub :
+        if not self._stub:
             await self.connect()
 
         if self._stub is None:
