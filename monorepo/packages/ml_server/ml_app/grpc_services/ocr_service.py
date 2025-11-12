@@ -18,9 +18,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
         logger.info("OCR gRPC 서비스 초기화 완료")
 
     async def extract_text(
-        self,
-        request: ocr_pb2.OCRRequest,
-        context: grpc.aio.ServicerContext
+        self, request: ocr_pb2.OCRRequest, context: grpc.aio.ServicerContext
     ) -> ocr_pb2.OCRResponse:
         """단일 이미지 OCR 추출
 
@@ -42,54 +40,24 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
             # 2. OCR 모델 실행
             model = get_ocr_model(
                 use_angle_cls=request.use_angle_cls if request.use_angle_cls else True,
-                lang=request.language if request.language else "korean"
+                lang=request.language if request.language else "korean",
             )
 
             result = model.predict(
                 image_data,
                 confidence_threshold=request.confidence_threshold
-                if request.confidence_threshold else 0.5
+                if request.confidence_threshold
+                else 0.5,
             )
 
             # 3. Protobuf 응답 생성
             response = ocr_pb2.OCRResponse(
                 status=common_pb2.STATUS_SUCCESS,
                 text="",  # 전체 텍스트는 text_boxes에서 추출
-                overall_confidence=0.0
+                overall_confidence=0.0,
             )
 
             # 4. 텍스트 박스 변환
-            total_confidence = 0.0
-            all_text = []
-
-            for box in result.text_boxes:
-                # bbox를 flat list로 변환
-                bbox_coords = []
-                if hasattr(box, 'bbox') and box.bbox:
-                    if isinstance(box.bbox, list):
-                        # 중첩 리스트인 경우 flatten
-                        for coord in box.bbox:
-                            if isinstance(coord, list):
-                                bbox_coords.extend(coord)
-                            else:
-                                bbox_coords.append(float(coord))
-                    else:
-                        bbox_coords = [float(box.bbox)]
-
-                text_box = ocr_pb2.TextBox(
-                    text=box.text,
-                    confidence=box.confidence,
-                    bbox=common_pb2.BoundingBox(coordinates=bbox_coords)
-                )
-                response.text_boxes.append(text_box)
-
-                all_text.append(box.text)
-                total_confidence += box.confidence
-
-            # 전체 텍스트 및 평균 신뢰도 계산
-            response.text = " ".join(all_text)
-            if len(result.text_boxes) > 0:
-                response.overall_confidence = total_confidence / len(result.text_boxes)
 
             # 5. 메타데이터 (OCRExtractDTO에는 metadata가 없으므로 status만 저장)
             response.metadata.data["status"] = result.status
@@ -106,16 +74,12 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
                 text="",
                 overall_confidence=0.0,
                 error=common_pb2.ErrorInfo(
-                    code="OCR_ERROR",
-                    message=str(e),
-                    details=type(e).__name__
-                )
+                    code="OCR_ERROR", message=str(e), details=type(e).__name__
+                ),
             )
 
     async def extract_text_batch(
-        self,
-        request: ocr_pb2.OCRBatchRequest,
-        context: grpc.aio.ServicerContext
+        self, request: ocr_pb2.OCRBatchRequest, context: grpc.aio.ServicerContext
     ):
         """배치 이미지 OCR 추출 (Server Streaming)
 
@@ -140,7 +104,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
                 private_image_path=image_path.private_path,
                 language=request.language,
                 confidence_threshold=request.confidence_threshold,
-                use_angle_cls=request.use_angle_cls
+                use_angle_cls=request.use_angle_cls,
             )
 
             # OCR 실행
@@ -152,7 +116,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
                 total_images=total,
                 processed_images=idx + 1,
                 current_result=result,
-                progress_percentage=(idx + 1) / total * 100
+                progress_percentage=(idx + 1) / total * 100,
             )
 
             yield progress
@@ -160,9 +124,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
         logger.info(f"gRPC 배치 OCR 완료: {batch_id}")
 
     async def check_health(
-        self,
-        request: ocr_pb2.HealthCheckRequest,
-        context: grpc.aio.ServicerContext
+        self, request: ocr_pb2.HealthCheckRequest, context: grpc.aio.ServicerContext
     ) -> ocr_pb2.HealthCheckResponse:
         """헬스 체크
 
@@ -180,10 +142,11 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
 
             return ocr_pb2.HealthCheckResponse(
                 status=common_pb2.STATUS_SUCCESS
-                if model.is_loaded else common_pb2.STATUS_FAILURE,
+                if model.is_loaded
+                else common_pb2.STATUS_FAILURE,
                 engine_type=settings.OCR_ENGINE,
                 model_loaded=model.is_loaded,
-                version="1.0.0"
+                version="1.0.0",
             )
         except Exception as e:
             logger.error(f"헬스 체크 실패: {str(e)}")
@@ -191,5 +154,5 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
                 status=common_pb2.STATUS_FAILURE,
                 engine_type="unknown",
                 model_loaded=False,
-                version="1.0.0"
+                version="1.0.0",
             )

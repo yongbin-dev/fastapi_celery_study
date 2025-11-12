@@ -61,10 +61,97 @@ class OCRStage(PipelineStage):
             RetryableError: 네트워크 오류 또는 서버 오류
             ValueError: 클라이언트 오류
         """
-        await self._execute_grpc(context)
+        await self.execute_bento_ml(context)
         return context
 
-    async def _execute_grpc(self, context: PipelineContext) -> PipelineContext:
+    async def execute_bento_ml(self, context: PipelineContext) -> PipelineContext:
+        """BentoML HTTP API로 OCR 요청
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Returns:
+            업데이트된 컨텍스트 (ocr_result 포함)
+
+        Raises:
+            RetryableError: 네트워크 오류 또는 서버 오류
+            ValueError: 클라이언트 오류
+        """
+        import json
+
+        import httpx
+
+        try:
+            # BentoML 서버 URL
+            bentoml_url = f"http://{settings.ML_SERVER_BENTO_ADDRESS}"
+
+            logger.info(f"BentoML OCR 요청: {context.private_img}")
+
+            # 이미지 파일 읽기
+
+            # BentoML API 호출
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                request_data = {
+                    "private_img": context.private_img,
+                    "language": "korean",
+                    "confidence_threshold": 0.5,
+                    "use_angle_cls": True,
+                }
+                data = {"request_data": json.dumps(request_data)}
+
+                response = await client.post(
+                    f"{bentoml_url}/extract_text",
+                    data=data,
+                )
+
+                # 응답 확인
+                if response.status_code != 200:
+                    error_msg = (
+                        f"BentoML API failed: {response.status_code} - {response.text}"
+                    )
+                    if response.status_code >= 500:
+                        # 서버 오류는 재시도
+                        raise RetryableError("OCRStage", error_msg)
+                    else:
+                        # 클라이언트 오류는 재시도 안 함
+                        raise ValueError(error_msg)
+
+                # JSON 응답 파싱
+                result = response.json()
+
+                # OCRExtractDTO로 변환
+                text_boxes = []
+                for box in result.get("text_boxes", []):
+                    text_box_dict = {
+                        "text": box["text"],
+                        "confidence": box["confidence"],
+                        "bbox": box["bbox"],
+                    }
+                    text_boxes.append(text_box_dict)
+
+                context.ocr_result = OCRExtractDTO(
+                    text_boxes=text_boxes,
+                    status=ProcessStatus.STARTED,
+                )
+
+                logger.info(f"BentoML OCR 완료: {len(text_boxes)} 텍스트 박스")
+                return context
+
+        except httpx.TimeoutException as e:
+            # 타임아웃은 재시도
+            raise RetryableError("OCRStage", f"BentoML timeout: {str(e)}") from e
+
+        except httpx.ConnectError as e:
+            # 연결 오류는 재시도
+            error_msg = f"BentoML connection error: {str(e)}"
+            raise RetryableError("OCRStage", error_msg) from e
+
+        except Exception as e:
+            # 기타 오류
+            logger.error(f"BentoML OCR 실패: {str(e)}", exc_info=True)
+            raise ValueError(f"BentoML OCR failed: {str(e)}") from e
+
+    async def execute_grpc(self, context: PipelineContext) -> PipelineContext:
         """gRPC로 OCR 실행 (신규 방식)"""
         from tasks.grpc_clients.ocr_client import OCRGrpcClient
 

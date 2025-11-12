@@ -126,6 +126,7 @@ class Settings(BaseSettings):
     USE_GRPC: str = "true"
     GRPC_PORT: int = 50051
     ML_SERVER_GRPC_ADDRESS: str = "localhost:50051"
+    ML_SERVER_BENTO_ADDRESS: str = "localhost:50052"
 
     # CELERY Worker 설정
     # Pool 타입:

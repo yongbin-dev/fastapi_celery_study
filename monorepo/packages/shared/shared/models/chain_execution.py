@@ -35,7 +35,7 @@ class ChainExecution(Base):
     # --- [수정됨] ForeignKey 추가 ---
     batch_id = mapped_column(
         String(255),
-        ForeignKey("batch_executions.batch_id"), # BatchExecution.batch_id 참조
+        ForeignKey("batch_executions.batch_id"),  # BatchExecution.batch_id 참조
         nullable=True,
         index=True,
         comment="배치 ID (배치 실행 시에만 사용)",
@@ -58,7 +58,8 @@ class ChainExecution(Base):
         Integer, default=0, nullable=False, comment="완료된 작업 수"
     )
     failed_tasks = mapped_column(
-        Integer, default=0, nullable=False, comment="실패한 작업 수")
+        Integer, default=0, nullable=False, comment="실패한 작업 수"
+    )
 
     # 타임스탬프
     started_at = mapped_column(DateTime, nullable=True, comment="시작 시간")
@@ -66,7 +67,8 @@ class ChainExecution(Base):
 
     # 메타 정보
     initiated_by = mapped_column(
-        String(100), nullable=True, comment="시작한 사용자/시스템")
+        String(100), nullable=True, comment="시작한 사용자/시스템"
+    )
     input_data = mapped_column(JSON, nullable=True, comment="입력 데이터 (JSON)")
     final_result = mapped_column(JSON, nullable=True, comment="최종 결과 (JSON)")
     error_message = mapped_column(Text, nullable=True, comment="오류 메시지")
@@ -93,7 +95,6 @@ class ChainExecution(Base):
             f",status={self.status})>"
         )
 
-    # --- [신규] 자동 완료 체크 메서드 ---
     def _check_and_complete_execution(self):
         """
         처리된 작업(완료+실패)이 총 작업 수에 도달했는지 확인하고

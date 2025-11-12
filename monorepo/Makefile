@@ -26,14 +26,14 @@ docker-base-build:
 # ==============================================================================
 docker-build:
 	@echo "📦 Docker Compose Build..."
-	@docker-compose build
+	@docker compose build
 
 # ==============================================================================
 # docker base image build
 # ==============================================================================
 docker-start:
 	@echo "📦 Docker Compose Start..."
-	@docker-compose up -d
+	@docker compose up -d
 
 
 # ==============================================================================

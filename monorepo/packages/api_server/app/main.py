@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from shared.config import settings
 from shared.core import get_logger
 from shared.core.auto_router import setup_auto_routers
-from shared.core.database import close_db
+from shared.core.database import close_db, init_db
 from shared.handler.exceptions_handler import (
     general_exception_handler,
 )
@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 FastAPI 애플리케이션 시작")
     logger.info(f"📋 설정: {settings.PROJECT_NAME} v{settings.VERSION}")
 
+    await init_db()
     yield  # 애플리케이션 실행
 
     # 종료 시 실행

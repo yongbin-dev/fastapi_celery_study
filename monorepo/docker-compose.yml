@@ -1,42 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL 데이터베이스 (로컬 개발용 - Supabase 대신 사용 시)
-  # postgres-db:
-  #   image: postgres:16-alpine
-  #   container_name: postgres-db
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: postgres
-  #     POSTGRES_DB: postgres
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - app-network
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # Redis
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # API Server
   api_server:
     image: api_server:latest
@@ -56,9 +20,6 @@ services:
       - "8000:8000"
     networks:
       - app-network
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -86,25 +47,25 @@ services:
       ML_SERVER_GRPC_ADDRESS: "ml_server:50051"
     networks:
       - app-network
-    depends_on:
-      redis:
-        condition: service_healthy
     restart: unless-stopped
 
-  # # ML Server (OCR)
+  # # ML Server (OCR) - gRPC
   ml_server:
     image: ml_server:latest
     container_name: ml_server
-    platform: linux/amd64  
+    platform: linux/amd64
     build:
       context: .
       dockerfile: packages/ml_server/Dockerfile.gpu
     env_file:
       - .env.development
     environment:
-      OCR_ENGINE: "easyocr"
+      OCR_ENGINE : "paddleocr"
+      OCR_REC: ""
+      OCR_DET: ""
     ports:
       - "8001:8001"
+      - "50051:50051"  # gRPC 포트
     networks:
       - app-network
     healthcheck:
@@ -125,7 +86,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  # postgres_data:
-  redis_data:

@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.orm import Session, sessionmaker
 
 from shared.config import settings
+from shared.models.base import Base
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -126,6 +127,7 @@ class DatabaseManager:
         try:
             async with self.health_check_engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
+
             return True
         except Exception as e:
             logger.warning(f"데이터베이스 헬스체크 실패: {str(e)}")
@@ -184,6 +186,7 @@ async def init_db() -> None:
         async with asyncio.timeout(settings.DB_CONNECT_TIMEOUT):
             async with db_manager.async_engine.begin() as conn:
                 # 연결 테스트 수행
+                await conn.run_sync(Base.metadata.create_all)
                 await conn.execute(text("SELECT 1"))
                 logger.info("🔗 데이터베이스 연결 테스트 성공")
                 logger.info(

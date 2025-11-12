@@ -3,6 +3,8 @@
 Task 실행 생명주기를 자동으로 DB에 기록
 """
 
+from datetime import datetime
+
 from celery import signals
 from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
@@ -60,7 +62,7 @@ def task_prerun_handler(sender=None, task_id=None, task=None, args=None, **kwarg
         )
         return
 
-    logger.info(f"prerun context : {batch_id} , {chain_id}")
+    logger.info(f"prerun context : {batch_id} , {chain_id} , {task_id}")
     with get_db_manager().get_sync_session() as session:
         if not session:
             raise RuntimeError("DB 세션 생성 실패")
@@ -69,15 +71,26 @@ def task_prerun_handler(sender=None, task_id=None, task=None, args=None, **kwarg
 
         if chain_exec is not None:
             chain_exec_resp = ChainExecutionResponse.model_validate(chain_exec)
-            # TaskLog 생성
-            # SQLAlchemy 모델 인스턴스의 id는 런타임에 int 값
-            task_log_crud.create_task_log(
-                db=session,
-                task_id=task_id,
-                task_name=task.name,
-                status=ProcessStatus.STARTED.value,
-                chain_execution_id=chain_exec_resp.id,
-            )
+            # TaskLog가 이미 있는지 확인 (재시도 시 중복 생성 방지)
+            task_log = task_log_crud.get_by_task_id(session, task_id=task_id)
+
+            if task_log:
+                # 이미 존재하면 상태 및 재시도 횟수 업데이트
+                task_log.status = ProcessStatus.STARTED.value
+                task_log.retries = task.request.retries
+                task_log.started_at = datetime.now()
+                session.add(task_log)
+                session.commit()
+                session.refresh(task_log)
+            else:
+                # 없으면 새로 생성
+                task_log_crud.create_task_log(
+                    db=session,
+                    task_id=task_id,
+                    task_name=task.name,
+                    status=ProcessStatus.STARTED.value,
+                    chain_execution_id=chain_exec_resp.id,
+                )
 
             if chain_exec_resp.status == ProcessStatus.PENDING.value:
                 chain_exec.start_execution()
@@ -109,12 +122,6 @@ def task_postrun_handler(sender=None, task_id=None, task=None, **kwargs):
             task_log_crud.update_status(
                 db=session, task_log=task_log, status=ProcessStatus.SUCCESS.value
             )
-
-            # ChainExecution 완료 카운트 증가
-            if task_log.chain_execution:
-                chain_execution_crud.increment_completed_tasks(
-                    db=session, chain_execution=task_log.chain_execution
-                )
 
 
 @signals.task_failure.connect
@@ -148,10 +155,6 @@ def task_failure_handler(sender=None, task_id=None, exception=None, **kwargs):
 
             # ChainExecution 실패 카운트 증가
             if task_log.chain_execution:
-                chain_execution_crud.increment_failed_tasks(
-                    db=session, chain_execution=task_log.chain_execution
-                )
-
                 # Chain 전체를 실패로 마킹
                 task_log.chain_execution.complete_execution(
                     success=False,
