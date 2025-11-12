@@ -22,8 +22,8 @@ celery_app = Celery(
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
     include=[
-        "tasks.pipeline_tasks",  # 파이프라인 태스크 모듈
-        "tasks.batch_tasks",  # 배치 태스크 모듈
+        "tasks.batch.image_tasks",  # 이미지 배치 태스크
+        "tasks.batch.pdf_tasks",  # PDF 배치 태스크
     ],
 )
 
