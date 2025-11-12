@@ -13,7 +13,9 @@ class BatchExecutionCreate(BaseModel):
     batch_name: str = Field(..., description="배치 이름")
     total_images: int = Field(..., description="총 이미지 수")
     chunk_size: int = Field(default=10, description="청크당 이미지 수")
-    input_data: Optional[Dict[str, Any]] = Field(None, description="입력 데이터 (이미지 경로 목록)")
+    input_data: Optional[Dict[str, Any]] = Field(
+        None, description="입력 데이터 (이미지 경로 목록)"
+    )
     options: Optional[Dict[str, Any]] = Field(None, description="파이프라인 옵션")
     initiated_by: Optional[str] = Field(None, description="시작한 사용자/시스템")
 
@@ -62,9 +64,15 @@ class BatchStartRequest(BaseModel):
     batch_name: str = Field(..., description="배치 이름")
     file_paths: List[str] = Field(..., description="처리할 이미지 파일 경로 목록")
     public_file_paths: List[str] = Field(..., description="공개 이미지 파일 경로 목록")
-    options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="파이프라인 옵션")
-    chunk_size: int = Field(default=10, ge=1, le=100, description="청크당 이미지 수 (1-100)")
-    initiated_by: Optional[str] = Field(default="api_server", description="시작한 사용자/시스템")
+    options: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="파이프라인 옵션"
+    )
+    chunk_size: int = Field(
+        default=10, ge=1, le=100, description="청크당 이미지 수 (1-100)"
+    )
+    initiated_by: Optional[str] = Field(
+        default="api_server", description="시작한 사용자/시스템"
+    )
 
 
 class BatchStatusResponse(BaseModel):
@@ -78,7 +86,9 @@ class BatchStatusResponse(BaseModel):
     progress_percentage: float
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
-    estimated_time_remaining: Optional[float] = Field(None, description="예상 남은 시간 (초)")
+    estimated_time_remaining: Optional[float] = Field(
+        None, description="예상 남은 시간 (초)"
+    )
 
 
 # Forward reference 해결을 위한 모델 업데이트

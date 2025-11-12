@@ -74,27 +74,6 @@ class CRUDChainExecution(
         db.refresh(chain_exec)
         return chain_exec
 
-    def increment_completed_tasks(
-        self, db: Session, *, chain_execution: ChainExecution
-    ) -> ChainExecution:
-        """완료된 작업 수 증가"""
-        chain_execution.increment_completed_tasks()
-        db.add(chain_execution)
-        db.commit()
-        db.refresh(chain_execution)
-        return chain_execution
-
-    #
-    def increment_failed_tasks(
-        self, db: Session, *, chain_execution: ChainExecution
-    ) -> ChainExecution:
-        """실패한 작업 수 증가"""
-        chain_execution.increment_failed_tasks()
-        db.add(chain_execution)
-        db.commit()
-        db.refresh(chain_execution)
-        return chain_execution
-
     def update_status(
         self, db: Session, *, chain_execution: ChainExecution, status: ProcessStatus
     ) -> ChainExecution:

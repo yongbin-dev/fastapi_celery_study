@@ -72,34 +72,6 @@ class AsyncCRUDChainExecution(
             await db.rollback()
             raise e
 
-    async def increment_completed_tasks(
-        self, db: AsyncSession, *, chain_execution: ChainExecution
-    ) -> ChainExecution:
-        """완료된 작업 수 증가"""
-        try:
-            chain_execution.increment_completed_tasks()
-            db.add(chain_execution)
-            await db.commit()
-            await db.refresh(chain_execution)
-            return chain_execution
-        except Exception as e:
-            await db.rollback()
-            raise e
-
-    async def increment_failed_tasks(
-        self, db: AsyncSession, *, chain_execution: ChainExecution
-    ) -> ChainExecution:
-        """실패한 작업 수 증가"""
-        try:
-            chain_execution.increment_failed_tasks()
-            db.add(chain_execution)
-            await db.commit()
-            await db.refresh(chain_execution)
-            return chain_execution
-        except Exception as e:
-            await db.rollback()
-            raise e
-
     async def get_with_task_logs(
         self, db: AsyncSession, *, chain_id: str
     ) -> Optional[ChainExecution]:

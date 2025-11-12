@@ -50,17 +50,6 @@ class ChainExecution(Base):
         comment="체인 실행 상태",
     )
 
-    # 작업 통계
-    total_tasks = mapped_column(
-        Integer, default=0, nullable=False, comment="체인 내 총 작업 수"
-    )
-    completed_tasks = mapped_column(
-        Integer, default=0, nullable=False, comment="완료된 작업 수"
-    )
-    failed_tasks = mapped_column(
-        Integer, default=0, nullable=False, comment="실패한 작업 수"
-    )
-
     # 타임스탬프
     started_at = mapped_column(DateTime, nullable=True, comment="시작 시간")
     finished_at = mapped_column(DateTime, nullable=True, comment="완료 시간")
@@ -95,45 +84,12 @@ class ChainExecution(Base):
             f",status={self.status})>"
         )
 
-    def _check_and_complete_execution(self):
-        """
-        처리된 작업(완료+실패)이 총 작업 수에 도달했는지 확인하고
-        필요시 체인을 완료(SUCCESS 또는 FAILURE) 처리합니다.
-        """
-        # 이미 완료된 상태라면 중복 실행 방지
-        if self.status in {ProcessStatus.SUCCESS, ProcessStatus.FAILURE}:
-            return
-
-        total_processed = self.completed_tasks + self.failed_tasks
-        total_tasks = self.total_tasks
-
-        if total_tasks > 0 and total_processed >= total_tasks:
-            # 실패한 작업이 하나라도 있으면 체인 상태는 'FAILURE'
-            success = self.failed_tasks == 0
-            self.complete_execution(
-                success=success,
-                error_message="Chain completed with failed tasks."
-                if not success
-                else None,
-            )
-
-    def increment_completed_tasks(self, count: int = 1):
-        """완료된 작업 수 증가 및 완료 상태 확인"""
-        self.completed_tasks += count
-        self._check_and_complete_execution()
-
-    def increment_failed_tasks(self, count: int = 1):
-        """실패한 작업 수 증가 및 완료 상태 확인"""
-        self.failed_tasks += count
-        self._check_and_complete_execution()
-
     def start_execution(self):
         """체인 실행 시작"""
         if self.status == ProcessStatus.PENDING:
             self.status = ProcessStatus.STARTED
             self.started_at = datetime.now()
 
-    # --- [수정됨] 상태 확인 가드 추가 ---
     def complete_execution(
         self,
         success: bool = True,

@@ -22,8 +22,6 @@ class ChainExecutionUpdate(BaseModel):
 
     chain_name: Optional[str] = Field(None, description="체인 이름")
     status: Optional[ProcessStatus] = Field(None, description="실행 상태")
-    completed_tasks: Optional[int] = Field(None, description="완료된 작업 수")
-    failed_tasks: Optional[int] = Field(None, description="실패한 작업 수")
     final_result: Optional[Dict[str, Any]] = Field(None, description="최종 결과")
     error_message: Optional[str] = Field(None, description="오류 메시지")
 
@@ -34,9 +32,6 @@ class ChainExecutionResponse(BaseModel):
     id: int
     chain_id: str
     status: ProcessStatus
-    total_tasks: int
-    completed_tasks: int
-    failed_tasks: int
     batch_id: Optional[str]
     started_at: Optional[datetime]
     finished_at: Optional[datetime]

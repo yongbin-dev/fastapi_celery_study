@@ -14,7 +14,6 @@ from .enums import ProcessStatus
 from .ocr_db import OCRExtractDTO
 from .ocr_execution import OCRExecutionCreate
 from .ocr_text_box import OCRTextBoxCreate
-from .stage import StageInfo
 from .task_log import (
     TaskLogCreate,
     TaskLogResponse,
@@ -24,7 +23,6 @@ from .task_log import (
 __all__ = [
     "ProcessStatus",
     # Stage models
-    "StageInfo",
     # Batch Execution
     "BatchExecutionCreate",
     "BatchExecutionUpdate",
