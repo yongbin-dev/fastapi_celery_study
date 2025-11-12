@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     OCR_LANG: str = "korean"  # OCR 기본 언어
 
     # 모델 서버 설정
-    MODEL_SERVER_URL: str = "http://localhost:8002/api/model"  # OCR 전용 서버 URL
+    MODEL_SERVER_URL: str = "http://localhost:8002"  # OCR 전용 서버 URL
     MODEL_SERVER_TIMEOUT: int = 60
     ML_SERVER_PORT: int = 8002
     SUPABASE_SERVICE_ROLE_KEY: str = ""
@@ -126,7 +126,6 @@ class Settings(BaseSettings):
     USE_GRPC: str = "true"
     GRPC_PORT: int = 50051
     ML_SERVER_GRPC_ADDRESS: str = "localhost:50051"
-    ML_SERVER_BENTO_ADDRESS: str = "localhost:50052"
 
     # CELERY Worker 설정
     # Pool 타입:

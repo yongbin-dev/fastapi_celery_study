@@ -17,14 +17,14 @@ class OCRExecution(Base):
     id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
     chain_id = mapped_column(
         String(255),
-        unique=True,
         nullable=True,
         index=True,
         comment="Celery chain ID (선택적)",
     )
 
     image_path = mapped_column(
-        String(255), unique=True, index=True, comment="이미지 경로")
+        String(255), unique=True, index=True, comment="이미지 경로"
+    )
     public_path = mapped_column(
         String(255), unique=True, index=True, comment="이미지 공개 경로"
     )

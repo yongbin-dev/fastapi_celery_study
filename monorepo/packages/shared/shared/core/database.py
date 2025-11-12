@@ -189,9 +189,6 @@ async def init_db() -> None:
                 await conn.run_sync(Base.metadata.create_all)
                 await conn.execute(text("SELECT 1"))
                 logger.info("🔗 데이터베이스 연결 테스트 성공")
-                logger.info(
-                    "💡 테이블 생성은 마이그레이션 도구를 사용하세요 (pgbouncer 호환성)"
-                )
     except asyncio.TimeoutError:
         logger.error(f"데이터베이스 연결 타임아웃 ({settings.DB_CONNECT_TIMEOUT}초)")
         raise

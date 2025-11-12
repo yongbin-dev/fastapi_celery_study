@@ -254,7 +254,7 @@ class OCRStage(PipelineStage):
 
     async def execute_grpc(self, context: PipelineContext) -> PipelineContext:
         """gRPC로 OCR 실행 (신규 방식)"""
-        from tasks.grpc_clients.ocr_client import OCRGrpcClient
+        from grpc_clients.ocr_client import OCRGrpcClient
 
         try:
             # gRPC 클라이언트를 컨텍스트 매니저로 사용 (매 요청마다 새 연결 생성)
