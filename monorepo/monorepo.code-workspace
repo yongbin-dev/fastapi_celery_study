@@ -89,7 +89,25 @@
     // Python 테스트 설정
     "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestArgs": ["tests"]
+    "python.testing.pytestArgs": ["tests"],
+
+    // cSpell 설정
+    "cSpell.words": [
+      "bentoml",
+      "Bento",
+      "fastapi",
+      "uvicorn",
+      "sqlalchemy",
+      "supabase",
+      "pytesseract",
+      "paddleocr",
+      "easyocr",
+      "pydantic",
+      "dotenv",
+      "asyncio",
+      "pytest",
+      "mypy"
+    ]
   },
   "launch": {
     "version": "0.2.0",
@@ -151,18 +169,10 @@
         "python": "${workspaceFolder:Root}/.venv/bin/python"
       },
       {
-        "name": "🤖 ML Server (ml_server)",
+        "name": "🤖 ML Server (ml_server - BentoML)",
         "type": "debugpy",
         "request": "launch",
-        "module": "uvicorn",
-        "args": [
-          "ml_app.main:app",
-          "--reload",
-          "--host",
-          "0.0.0.0",
-          "--port",
-          "8002"
-        ],
+        "program": "${workspaceFolder:Root}/packages/ml_server/main.py",
         "justMyCode": false,
         "envFile": "${workspaceFolder:Root}/.env.development",
         "env": {
@@ -172,28 +182,6 @@
         "cwd": "${workspaceFolder:Root}/packages/ml_server",
         "python": "${workspaceFolder:Root}/.venv/bin/python"
       }
-      // {
-      //   "name": "🤖 ML Server (ml_server)",
-      //   "type": "debugpy",
-      //   "request": "launch",
-      //   "module": "uvicorn",
-      //   "args": [
-      //     "ml_app.main:app",
-      //     "--reload",
-      //     "--host",
-      //     "0.0.0.0",
-      //     "--port",
-      //     "8002"
-      //   ],
-      //   "justMyCode": false,
-      //   "envFile": "${workspaceFolder:Root}/.env.development",
-      //   "env": {
-      //     "ENVIRONMENT": "development"
-      //   },
-      //   "console": "integratedTerminal",
-      //   "cwd": "${workspaceFolder:Root}/packages/ml_server",
-      //   "python": "${workspaceFolder:Root}/.venv/bin/python"
-      // }
     ],
     "compounds": [
       {
@@ -201,7 +189,7 @@
         "configurations": [
           "🌐 FastAPI Dev Server (api_server)",
           "⚙️ Celery Worker (celery_worker)",
-          "🤖 ML Server (ml_server)"
+          "🤖 ML Server (ml_server - BentoML)"
         ],
         "stopAll": true
       },
