@@ -15,10 +15,12 @@ from .image_tasks import (
     process_image_chunk_task,
     start_image_batch_pipeline,
 )
+from .pdf_tasks import start_pdf_batch_pipeline
 
 __all__ = [
     # Public API Functions
     "start_image_batch_pipeline",
+    "start_pdf_batch_pipeline",
     # Celery Tasks
     "process_image_chunk_task",
 ]

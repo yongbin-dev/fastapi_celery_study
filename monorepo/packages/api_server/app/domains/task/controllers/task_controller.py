@@ -11,7 +11,7 @@ from shared.repository.crud.async_crud import chain_execution_crud
 from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks.batch.image_tasks import start_image_batch_pipeline
+from tasks.batch import start_pdf_batch_pipeline
 
 logger = get_logger(__name__)
 
@@ -106,8 +106,8 @@ async def run_ocr_pdf_extract_async(
             f"filename={filename}, size={file_size / 1024:.2f}KB"
         )
 
-        # 1. PDF를 이미지로 변환
-        image_responses = await common_service.save_pdf(
+        # 1. PDF 파일 저장
+        pdf_response = await common_service.save_pdf(
             original_filename=filename,
             pdf_file_bytes=file_bytes,
         )
@@ -115,11 +115,14 @@ async def run_ocr_pdf_extract_async(
         batch_name = f"{filename}_{uuid.uuid4().hex[:8]}"
         chunk_size = 10
 
-        # 4. Celery 태스크 전송
-        task_id = await start_image_batch_pipeline(
+        # 2. PDF를 단일 이미지로 처리 (Celery에서 페이지별 분할 처리)
+
+        # 3. Celery 태스크 전송
+        task_id = start_pdf_batch_pipeline(
             batch_id=batch_id,
             batch_name=batch_name,
-            image_responses=image_responses,
+            original_filename=filename,
+            pdf_url=pdf_response.private_img,  # public url
             chunk_size=chunk_size,
             initiated_by="pdf_converter",
             options={},
