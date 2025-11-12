@@ -27,60 +27,65 @@ logger = get_logger(__name__)
     retry_backoff_max=600,
     retry_jitter=True,
 )
-def process_chunk_task(
+def process_chunk(
     self,
     batch_id: str,
     chunk_index: int,
     image_response_list: List[Dict[str, Any]],
     options: Dict[str, Any],
 ):
-    """청크 단위 파이프라인 처리
+    """청크 단위 파이프라인 처리 (Batch OCR 활용)
+
     Args:
         self: Celery task instance
         batch_id: 배치 ID
         chunk_index: 청크 인덱스
-        image_response_dicts: ImageResponse dict 목록
+        image_response_list: ImageResponse dict 목록
         options: 파이프라인 옵션
+
     Returns:
         청크 처리 결과 (성공/실패 이미지 수)
     """
     from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
 
-    # pipeline_tasks에서 start_pipeline import
-    from .pipeline_tasks import start_pipeline
+    # pipeline_tasks에서 start_batch_pipeline import
+    from .pipeline_tasks import start_batch_pipeline_sync
 
     logger.info(
-        f"청크 처리 시작: batch_id={batch_id}, chunk={chunk_index}, "
+        f"청크 배치 처리 시작: batch_id={batch_id}, chunk={chunk_index}, "
         f"images={len(image_response_list)}"
     )
 
-    completed_count = 0
-    failed_count = 0
+    try:
+        # dict를 ImageResponse 객체로 복원
+        image_responses = [
+            ImageResponse(**img_dict) for img_dict in image_response_list
+        ]
 
-    # 각 이미지에 대해 개별 파이프라인 실행
-    for idx, image_dict in enumerate(image_response_list):
-        file_path = None  # 예외 처리를 위해 먼저 초기화
-        try:
-            # dict를 ImageResponse 객체로 복원
-            image_response = ImageResponse(**image_dict)
-            file_path = image_response.private_img
+        # 배치 파이프라인 실행 (한 번에 모든 이미지 처리)
+        result = start_batch_pipeline_sync(
+            image_responses=image_responses,
+            batch_id=batch_id,
+            options=options,
+        )
 
-            # 개별 파이프라인 실행
-            start_pipeline(image_response, batch_id, options)
-            completed_count += 1
+        completed_count = result.get("completed_count", 0)
+        failed_count = result.get("failed_count", 0)
 
-            logger.info(
-                f"이미지 처리 완료: batch={batch_id}, chunk={chunk_index}, "
-                f"idx={idx}, file={file_path}"
-            )
+        logger.info(
+            f"청크 배치 처리 완료: batch={batch_id}, chunk={chunk_index}, "
+            f"completed={completed_count}, failed={failed_count}"
+        )
 
-        except Exception as e:
-            failed_count += 1
+    except Exception as e:
+        # 전체 청크 실패
+        failed_count = len(image_response_list)
+        completed_count = 0
 
-            logger.error(
-                f"이미지 처리 실패: batch={batch_id}, chunk={chunk_index}, "
-                f"idx={idx}, file={file_path or 'unknown'}, error={str(e)}"
-            )
+        logger.error(
+            f"청크 배치 처리 실패: batch={batch_id}, chunk={chunk_index}, "
+            f"error={str(e)}"
+        )
 
     # 배치 통계 업데이트
     with get_db_manager().get_sync_session() as session:
@@ -169,7 +174,7 @@ def start_batch_pipeline(
     # 5. 각 청크를 독립적인 태스크로 실행
     # group을 사용하여 병렬 처리
     chunk_tasks = group(
-        process_chunk_task.s(
+        process_chunk.s(
             batch_id=batch_id,
             chunk_index=idx,
             image_response_list=chunk_files,

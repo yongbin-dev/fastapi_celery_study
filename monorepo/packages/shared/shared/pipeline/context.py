@@ -75,14 +75,26 @@ class PipelineContext(BaseModel):
     # 기본 정보
     batch_id: str = Field(description="batch ID", default="")
     chain_id: str = Field(..., description="Chain ID")
-    private_img: str = Field(..., description="입력 파일 경로")
-    public_file_path: str = Field(..., description="공개 파일 경로")
+    private_img: str = Field(default="", description="입력 파일 경로 (단일 이미지)")
+    public_file_path: str = Field(default="", description="공개 파일 경로")
+
+    # 배치 처리 지원
+    private_imgs: Optional[list[str]] = Field(
+        default=None, description="배치 처리용 이미지 경로 리스트"
+    )
+    public_file_paths: Optional[list[str]] = Field(
+        default=None, description="배치 처리용 공개 파일 경로 리스트"
+    )
+    is_batch: bool = Field(default=False, description="배치 처리 여부")
 
     options: Dict[str, Any] = Field(default_factory=dict, description="파이프라인 옵션")
 
     # 단계별 결과 (Pydantic 스키마 사용)
     ocr_result: Optional[OCRExtractDTO] = Field(
-        default=None, description="OCR 단계 결과"
+        default=None, description="OCR 단계 결과 (단일)"
+    )
+    ocr_results: Optional[list[OCRExtractDTO]] = Field(
+        default=None, description="OCR 단계 결과 리스트 (배치)"
     )
     llm_result: Optional[LLMResult] = Field(default=None, description="LLM 분석 결과")
     # layout_result: Optional[Dict[str, Any]] = Field(
