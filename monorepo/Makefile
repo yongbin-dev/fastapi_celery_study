@@ -21,12 +21,21 @@ docker-base-build:
 	@docker build -f $(ML_SERVER_DIR)/Dockerfile.base -t ml-server-base .
 
 
+
 # ==============================================================================
 # docker image build
 # ==============================================================================
 docker-build:
 	@echo "📦 Docker Compose Build..."
 	@docker compose build
+
+
+# ==============================================================================
+# docker infra start
+# ==============================================================================
+docker-infra-start:
+	@echo "📦 Docker Infra start..."
+	@docker compose -f docker-compose.db.yml up -d
 
 # ==============================================================================
 # docker base image build

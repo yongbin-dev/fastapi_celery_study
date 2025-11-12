@@ -10,7 +10,7 @@ from shared.pipeline.cache import PipelineCacheService, get_pipeline_cache_servi
 from shared.repository.crud.async_crud import chain_execution_crud
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks.batch_tasks import start_batch_pipeline_from_pdf
+from tasks import start_pdf_batch_pipeline
 
 logger = get_logger(__name__)
 
@@ -87,7 +87,7 @@ async def run_ocr_pdf_extract_async(
         )
 
         # 4. Celery 태스크 전송
-        task_id = start_batch_pipeline_from_pdf(
+        task_id = start_pdf_batch_pipeline(
             batch_id=batch_id,
             pdf_file_bytes=file_bytes,
             original_filename=filename,
