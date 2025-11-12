@@ -41,6 +41,7 @@ services:
   api_server:
     image: api_server:latest
     container_name: api_server
+    platform: linux/amd64  
     build:
       context: .
       dockerfile: packages/api_server/Dockerfile
@@ -70,6 +71,7 @@ services:
   celery_worker:
     image: celery_worker:latest
     container_name: celery_worker
+    platform: linux/amd64  
     build:
       context: .
       dockerfile: packages/celery_worker/Dockerfile
@@ -93,6 +95,7 @@ services:
   ml_server:
     image: ml_server:latest
     container_name: ml_server
+    platform: linux/amd64  
     build:
       context: .
       dockerfile: packages/ml_server/Dockerfile.gpu
