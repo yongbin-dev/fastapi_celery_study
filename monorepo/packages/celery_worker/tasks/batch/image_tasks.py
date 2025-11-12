@@ -12,10 +12,10 @@ from shared.pipeline.exceptions import RetryableError
 from shared.schemas.common import ImageResponse
 
 from .helpers import (
+    async_create_batch_execution,
+    async_start_batch_execution,
     convert_to_image_response_dicts,
-    create_batch_execution,
     split_into_chunks,
-    start_batch_execution,
     update_batch_statistics,
 )
 
@@ -101,7 +101,7 @@ def process_image_chunk_task(
     )
 
 
-def start_image_batch_pipeline(
+async def start_image_batch_pipeline(
     batch_id: str,
     batch_name: str,
     image_responses: List[ImageResponse],
@@ -109,7 +109,7 @@ def start_image_batch_pipeline(
     chunk_size: int = 10,
     initiated_by: str = "api_server",
 ) -> str:
-    """이미지 배치 파이프라인 시작
+    """이미지 배치 파이프라인 시작 (비동기)
 
     여러 이미지를 청크로 나누어 병렬 처리합니다.
 
@@ -129,8 +129,8 @@ def start_image_batch_pipeline(
         f"total_images={len(image_responses)}, chunk_size={chunk_size}"
     )
 
-    # 1. BatchExecution 레코드 생성
-    create_batch_execution(
+    # 1. BatchExecution 레코드 생성 (비동기)
+    await async_create_batch_execution(
         batch_id=batch_id,
         batch_name=batch_name,
         total_images=len(image_responses),
@@ -161,8 +161,8 @@ def start_image_batch_pipeline(
         for idx, chunk in enumerate(chunks)
     )
 
-    # 5. 배치 실행 시작 상태로 변경
-    start_batch_execution(batch_id)
+    # 5. 배치 실행 시작 상태로 변경 (비동기)
+    await async_start_batch_execution(batch_id)
 
     # 6. 비동기 실행
     chunk_tasks.apply_async()

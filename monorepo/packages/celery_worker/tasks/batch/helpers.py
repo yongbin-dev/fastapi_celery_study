@@ -5,9 +5,10 @@
 
 from typing import Any, Dict, List
 
-from shared.core.database import get_db_manager
+from shared.core.database import get_db, get_db_manager
 from shared.core.logging import get_logger
 from shared.schemas.common import ImageResponse
+from shared.schemas.enums import ProcessStatus
 
 logger = get_logger(__name__)
 
@@ -147,3 +148,67 @@ def start_batch_execution(batch_id: str):
         if batch_execution:
             batch_execution.start_execution()
             session.commit()
+
+
+# ==================== 비동기 버전 헬퍼 함수들 ====================
+
+
+async def async_create_batch_execution(
+    batch_id: str,
+    batch_name: str,
+    total_images: int,
+    chunk_size: int,
+    initiated_by: str,
+    options: Dict[str, Any],
+):
+    """배치 실행 레코드 생성 (비동기)
+
+    Args:
+        batch_id: 배치 ID
+        batch_name: 배치 이름
+        total_images: 총 이미지 수
+        chunk_size: 청크 크기
+        initiated_by: 시작한 사용자/시스템
+        options: 파이프라인 옵션
+    """
+    from shared.repository.crud.async_crud.batch_execution import (
+        async_batch_execution_crud,
+    )
+
+    async for session in get_db():
+        await async_batch_execution_crud.create_batch_execution(
+            db=session,
+            batch_id=batch_id,
+            batch_name=batch_name,
+            total_images=total_images,
+            chunk_size=chunk_size,
+            initiated_by=initiated_by,
+            options=options,
+        )
+        break
+
+
+async def async_start_batch_execution(batch_id: str):
+    """배치 실행 시작 상태로 변경 (비동기)
+
+    Args:
+        batch_id: 배치 ID
+    """
+    from shared.repository.crud.async_crud.batch_execution import (
+        async_batch_execution_crud,
+    )
+
+    async for session in get_db():
+        batch_execution = await async_batch_execution_crud.get_by_batch_id(
+            db=session, batch_id=batch_id
+        )
+        if batch_execution:
+            batch_execution.start_execution()
+            await async_batch_execution_crud.update_status(
+                db=session,
+                batch_execution=batch_execution,
+                status=ProcessStatus.STARTED,
+            )
+        else:
+            logger.warning(f"BatchExecution을 찾을 수 없음: batch_id={batch_id}")
+        break

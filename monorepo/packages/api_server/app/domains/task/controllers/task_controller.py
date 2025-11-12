@@ -116,7 +116,7 @@ async def run_ocr_pdf_extract_async(
         chunk_size = 10
 
         # 4. Celery 태스크 전송
-        task_id = start_image_batch_pipeline(
+        task_id = await start_image_batch_pipeline(
             batch_id=batch_id,
             batch_name=batch_name,
             image_responses=image_responses,
@@ -134,10 +134,6 @@ async def run_ocr_pdf_extract_async(
             data={"batch_id": batch_id, "task_id": task_id, "filename": filename},
             message="PDF 파일 처리가 시작되었습니다.",
         )
-
-    except HTTPException:
-        # FastAPI HTTPException은 그대로 전파
-        raise
 
     except Exception as e:
         logger.error(
