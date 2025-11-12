@@ -19,8 +19,8 @@ logger = get_logger(__name__)
 
 # Task 이름 → Stage 매핑
 TASK_STAGE_MAP = {
-    "pipeline.ocr_stage": "OCRStage",
-    "pipeline.llm_stage": "LLMStage",
+    # "pipeline.ocr_stage": "OCRStage",
+    # "pipeline.llm_stage": "LLMStage",
 }
 
 

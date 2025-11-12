@@ -59,13 +59,13 @@ class Settings(BaseSettings):
     SUPABASE_STORAGE_BUCKET: str = "yb_test_storage"  # Supabase Storage 버킷 이름
     SUPABASE_STORAGE_PATH: str = "uploads"  # 버킷 내 저장 경로
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
-    DB_POOL_SIZE: int = 5  # 데이터베이스 연결 풀 크기 (Celery 환경에서는 작게 설정)
-    DB_MAX_OVERFLOW: int = 10  # 추가 연결 허용 개수 (피크 시 대응)
+    DB_POOL_SIZE: int = 2  # 데이터베이스 연결 풀 크기 (Supabase 세션 모드 제한 고려)
+    DB_MAX_OVERFLOW: int = 3  # 추가 연결 허용 개수 (최대 5개까지 허용)
     DB_TIMEZONE: str = "Asia/Seoul"  # 데이터베이스 시간대
     DB_POOL_PRE_PING: bool = True  # 연결 유효성 검사
-    DB_POOL_RECYCLE: int = 1800  # 연결 재활용 시간(초) - 30분
+    DB_POOL_RECYCLE: int = 300  # 연결 재활용 시간(초) - 5분 (Supabase 권장)
     DB_CONNECT_TIMEOUT: int = 30  # 연결 타임아웃(초)
-    DB_HEALTH_CHECK_POOL_SIZE: int = 2  # 헬스체크용 별도 풀 크기 (최소화)
+    DB_HEALTH_CHECK_POOL_SIZE: int = 1  # 헬스체크용 별도 풀 크기 (최소화)
 
     # Pipeline 설정
     PIPELINE_TTL: int = 3600  # Redis에서 파이프라인 데이터 TTL (초)

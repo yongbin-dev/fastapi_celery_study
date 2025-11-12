@@ -11,6 +11,7 @@ from shared.core.logging import get_logger
 from shared.pipeline.cache import get_pipeline_cache_service
 from shared.pipeline.context import PipelineContext
 from shared.schemas.common import ImageResponse
+
 from tasks.stages.ocr_stage import OCRStage
 
 logger = get_logger(__name__)

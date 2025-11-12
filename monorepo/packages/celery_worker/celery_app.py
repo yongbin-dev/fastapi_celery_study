@@ -23,7 +23,6 @@ celery_app = Celery(
     backend=settings.REDIS_URL,
     include=[
         "tasks.batch.image_tasks",  # 이미지 배치 태스크
-        "tasks.batch.pdf_tasks",  # PDF 배치 태스크
     ],
 )
 

@@ -102,12 +102,14 @@ class PipelineStage(ABC):
             self.validate_output(context)
 
             logger.info(f"{self.stage_name.lower()}_in_progress 검증 성공")
-            # 4. 상태 업데이트
+
+            # 4. DB 저장
+            self.save_db(context)
+
+            # 5. 상태 업데이트
             context.update_status(
                 status=f"{self.stage_name.lower()}_completed", stage=self.stage_name
             )
-
-            self.save_db(context)
 
             logger.info(f"{self.stage_name.lower()}_in_progress 상태 업데이트")
             return context

@@ -84,8 +84,7 @@ def process_image_chunk_task(
         completed_count = 0
 
         logger.error(
-            f"[청크 {chunk_index}] 배치 OCR 실패: "
-            f"batch_id={batch_id}, error={str(e)}",
+            f"[청크 {chunk_index}] 배치 OCR 실패: batch_id={batch_id}, error={str(e)}",
             exc_info=True,
         )
 
@@ -168,8 +167,6 @@ def start_image_batch_pipeline(
     # 6. 비동기 실행
     chunk_tasks.apply_async()
 
-    logger.info(
-        f"✅ 배치 파이프라인 시작됨: batch_id={batch_id}, " f"chunks={len(chunks)}"
-    )
+    logger.info(f"✅ 배치 파이프라인 시작됨: batch_id={batch_id}, chunks={len(chunks)}")
 
     return batch_id

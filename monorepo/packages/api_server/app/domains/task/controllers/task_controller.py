@@ -8,9 +8,10 @@ from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.pipeline.cache import PipelineCacheService, get_pipeline_cache_service
 from shared.repository.crud.async_crud import chain_execution_crud
+from shared.service.common_service import CommonService, get_common_service
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks import start_pdf_batch_pipeline
+from tasks.batch.image_tasks import start_image_batch_pipeline
 
 logger = get_logger(__name__)
 
@@ -25,6 +26,7 @@ async def healthy():
 @router.post("/extract-pdf")
 async def run_ocr_pdf_extract_async(
     pdf_file: UploadFile = File(...),
+    common_service: CommonService = Depends(get_common_service),
 ):
     """
     PDF 파일 OCR 비동기 처리
@@ -86,11 +88,28 @@ async def run_ocr_pdf_extract_async(
             f"filename={filename}, size={file_size / 1024:.2f}KB"
         )
 
-        # 4. Celery 태스크 전송
-        task_id = start_pdf_batch_pipeline(
-            batch_id=batch_id,
-            pdf_file_bytes=file_bytes,
+        # 1. PDF를 이미지로 변환
+        image_responses = await common_service.save_pdf(
             original_filename=filename,
+            pdf_file_bytes=file_bytes,
+        )
+
+        batch_name = f"{filename}_{uuid.uuid4().hex[:8]}"
+        chunk_size = 10
+        # start_image_batch_pipeline(
+        #     batch_id=batch_id,
+        #     image_responses=image_responses,
+        #     options=options,
+        # )
+
+        # 4. Celery 태스크 전송
+        task_id = start_image_batch_pipeline(
+            batch_id=batch_id,
+            batch_name=batch_name,
+            image_responses=image_responses,
+            chunk_size=chunk_size,
+            initiated_by="pdf_converter",
+            options={},
         )
 
         logger.info(
