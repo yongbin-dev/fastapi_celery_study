@@ -104,7 +104,7 @@ def process_image_chunk_task(
 async def start_image_batch_pipeline(
     batch_id: str,
     batch_name: str,
-    image_responses: List[ImageResponse],
+    file_response: List[ImageResponse],
     options: Dict[str, Any],
     chunk_size: int = 10,
     initiated_by: str = "api_server",
@@ -124,33 +124,30 @@ async def start_image_batch_pipeline(
     Returns:
         batch_id: 배치 고유 ID
     """
-    logger.info(
-        f"배치 파이프라인 시작 준비: batch_id={batch_id}, "
-        f"total_images={len(image_responses)}, chunk_size={chunk_size}"
-    )
+    logger.info(f"배치 파이프라인 시작 준비: batch_id={batch_id}, ")
 
     # 1. BatchExecution 레코드 생성 (비동기)
     await async_create_batch_execution(
         batch_id=batch_id,
         batch_name=batch_name,
-        total_images=len(image_responses),
+        total_images=len(file_response),
         chunk_size=chunk_size,
         initiated_by=initiated_by,
         options=options,
     )
 
-    # 2. ImageResponse를 dict로 변환 (Celery 직렬화용)
-    image_dicts = convert_to_image_response_dicts(image_responses)
+    # # 2. ImageResponse를 dict로 변환 (Celery 직렬화용)
+    image_dicts = convert_to_image_response_dicts(file_response)
 
-    # 3. 청크로 분할
+    # # 3. 청크로 분할
     chunks = split_into_chunks(image_dicts, chunk_size)
 
     logger.info(
         f"배치 파이프라인 청크 분할 완료: "
-        f"total_images={len(image_responses)}, chunks={len(chunks)}"
+        f"total_images={len(file_response)}, chunks={len(chunks)}"
     )
 
-    # 4. 각 청크를 병렬 처리할 태스크 그룹 생성
+    # # 4. 각 청크를 병렬 처리할 태스크 그룹 생성
     chunk_tasks = group(
         process_image_chunk_task.s(
             batch_id=batch_id,
@@ -161,12 +158,10 @@ async def start_image_batch_pipeline(
         for idx, chunk in enumerate(chunks)
     )
 
-    # 5. 배치 실행 시작 상태로 변경 (비동기)
+    # # 5. 배치 실행 시작 상태로 변경 (비동기)
     await async_start_batch_execution(batch_id)
 
-    # 6. 비동기 실행
+    # # 6. 비동기 실행
     chunk_tasks.apply_async()
-
-    logger.info(f"✅ 배치 파이프라인 시작됨: batch_id={batch_id}, chunks={len(chunks)}")
 
     return batch_id

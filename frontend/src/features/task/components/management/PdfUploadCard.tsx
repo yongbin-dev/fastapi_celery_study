@@ -1,11 +1,9 @@
-import type { UseMutationResult } from '@tanstack/react-query';
 import React, { useState } from 'react';
 
 interface PdfUploadCardProps {
   selectedFile: File | null;
   onFileSelect: (file: File | null) => void;
   onUpload: () => void;
-  extractPdfMutation: UseMutationResult<any, Error, File, unknown>;
   isLoading?: boolean;
 }
 
@@ -13,7 +11,6 @@ export const PdfUploadCard: React.FC<PdfUploadCardProps> = ({
   selectedFile,
   onFileSelect,
   onUpload,
-  extractPdfMutation,
   isLoading = false,
 }) => {
   const [isDragging, setIsDragging] = useState(false);

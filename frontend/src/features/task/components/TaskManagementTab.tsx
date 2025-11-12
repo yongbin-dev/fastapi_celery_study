@@ -47,15 +47,17 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
   // 4. batchStatus는 있지만 total_count가 0 (아직 데이터가 준비되지 않음)
   const isLoadingBatchData =
     isProcessing ||
-    extractPdfMutation.isPending ||
-    (!!batchId && !batchStatus) ||
-    (!!batchStatus && batchStatus.total_count === 0);
+    extractPdfMutation.isPending 
+    // (!!batchId && !batchStatus) ||
+    // (!!batchStatus && batchStatus.total_count === 0);
 
   // 배치 데이터가 실제로 로드되면 처리 상태 종료
   useEffect(() => {
-    if (batchStatus && batchStatus.total_count > 0 && isProcessing) {
-      setIsProcessing(false);
-    }
+    setIsProcessing(false);
+
+    // if (batchStatus && batchStatus.total_count > 0 && isProcessing) {
+    //   setIsProcessing(false);
+    // }
   }, [batchStatus, isProcessing]);
 
   // 디버깅용 로그
@@ -85,7 +87,7 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
 
   const handleUpload = () => {
     if (selectedFile) {
-      setIsProcessing(true); // 처리 시작
+      // setIsProcessing(true); // 처리 시작
       extractPdfMutation.mutate(selectedFile, {
         onSuccess: (data) => {
           setBatchId(data.batch_id);
@@ -130,7 +132,6 @@ export const TaskManagementTab: React.FC<TaskManagementTabProps> = ({
             selectedFile={selectedFile}
             onFileSelect={handleFileSelect}
             onUpload={handleUpload}
-            extractPdfMutation={extractPdfMutation}
             isLoading={isLoadingBatchData}
           />
 
