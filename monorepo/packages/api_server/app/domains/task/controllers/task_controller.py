@@ -8,8 +8,10 @@ from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.pipeline.cache import get_pipeline_cache_service
 from shared.repository.crud.async_crud import chain_execution_crud
-from shared.service.common_service import CommonService, get_common_service
+from shared.utils.file_utils import get_default_storage
+from shared.utils.path_builder import StoragePathBuilder
 from shared.utils.response_builder import ResponseBuilder
+from shared.utils.storage_base import StorageProvider
 from sqlalchemy.ext.asyncio import AsyncSession
 from tasks.batch import start_pdf_batch_pipeline
 
@@ -71,7 +73,7 @@ def _validate_file_size(file_size: int, filename: str) -> None:
 @router.post("/extract-pdf")
 async def run_ocr_pdf_extract_async(
     pdf_file: UploadFile = File(...),
-    common_service: CommonService = Depends(get_common_service),
+    storage: StorageProvider = Depends(get_default_storage),
 ):
     """
     PDF 파일 OCR 비동기 처리
@@ -106,18 +108,22 @@ async def run_ocr_pdf_extract_async(
             f"filename={filename}, size={file_size / 1024:.2f}KB"
         )
 
-        # 1. PDF 파일 저장
-        pdf_response = await common_service.save_pdf(
-            original_filename=filename,
-            pdf_file_bytes=file_bytes,
+        # 1. PDF 저장 경로 생성
+        pdf_path, folder_name = StoragePathBuilder.build_pdf_path(filename)
+        logger.info(f"📁 PDF 저장 경로: {pdf_path}")
+
+        # 2. PDF 파일 저장 (SupabaseStorage 직접 사용)
+        pdf_response = await storage.upload(
+            file_data=file_bytes,
+            path=pdf_path,
+            content_type="application/pdf",
         )
+        logger.info(f"✅ PDF 파일 저장 완료: {pdf_response.private_img}")
 
         batch_name = f"{filename}_{uuid.uuid4().hex[:8]}"
         chunk_size = 10
 
-        # 2. PDF를 단일 이미지로 처리 (Celery에서 페이지별 분할 처리)
-
-        # 3. Celery 태스크 전송
+        # 3. Celery 태스크 전송 (PDF를 Celery에서 페이지별 분할 처리)
         task_id = start_pdf_batch_pipeline(
             batch_id=batch_id,
             batch_name=batch_name,
