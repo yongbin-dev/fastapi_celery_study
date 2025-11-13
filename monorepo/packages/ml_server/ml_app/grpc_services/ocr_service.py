@@ -6,6 +6,7 @@ from ml_app.models.ocr_model import get_ocr_model
 from shared.core.logging import get_logger
 from shared.grpc.generated import common_pb2, ocr_pb2, ocr_pb2_grpc  # type: ignore
 from shared.service.common_service import CommonService
+from shared.utils.supabase_storage import SupabaseStorage
 
 logger = get_logger(__name__)
 
@@ -15,6 +16,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
 
     def __init__(self):
         self.common_service = CommonService()
+        self.storage = SupabaseStorage()
         logger.info("OCR gRPC 서비스 초기화 완료")
 
     async def extract_text(
@@ -33,9 +35,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
             logger.info(f"gRPC OCR 요청: {request.private_image_path}")
 
             # 1. 이미지 로드
-            image_data = await self.common_service.load_image(
-                request.private_image_path
-            )
+            image_data = await self.storage.download(request.private_image_path)
 
             # 2. OCR 모델 실행
             model = get_ocr_model(
