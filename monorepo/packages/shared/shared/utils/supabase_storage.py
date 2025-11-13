@@ -45,9 +45,15 @@ class SupabaseStorage(StorageProvider):
 
         try:
             # 경로 정규화
+            # 1. 슬래시로 시작하면 제거
             normalized_path = (
                 "/".join(path.split("/")[1:]) if path.startswith("/") else path
             )
+
+            # 2. 버킷 이름이 경로에 포함되어 있으면 제거
+            if normalized_path.startswith(f"{self.bucket_name}/"):
+                normalized_path = normalized_path[len(self.bucket_name) + 1 :]
+
             logger.debug(f"이미지 다운로드 시도: {normalized_path}")
 
             image_data = self._client.storage.from_(self.bucket_name).download(
