@@ -5,7 +5,7 @@ ML 서버를 호출하여 이미지/PDF 파일에서 텍스트를 추출합니�
 
 import grpc
 from celery.beat import get_logger
-
+from repository.ocr_repository import OCRRepository
 from shared.config import settings
 from shared.grpc.generated import common_pb2
 from shared.pipeline.context import PipelineContext
@@ -15,12 +15,8 @@ from shared.schemas.enums import ProcessStatus
 from shared.schemas.ocr_db import OCRExtractDTO
 
 from .ocr_client import OCRClient
-from .ocr_repository import OCRRepository
 
 logger = get_logger(__name__)
-
-# Feature Flag
-USE_GRPC = settings.USE_GRPC == "true"
 
 
 class OCRStage(PipelineStage):
@@ -37,6 +33,7 @@ class OCRStage(PipelineStage):
         super().__init__()
         self.client = OCRClient(settings.MODEL_SERVER_URL)
         self.repository = OCRRepository()
+        self.use_grpc = settings.USE_GRPC
 
     def validate_input(self, context: PipelineContext) -> None:
         """입력 검증: 파일 경로가 있는지 확인
@@ -77,6 +74,33 @@ class OCRStage(PipelineStage):
                 context.private_img, context.options
             )
         return context
+
+    def validate_output(self, context: PipelineContext) -> None:
+        """출력 검증: OCR 결과에 텍스트가 있는지 확인
+
+        Args:
+            context: 파이프라인 컨텍스트
+
+        Raises:
+            ValueError: OCR 결과가 없거나 텍스트가 없을 때
+        """
+        if context.is_batch:
+            if not context.ocr_results or len(context.ocr_results) == 0:
+                raise ValueError("OCR batch results are empty")
+        else:
+            if not context.ocr_result:
+                raise ValueError("OCR result is empty")
+
+    def save_db(self, context: PipelineContext):
+        """OCR 결과를 DB에 저장 (단일/배치 지원)
+
+        Args:
+            context: 파이프라인 컨텍스트
+        """
+        if context.is_batch:
+            self.repository.save_batch(context)
+        else:
+            self.repository.save_single(context)
 
     async def execute_grpc(self, context: PipelineContext) -> PipelineContext:
         """gRPC로 OCR 실행 (신규 방식)"""
@@ -137,30 +161,3 @@ class OCRStage(PipelineStage):
             else:
                 # 재시도 불가능한 오류
                 raise ValueError(f"gRPC OCR failed: {e.details()}") from e
-
-    def validate_output(self, context: PipelineContext) -> None:
-        """출력 검증: OCR 결과에 텍스트가 있는지 확인
-
-        Args:
-            context: 파이프라인 컨텍스트
-
-        Raises:
-            ValueError: OCR 결과가 없거나 텍스트가 없을 때
-        """
-        if context.is_batch:
-            if not context.ocr_results or len(context.ocr_results) == 0:
-                raise ValueError("OCR batch results are empty")
-        else:
-            if not context.ocr_result:
-                raise ValueError("OCR result is empty")
-
-    def save_db(self, context: PipelineContext):
-        """OCR 결과를 DB에 저장 (단일/배치 지원)
-
-        Args:
-            context: 파이프라인 컨텍스트
-        """
-        if context.is_batch:
-            self.repository.save_batch(context)
-        else:
-            self.repository.save_single(context)

@@ -22,23 +22,19 @@ class CRUDBatchExecution(
     """BatchExecution 모델용 CRUD 클래스"""
 
     def get_by_batch_id(
-        self, session: Session, *, batch_id: str
+        self, db: Session, *, batch_id: str
     ) -> Optional[BatchExecution]:
         """batch_id로 배치 실행 조회"""
         return (
-            session.query(BatchExecution)
-            .filter(BatchExecution.batch_id == batch_id)
-            .first()
+            db.query(BatchExecution).filter(BatchExecution.batch_id == batch_id).first()
         )
 
     def get_dto_by_batch_id(
-        self, session: Session, *, batch_id: str
+        self, db: Session, *, batch_id: str
     ) -> Optional[BatchExecutionResponse]:
         """batch_id로 배치 실행 조회 (DTO 반환)"""
         batch_execution = (
-            session.query(BatchExecution)
-            .filter(BatchExecution.batch_id == batch_id)
-            .first()
+            db.query(BatchExecution).filter(BatchExecution.batch_id == batch_id).first()
         )
 
         if not batch_execution:

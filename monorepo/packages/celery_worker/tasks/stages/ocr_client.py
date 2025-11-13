@@ -8,10 +8,10 @@ from typing import List
 
 import httpx
 from celery.beat import get_logger
-
 from shared.pipeline.exceptions import RetryableError
 from shared.schemas.enums import ProcessStatus
 from shared.schemas.ocr_db import OCRExtractDTO
+from shared.schemas.ocr_text_box import OCRTextBoxCreate
 
 logger = get_logger(__name__)
 
@@ -27,9 +27,7 @@ class OCRClient:
         """
         self.server_url = server_url
 
-    async def call_single(
-        self, image_path: str, options: dict
-    ) -> OCRExtractDTO:
+    async def call_single(self, image_path: str, options: dict) -> OCRExtractDTO:
         """단일 이미지 OCR 요청
 
         Args:
@@ -63,8 +61,7 @@ class OCRClient:
                 # 응답 확인
                 if response.status_code != 200:
                     error_msg = (
-                        f"BentoML API failed: "
-                        f"{response.status_code} - {response.text}"
+                        f"BentoML API failed: {response.status_code} - {response.text}"
                     )
                     if response.status_code >= 500:
                         raise RetryableError("OCRClient", error_msg)
@@ -170,15 +167,13 @@ class OCRClient:
                 return ocr_results
 
         except httpx.TimeoutException as e:
-            raise RetryableError(
-                "OCRClient", f"BentoML batch timeout: {str(e)}"
-            ) from e
+            raise RetryableError("OCRClient", f"BentoML batch timeout: {str(e)}") from e
         except httpx.ConnectError as e:
             raise RetryableError(
                 "OCRClient", f"BentoML batch connection error: {str(e)}"
             ) from e
 
-    def _parse_text_boxes(self, boxes: List[dict]) -> List[dict]:
+    def _parse_text_boxes(self, boxes: List[dict]) -> List[OCRTextBoxCreate]:
         """텍스트 박스 파싱
 
         Args:
