@@ -11,7 +11,7 @@ from ml_app.models.ocr_model import get_ocr_model
 from pydantic import BaseModel, Field
 from shared.core.logging import get_logger
 from shared.schemas.ocr_db import OCRExtractDTO
-from shared.service.common_service import get_common_service
+from shared.utils.supabase_storage import SupabaseStorage
 
 logger = get_logger(__name__)
 
@@ -79,6 +79,7 @@ class OCRBentoService:
         from shared.config import settings
 
         self.engine_type = settings.OCR_ENGINE
+        self.storage = SupabaseStorage()
         logger.info(f"OCRBentoService 초기화: engine={self.engine_type}")
 
     @bentoml.api
@@ -98,7 +99,7 @@ class OCRBentoService:
         try:
             private_img = request_data.private_img
             logger.info(f"private_img : {private_img}")
-            image_data = await get_common_service().load_image(private_img)
+            image_data = await self.storage.download(private_img)
             logger.info(
                 f"OCR 요청: lang={request_data.language}, size={len(image_data)}"
             )
@@ -145,7 +146,9 @@ class OCRBentoService:
         for idx, private_img in enumerate(private_imgs):
             try:
                 # 이미지 로드
-                image_data = await get_common_service().load_image(private_img)
+
+                image_data = await self.storage.download(private_img)
+                # image_data = await get_common_service().load_image(private_img)
 
                 # OCR 모델 실행
                 model = get_ocr_model(

@@ -1,214 +1,94 @@
-# app/utils/file_utils.py
-"""파일 처리 유틸리티"""
+"""파일 처리 유틸리티 - Storage 팩토리 및 레거시 함수"""
 
 import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
-from supabase import Client, create_client
-
 from ..config import settings
-from ..core.logging import get_logger
 from ..schemas.common import ImageResponse
-
-logger = get_logger(__name__)
-
-# Supabase 클라이언트 초기화 (환경 변수가 설정된 경우에만)
-supabase: Optional[Client] = None
-if settings.NEXT_PUBLIC_SUPABASE_URL and settings.NEXT_PUBLIC_SUPABASE_ANON_KEY:
-    try:
-        supabase = create_client(
-            settings.NEXT_PUBLIC_SUPABASE_URL,
-            settings.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            # 권한 문제가 있다면 Service Role Key 사용:
-            # settings.SUPABASE_SERVICE_ROLE_KEY,
-        )
-        logger.info("✅ Supabase 클라이언트 초기화 완료")
-    except Exception as e:
-        logger.warning(f"⚠️ Supabase 클라이언트 초기화 실패: {e}")
-else:
-    logger.warning("ℹ️ Supabase 환경 변수가 설정되지 않음 (Storage 기능 비활성화)")
-
-# 환경 변수에서 버킷 이름 가져오기
-BUCKET_NAME = "yb_test_storage"
+from .storage_base import StorageProvider
+from .supabase_storage import SupabaseStorage
 
 
-async def load_uploaded_image(image_path: str) -> bytes:
+# Storage Provider Factory
+def get_storage_provider(provider_type: str = "supabase") -> StorageProvider:
     """
-    Supabase Storage에서 이미지를 다운로드하여 반환합니다.
+    Storage Provider 팩토리 함수 (FastAPI Depends에서 사용 가능)
 
     Args:
-        image_path: 이미지 경로 또는 전체 URL
-            - 경로만: "uploads/2025-10-21/file.png"
-            - 전체 URL: "https://.../storage/v1/object/public/bucket/uploads/..."
+        provider_type: 'supabase' 또는 'minio'
 
     Returns:
-        bytes: 이미지 바이너리 데이터
-
-    Raises:
-        Exception: Storage 다운로드 실패 시
+        StorageProvider 인스턴스
     """
-    # Supabase가 설정되지 않은 경우 에러
-    if supabase is None:
-        raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. 환경 변수를 설정하세요."
-        )
+    if provider_type == "supabase":
+        return SupabaseStorage()
+    # elif provider_type == "minio":
+    #     return MinIOStorage()
+    else:
+        raise ValueError(f"지원하지 않는 Storage Provider: {provider_type}")
 
-    try:
-        # URL인 경우 경로 추출
-        path = image_path
 
-        # 경로 정규화 (앞의 슬래시 제거)
-        path = "/".join(path.split("/")[1:])
+# 전역 Storage 인스턴스 (기본값: Supabase)
+_default_storage: Optional[StorageProvider] = None
 
-        logger.debug(f"이미지 다운로드 시도: {path}")
 
-        # Supabase Storage에서 다운로드
-        image_data = supabase.storage.from_(BUCKET_NAME).download(path=path)
+def get_default_storage() -> StorageProvider:
+    """
+    기본 Storage Provider 반환 (FastAPI Depends에서 사용)
 
-        logger.info(f"✅ 이미지 다운로드 성공: {len(image_data)} bytes")
-        return image_data
+    환경 변수 STORAGE_PROVIDER로 제어 (기본값: supabase)
+    """
+    global _default_storage
 
-    except Exception as e:
-        error_msg = str(e)
-        logger.error(f"❌ Supabase Storage 다운로드 실패: {error_msg}")
+    if _default_storage is None:
+        provider_type = getattr(settings, "STORAGE_PROVIDER", "supabase")
+        _default_storage = get_storage_provider(provider_type)
 
-        # RLS 정책 위반인 경우
-        if "row-level security policy" in error_msg.lower():
-            raise Exception(
-                "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
-                "Storage 버킷에 대한 READ 권한이 필요합니다."
-            )
-        # 버킷이 없는 경우
-        elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
-            raise Exception(
-                f"Storage 버킷 '{BUCKET_NAME}' 또는 파일을 찾을 수 없습니다: {path}"
-            )
-        # 기타 에러
-        else:
-            raise Exception(f"파일 로드 실패: {error_msg}")
+    return _default_storage
+
+
+# 하위 호환성을 위한 레거시 함수들
+async def load_uploaded_image(image_path: str) -> bytes:
+    """
+    [레거시] 이미지 로드 (하위 호환성)
+
+    새 코드에서는 get_default_storage()를 Depends로 주입받아 사용하세요.
+    """
+    storage = get_default_storage()
+    return await storage.download(image_path)
 
 
 async def save_uploaded_image(
     image_data: bytes, filename: str, content_type: Optional[str]
 ) -> ImageResponse:
     """
-    업로드된 이미지를 Supabase Storage에 저장하고 URL을 반환합니다.
+    [레거시] 이미지 저장 (uploads/{filename})
 
-    Args:
-        file: 업로드된 파일 객체
-        filename: 저장할 파일명
-
-    Returns:
-        dict: 업로드 응답과 public URL
-
-    Raises:
-        Exception: Storage 업로드 실패 시
+    새 코드에서는 get_default_storage()를 Depends로 주입받아 사용하세요.
     """
-    # Supabase가 설정되지 않은 경우 에러
-    if supabase is None:
-        raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. 환경 변수를 설정하세요."
-        )
-
-    try:
-        contents = image_data
-
-        # filename 파라미터를 사용하여 업로드
-        response = supabase.storage.from_(BUCKET_NAME).upload(
-            path=f"uploads/{filename}",
-            file=contents,
-            file_options={
-                "content-type": str(content_type or "application/octet-stream")
-            },
-        )
-
-        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
-            f"uploads/{filename}"
-        )
-
-        return ImageResponse(private_img=response.fullPath, public_img=public_url)
-
-    except Exception as e:
-        error_msg = str(e)
-        logger.error("❌ Supabase Storage 업로드 실패 ")
-
-        # RLS 정책 위반인 경우
-        if "row-level security policy" in error_msg.lower():
-            raise Exception(
-                "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
-                "Storage 버킷에 대한 INSERT 권한이 필요합니다."
-            )
-        # 버킷이 없는 경우
-        elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
-            raise Exception(f"Storage 버킷 '{BUCKET_NAME}'을 찾을 수 없습니다.")
-        # 기타 에러
-        else:
-            raise Exception(f"파일 업로드 실패: {error_msg}")
+    storage = get_default_storage()
+    path = f"uploads/{filename}"
+    return await storage.upload(image_data, path, content_type)
 
 
 async def save_uploaded_file(
     image_data: bytes, filename: str, content_type: Optional[str]
 ) -> ImageResponse:
     """
-    업로드된 이미지를 Supabase Storage에 저장하고 URL을 반환합니다.
+    [레거시] 파일 저장 (uploads/{YYYYMMDD}/{filename})
 
-    Args:
-        file: 업로드된 파일 객체
-        filename: 저장할 파일명
-
-    Returns:
-        dict: 업로드 응답과 public URL
-
-    Raises:
-        Exception: Storage 업로드 실패 시
+    새 코드에서는 get_default_storage()를 Depends로 주입받아 사용하세요.
     """
-    # Supabase가 설정되지 않은 경우 에러
-    if supabase is None:
-        raise Exception(
-            "Supabase Storage가 설정되지 않았습니다. 환경 변수를 설정하세요."
-        )
-
-    try:
-        now = datetime.now()
-        formatted_date = now.strftime("%Y%m%d")
-
-        contents = image_data
-
-        # filename 파라미터를 사용하여 업로드
-        response = supabase.storage.from_(BUCKET_NAME).upload(
-            path=f"uploads/{formatted_date}/{filename}",
-            file=contents,
-            file_options={
-                "content-type": str(content_type or "application/octet-stream")
-            },
-        )
-
-        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(
-            f"uploads/{formatted_date}/{filename}"
-        )
-
-        return ImageResponse(private_img=response.fullPath, public_img=public_url)
-
-    except Exception as e:
-        error_msg = str(e)
-        logger.error("❌ Supabase Storage 업로드 실패 ")
-
-        # RLS 정책 위반인 경우
-        if "row-level security policy" in error_msg.lower():
-            raise Exception(
-                "Supabase Storage 권한 오류: RLS 정책을 확인하세요. "
-                "Storage 버킷에 대한 INSERT 권한이 필요합니다."
-            )
-        # 버킷이 없는 경우
-        elif "not found" in error_msg.lower() or "does not exist" in error_msg.lower():
-            raise Exception(f"Storage 버킷 '{BUCKET_NAME}'을 찾을 수 없습니다.")
-        # 기타 에러
-        else:
-            raise Exception(f"파일 업로드 실패: {error_msg}")
+    storage = get_default_storage()
+    now = datetime.now()
+    formatted_date = now.strftime("%Y%m%d")
+    path = f"uploads/{formatted_date}/{filename}"
+    return await storage.upload(image_data, path, content_type)
 
 
+# 유틸리티 함수들
 def get_file_size_mb(file_path: str) -> float:
     """파일 크기를 MB 단위로 반환"""
     return os.path.getsize(file_path) / (1024 * 1024)
