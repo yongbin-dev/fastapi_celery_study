@@ -44,7 +44,7 @@ class PipelineCacheService:
             context: 파이프라인 컨텍스트
             ttl: Time To Live (초, 기본 24시간)
         """
-        key = self._get_key(context.batch_id, context.chain_id)
+        key = self._get_key(context.batch_id, str(context.chain_execution_id))
         self.redis_client.set(key, context.model_dump_json(), ex=ttl)
         logger.debug(f"✅ 컨텍스트 저장: {key} (TTL: {ttl}s)")
 

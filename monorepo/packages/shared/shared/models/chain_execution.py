@@ -19,12 +19,6 @@ class ChainExecution(Base):
 
     # 기본 필드
     id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
-    chain_id = mapped_column(
-        String(255), nullable=True, index=True, comment="체인 고유 ID"
-    )
-    celery_task_id = mapped_column(
-        String(255), nullable=True, index=True, comment="Celery Task ID (첫 번째 task)"
-    )
     chain_name = mapped_column(
         String(255),
         nullable=False,
@@ -78,11 +72,7 @@ class ChainExecution(Base):
     )
 
     def __repr__(self):
-        return (
-            f"<ChainExecution(id={self.id}"
-            f",chain_id={self.chain_id}"
-            f",status={self.status})>"
-        )
+        return f"<ChainExecution(id={self.id},status={self.status})>"
 
     def start_execution(self):
         """체인 실행 시작"""

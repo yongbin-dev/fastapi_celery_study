@@ -17,7 +17,7 @@ export const taskApi = {
     if (params.limit) searchParams.append('limit', params.limit.toString());
 
     const queryString = searchParams.toString();
-    const url = `/pipeline/history?${queryString ? `${queryString}` : ''}`;
+    const url = `/task/history?${queryString ? `${queryString}` : ''}`;
 
     const response = await api.get<ChainExecutionResponseDto[]>(url);
     return response.data;

@@ -25,7 +25,9 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
     setIsCollapsed(!isCollapsed);
   };
 
-  const totalProgress = pipeline.total_tasks > 0 ? (pipeline.completed_tasks / pipeline.total_tasks) * 100 : 0;
+  const totalTasks = pipeline.task_logs.length;
+  const completedTasks = pipeline.task_logs.filter(log => log.status === 'SUCCESS').length;
+  const totalProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
   return (
     <div key={pipeline.id} className="p-6">
@@ -45,20 +47,40 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          <h4 className="text-lg font-semibold">Chain: {pipeline.chain_name} ({pipeline.chain_id})</h4>
+          <h4 className="text-lg font-semibold">Execution ID: {pipeline.id}</h4>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(pipeline.status)}`}>
             {pipeline.status}
           </span>
         </div>
         <div className="text-sm text-gray-500">
-          {formatDate(pipeline.created_at)}
+          {formatDate(pipeline.started_at)} ~ {formatDate(pipeline.finished_at || '')}
         </div>
+      </div>
+
+      {/* 메타 정보 */}
+      <div className="mb-4 space-y-1 text-sm text-gray-600">
+        <div className="flex items-center space-x-2">
+          <span className="font-medium">Batch ID:</span>
+          <span className="font-mono text-xs">{pipeline.batch_id}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="font-medium">Initiated by:</span>
+          <span>{pipeline.initiated_by}</span>
+        </div>
+        {Object.keys(pipeline.input_data).length > 0 && (
+          <div className="flex items-start space-x-2">
+            <span className="font-medium">Input Data:</span>
+            <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+              {JSON.stringify(pipeline.input_data)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 파이프라인 진행률 - 항상 표시 */}
       <div className="mb-4">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Progress: {pipeline.completed_tasks} / {pipeline.total_tasks} tasks</span>
+          <span>Progress: {completedTasks} / {totalTasks} tasks</span>
           <span>{Math.round(totalProgress)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -113,7 +135,7 @@ export const TaskGroup: React.FC<TaskGroupProps> = ({ pipeline, }) => {
                         </div>
                         <div className="text-right text-xs whitespace-nowrap text-gray-500">
                           <p>Start: {formatDate(task.started_at)}</p>
-                          <p>Finish: {formatDate(task.finished_at)}</p>
+                          <p>Finish: {task.finished_at ? formatDate(task.finished_at) : 'N/A'}</p>
                         </div>
                       </div>
                     </div>

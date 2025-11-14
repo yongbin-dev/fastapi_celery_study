@@ -74,7 +74,9 @@ class PipelineContext(BaseModel):
 
     # 기본 정보
     batch_id: str = Field(description="batch ID", default="")
-    chain_id: str = Field(..., description="Chain ID")
+    chain_execution_id: Optional[int] = Field(
+        default=None, description="ChainExecution DB ID"
+    )
     private_img: str = Field(default="", description="입력 파일 경로 (단일 이미지)")
     public_file_path: str = Field(default="", description="공개 파일 경로")
 

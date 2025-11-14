@@ -4,12 +4,11 @@ import type { ChainExecutionResponseDto } from '../../types/pipeline';
 import { TaskGroup } from './TaskGroup';
 
 interface BatchGroupProps {
-  batchId: number;
-  batchName: string;
+  batchId: string;
   chains: ChainExecutionResponseDto[];
 }
 
-export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, batchName, chains }) => {
+export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, chains }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
 
   const batchStatus = useMemo(() => {
@@ -21,17 +20,21 @@ export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, batchName, chai
   }, [chains]);
 
   const batchProgress = useMemo(() => {
-    const totalTasks = chains.reduce((sum, chain) => sum + chain.total_tasks, 0);
-    const completedTasks = chains.reduce((sum, chain) => sum + chain.completed_tasks, 0);
+    const totalTasks = chains.reduce((sum, chain) => sum + chain.task_logs.length, 0);
+    const completedTasks = chains.reduce((sum, chain) =>
+      sum + chain.task_logs.filter(log => log.status === 'SUCCESS').length, 0
+    );
     return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
   }, [chains]);
 
   const totalTasksCount = useMemo(() => {
-    return chains.reduce((sum, chain) => sum + chain.total_tasks, 0);
+    return chains.reduce((sum, chain) => sum + chain.task_logs.length, 0);
   }, [chains]);
 
   const completedTasksCount = useMemo(() => {
-    return chains.reduce((sum, chain) => sum + chain.completed_tasks, 0);
+    return chains.reduce((sum, chain) =>
+      sum + chain.task_logs.filter(log => log.status === 'SUCCESS').length, 0
+    );
   }, [chains]);
 
   const getStatusBadge = (status: string) => {
@@ -49,11 +52,11 @@ export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, batchName, chai
     setIsCollapsed(!isCollapsed);
   };
 
-  const latestCreatedAt = useMemo(() => {
+  const latestStartedAt = useMemo(() => {
     if (chains.length === 0) return '';
     return chains.reduce((latest, chain) => {
-      return new Date(chain.created_at) > new Date(latest) ? chain.created_at : latest;
-    }, chains[0].created_at);
+      return new Date(chain.started_at) > new Date(latest) ? chain.started_at : latest;
+    }, chains[0].started_at);
   }, [chains]);
 
   return (
@@ -79,7 +82,7 @@ export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, batchName, chai
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <h3 className="text-xl font-bold text-gray-900">
-              Batch: {batchName || `Batch #${batchId}`}
+              Batch: {batchId}
             </h3>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(batchStatus)}`}>
@@ -90,7 +93,7 @@ export const BatchGroup: React.FC<BatchGroupProps> = ({ batchId, batchName, chai
           </span>
         </div>
         <div className="text-sm text-gray-500">
-          {formatDate(latestCreatedAt)}
+          {formatDate(latestStartedAt)}
         </div>
       </div>
 

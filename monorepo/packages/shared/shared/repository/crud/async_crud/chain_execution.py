@@ -28,11 +28,11 @@ class AsyncCRUDChainExecution(
         return list(result.scalars().all())
 
     async def get_by_chain_id(
-        self, db: AsyncSession, *, chain_id: str
+        self, db: AsyncSession, *, id: str
     ) -> Optional[ChainExecution]:
         """chain_id로 체인 실행 조회"""
         try:
-            stmt = select(ChainExecution).where(ChainExecution.chain_id == chain_id)
+            stmt = select(ChainExecution).where(ChainExecution.id == id)
             result = await db.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
@@ -46,7 +46,6 @@ class AsyncCRUDChainExecution(
         chain_id: str,
         chain_name: str,
         batch_id: Optional[str] = None,
-        total_tasks: int = 4,
         initiated_by: Optional[str] = None,
         input_data: Optional[dict] = None,
     ) -> ChainExecution:
@@ -59,7 +58,6 @@ class AsyncCRUDChainExecution(
                 chain_id=chain_id,
                 chain_name=chain_name,
                 batch_id=batch_id,
-                total_tasks=total_tasks,
                 status=ProcessStatus.PENDING.value,
                 initiated_by=initiated_by,
                 input_data=input_data,
@@ -79,7 +77,7 @@ class AsyncCRUDChainExecution(
         stmt = (
             select(ChainExecution)
             .options(selectinload(ChainExecution.task_logs))
-            .where(ChainExecution.chain_id == chain_id)
+            .where(ChainExecution.id == chain_id)
             .order_by(desc(ChainExecution.created_at))
         )
         result = await db.execute(stmt)

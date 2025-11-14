@@ -10,7 +10,6 @@ from .task_log import TaskLogResponse
 class ChainExecutionCreate(BaseModel):
     """ChainExecution 생성용 스키마"""
 
-    chain_id: str = Field(..., description="체인 ID")
     chain_name: str = Field(..., description="체인 이름")
     total_tasks: int = Field(..., description="총 작업 수")
     input_data: Optional[Dict[str, Any]] = Field(None, description="입력 데이터")
@@ -30,7 +29,6 @@ class ChainExecutionResponse(BaseModel):
     """ChainExecution 응답용 스키마"""
 
     id: int
-    chain_id: str
     status: ProcessStatus
     batch_id: Optional[str]
     started_at: Optional[datetime]

@@ -64,18 +64,10 @@ def process_image_chunk_task(
         image_responses = [ImageResponse(**img_dict) for img_dict in image_dicts]
 
         # 배치 OCR 파이프라인 실행
-        result = execute_batch_ocr_pipeline(
+        execute_batch_ocr_pipeline(
             image_responses=image_responses,
             batch_id=batch_id,
             options=options,
-        )
-
-        completed_count = result.get("completed_count", 0)
-        failed_count = result.get("failed_count", 0)
-
-        logger.info(
-            f"[청크 {chunk_index}] 배치 OCR 완료: "
-            f"성공={completed_count}, 실패={failed_count}"
         )
 
     except Exception as e:

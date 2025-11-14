@@ -3,14 +3,15 @@
 여러 이미지를 한 번에 처리하는 배치 OCR 파이프라인
 """
 
-import uuid
 from typing import Any, Dict, Optional
 
 from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
 from shared.pipeline.cache import get_pipeline_cache_service
 from shared.pipeline.context import PipelineContext
+from shared.repository.crud.sync_crud.chain_execution import chain_execution_crud
 from shared.schemas.common import ImageResponse
+from shared.schemas.enums import ProcessStatus
 
 from tasks.stages.ocr_stage import OCRStage
 
@@ -22,7 +23,7 @@ def execute_batch_ocr_pipeline(
     image_responses: list[ImageResponse],
     batch_id: Optional[str],
     options: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+):
     """배치 OCR 파이프라인 실행
 
     여러 이미지를 한 번에 처리하여 Batch OCR API를 활용합니다.
@@ -45,9 +46,6 @@ def execute_batch_ocr_pipeline(
         f"batch_id={batch_id}, images={len(image_responses)}"
     )
 
-    # 1. Chain ID 생성 (배치 전체에 하나)
-    chain_id = str(uuid.uuid4())
-
     # batch_id가 빈 문자열이면 None으로 변환
     batch_id = batch_id if batch_id else None
 
@@ -55,10 +53,20 @@ def execute_batch_ocr_pipeline(
         if not session:
             raise RuntimeError("DB 세션 생성 실패")
 
-        # 2. PipelineContext 생성 (배치 모드)
+        # 2. ChainExecution 생성 (OCR Stage 시작 전)
+        chain_execution = chain_execution_crud.create_chain_execution(
+            db=session,
+            chain_name="batch_ocr_pipeline",
+            batch_id=batch_id,
+            initiated_by="batch_ocr",
+            input_data={"image_count": len(image_responses)},
+        )
+        logger.info(f"ChainExecution 생성 완료: chain_id={chain_execution.id}, ")
+
+        # 3. PipelineContext 생성 (배치 모드, chain_execution_id 포함)
         context = PipelineContext(
             batch_id=batch_id or "",
-            chain_id=chain_id,
+            chain_execution_id=chain_execution.id,
             private_imgs=[img.private_img for img in image_responses],
             public_file_paths=[img.public_img for img in image_responses],
             is_batch=True,
@@ -68,39 +76,31 @@ def execute_batch_ocr_pipeline(
         # Redis에 컨텍스트 저장
         cache_service.save_context(context)
 
-        # 3. OCR Stage 실행 (배치)
+        # 4. OCR Stage 실행 (배치)
         try:
             stage = OCRStage()
             context = asyncio.run(stage.run(context))
 
-            # 4. 결과 집계
-            if context.ocr_results:
-                completed_count = sum(
-                    1 for result in context.ocr_results if result.text_boxes
-                )
-                failed_count = len(context.ocr_results) - completed_count
-            else:
-                completed_count = 0
-                failed_count = len(image_responses)
-
-            logger.info(
-                f"배치 OCR 파이프라인 완료: chain_id={chain_id}, "
-                f"completed={completed_count}, failed={failed_count}"
+            # 6. ChainExecution 상태 업데이트 (성공)
+            chain_execution_crud.update_status(
+                db=session,
+                chain_execution=chain_execution,
+                status=ProcessStatus.SUCCESS,
             )
-
-            return {
-                "chain_id": chain_id,
-                "completed_count": completed_count,
-                "failed_count": failed_count,
-            }
+            logger.info(
+                f"배치 OCR 파이프라인 완료: chain_execution_id={chain_execution.id}, "
+            )
 
         except Exception as e:
+            # ChainExecution 상태 업데이트 (실패)
+            chain_execution_crud.update_status(
+                db=session,
+                chain_execution=chain_execution,
+                status=ProcessStatus.FAILURE,
+            )
+
             logger.error(
-                f"배치 OCR 파이프라인 실패: chain_id={chain_id}, error={str(e)}",
+                f"배치 OCR 파이프라인 실패: chain_execution.id={chain_execution.id}"
+                f":error={str(e)}",
                 exc_info=True,
             )
-            return {
-                "chain_id": chain_id,
-                "completed_count": 0,
-                "failed_count": len(image_responses),
-            }

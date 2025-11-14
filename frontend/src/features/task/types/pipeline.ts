@@ -7,34 +7,18 @@ export interface TaskLog {
   status: string;
   chain_execution_id: number;
   started_at: string;
-  finished_at: string;
-}
-
-export interface InputData {
-  text: string;
-  options: {
-    model: string;
-  };
-  priority: number;
-  callback_url: string | null;
+  finished_at: string | null;
 }
 
 export interface ChainExecutionResponseDto {
   id: number;
-  chain_id: string;
-  chain_name: string;
   status: string;
-  total_tasks: number;
-  batch_id?: number | null;
-  batch_name?: string | null;
-  completed_tasks: number;
-  failed_tasks: number;
-  created_at: string;
+  batch_id: string;
   started_at: string;
-  finished_at: string;
+  finished_at: string | null;
   initiated_by: string;
-  input_data: InputData;
-  final_result: string | null;
+  input_data: Record<string, any>;
+  final_result: any | null;
   error_message: string | null;
   task_logs: TaskLog[];
 }

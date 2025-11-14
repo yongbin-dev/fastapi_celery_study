@@ -26,9 +26,7 @@ class CRUDChainExecution(
     ) -> Optional[ChainExecution]:
         """chain_id로 체인 실행 조회"""
         return (
-            session.query(ChainExecution)
-            .filter(ChainExecution.chain_id == chain_id)
-            .first()
+            session.query(ChainExecution).filter(ChainExecution.id == chain_id).first()
         )
 
     def get_dto_by_chain_id(
@@ -37,9 +35,7 @@ class CRUDChainExecution(
         """chain_id로 체인 실행 조회"""
 
         chain_execution = (
-            session.query(ChainExecution)
-            .filter(ChainExecution.chain_id == chain_id)
-            .first()
+            session.query(ChainExecution).filter(ChainExecution.id == chain_id).first()
         )
 
         return ChainExecutionResponse.model_validate(chain_execution)
@@ -48,10 +44,8 @@ class CRUDChainExecution(
         self,
         db: Session,
         *,
-        chain_id: str,
         chain_name: str,
         batch_id: Optional[str] = None,
-        total_tasks: int = 4,
         initiated_by: Optional[str] = None,
         input_data: Optional[dict] = None,
     ) -> ChainExecution:
@@ -60,14 +54,12 @@ class CRUDChainExecution(
         batch_id = batch_id if batch_id else None
 
         chain_exec = ChainExecution(
-            chain_id=chain_id,
             chain_name=chain_name,
-            celery_task_id=None,
             batch_id=batch_id,
-            total_tasks=total_tasks,
             status=ProcessStatus.PENDING.value,
             initiated_by=initiated_by,
             input_data=input_data,
+            started_at=datetime.now(),
         )
         db.add(chain_exec)
         db.commit()
@@ -94,10 +86,10 @@ class CRUDChainExecution(
         return chain_execution
 
     def update_celery_task_id(
-        self, db: Session, *, chain_execution: ChainExecution, celery_task_id: str
+        self, db: Session, *, chain_execution: ChainExecution, id: str
     ) -> ChainExecution:
         """Celery task ID 업데이트"""
-        chain_execution.celery_task_id = celery_task_id
+        chain_execution.id = id
         db.add(chain_execution)
         db.commit()
         db.refresh(chain_execution)

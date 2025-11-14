@@ -15,8 +15,8 @@ class OCRExecution(Base):
 
     # 기본 필드
     id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
-    chain_id = mapped_column(
-        String(255),
+    chain_execution_id = mapped_column(
+        Integer,
         nullable=True,
         index=True,
         comment="Celery chain ID (선택적)",

@@ -17,7 +17,7 @@ export const TaskHistoryTab: React.FC = () => {
 
   // Batch로 그룹핑
   const groupedData = useMemo(() => {
-    const batches = new Map<number, ChainExecutionResponseDto[]>();
+    const batches = new Map<string, ChainExecutionResponseDto[]>();
     const noBatchChains: ChainExecutionResponseDto[] = [];
 
     pipelines.forEach((pipeline: ChainExecutionResponseDto) => {
@@ -142,7 +142,6 @@ export const TaskHistoryTab: React.FC = () => {
               <BatchGroup
                 key={`batch-${batchId}`}
                 batchId={batchId}
-                batchName={chains[0]?.batch_name || ''}
                 chains={chains}
               />
             ))}

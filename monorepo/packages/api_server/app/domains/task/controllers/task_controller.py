@@ -1,13 +1,13 @@
 # app/domains/task/controllers/task_controller.py
 import uuid
 
-from celery import Celery
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from shared.config import settings
 from shared.core.database import get_db
 from shared.core.logging import get_logger
 from shared.pipeline.cache import get_pipeline_cache_service
 from shared.repository.crud.async_crud import chain_execution_crud
+from shared.schemas.chain_execution import ChainExecutionResponse
 from shared.utils.file_utils import get_default_storage
 from shared.utils.path_builder import StoragePathBuilder
 from shared.utils.response_builder import ResponseBuilder
@@ -68,6 +68,34 @@ def _validate_file_size(file_size: int, filename: str) -> None:
                 f"(최대: {max_size_mb}MB, 현재: {current_size_mb:.2f}MB)"
             ),
         )
+
+
+# response_model=List[PipelineHistoryResponse]
+@router.get(
+    "/history",
+)
+async def get_pipeline_history(
+    limit: int = 100, offset: int = 0, db: AsyncSession = Depends(get_db)
+):
+    """파이프라인 실행 이력 조회
+
+    Args:
+        limit: 최대 조회 개수
+        offset: 시작 위치
+        db: DB 세션
+
+    Returns:
+        파이프라인 실행 이력 리스트
+    """
+    result = await chain_execution_crud.get_multi_with_task_logs(db)
+    list = []
+
+    if result is None:
+        list = []
+    else:
+        logger.info(result)
+        list = [ChainExecutionResponse.model_validate(ocr) for ocr in result]
+    return ResponseBuilder.success(data=list)
 
 
 @router.post("/extract-pdf")
@@ -228,15 +256,15 @@ async def cancel_task_result(
     logger.info(f"🔍 태스크 취소 요청: chain_id={chain_id}")
 
     # Celery 앱 인스턴스 생성
-    celery_app = Celery(broker=settings.REDIS_URL, backend=settings.REDIS_URL)
+    # celery_app = Celery(broker=settings.REDIS_URL, backend=settings.REDIS_URL)
 
-    chain_exec = await chain_execution_crud.get_by_chain_id(session, chain_id=chain_id)
-    if chain_exec is None:
-        raise HTTPException(
-            status_code=404, detail=f"Chain ID {chain_id}를 찾을 수 없습니다"
-        )
+    # chain_exec = await chain_execution_crud.get_by_chain_id(session, id=chain_id)
+    # if chain_exec is None:
+    #     raise HTTPException(
+    #         status_code=404, detail=f"Chain ID {chain_id}를 찾을 수 없습니다"
+    #     )
 
-    celery_app.control.revoke(chain_exec.celery_task_id, terminate=True)
+    # celery_app.control.revoke(chain_exec.id, terminate=True)
 
     return ResponseBuilder.error(
         message="태스크 취소 기능은 아직 구현되지 않았습니다.",
