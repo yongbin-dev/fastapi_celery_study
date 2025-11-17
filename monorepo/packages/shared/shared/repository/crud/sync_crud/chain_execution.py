@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from shared.models.chain_execution import ChainExecution
@@ -53,9 +54,21 @@ class CRUDChainExecution(
         # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
         batch_id = batch_id if batch_id else None
 
+        # batch_id가 있는 경우, 같은 batch_id의 최대 sequence_number 조회
+        sequence_number = 1
+        if batch_id:
+            max_sequence = (
+                db.query(func.max(ChainExecution.sequence_number))
+                .filter(ChainExecution.batch_id == batch_id)
+                .scalar()
+            )
+            if max_sequence is not None:
+                sequence_number = max_sequence + 1
+
         chain_exec = ChainExecution(
             chain_name=chain_name,
             batch_id=batch_id,
+            sequence_number=sequence_number,
             status=ProcessStatus.PENDING.value,
             initiated_by=initiated_by,
             input_data=input_data,

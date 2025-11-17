@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -35,6 +35,14 @@ class ChainExecution(Base):
         comment="배치 ID (배치 실행 시에만 사용)",
     )
 
+    # 같은 batch_id에 대한 순번 (1, 2, 3, ...)
+    sequence_number = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+        comment="같은 batch_id 내에서의 실행 순번",
+    )
+
     # 상태 관리
     status = mapped_column(
         String(20),
@@ -65,10 +73,16 @@ class ChainExecution(Base):
         order_by="TaskLog.started_at",
     )
 
-    # 인덱스 정의
+    # 인덱스 및 제약조건 정의
     __table_args__ = (
         Index("idx_chain_status_started", "status", "started_at"),
         Index("idx_chain_name_status", "chain_name", "status"),
+        # batch_id가 있을 경우 batch_id + sequence_number 조합은 유니크해야 함
+        UniqueConstraint(
+            "batch_id",
+            "sequence_number",
+            name="uq_batch_sequence",
+        ),
     )
 
     def __repr__(self):

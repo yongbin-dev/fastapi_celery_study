@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -54,10 +54,22 @@ class AsyncCRUDChainExecution(
             # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
             batch_id = batch_id if batch_id else None
 
+            # batch_id가 있는 경우, 같은 batch_id의 최대 sequence_number 조회
+            sequence_number = 1
+            if batch_id:
+                stmt = select(func.max(ChainExecution.sequence_number)).where(
+                    ChainExecution.batch_id == batch_id
+                )
+                result = await db.execute(stmt)
+                max_sequence = result.scalar_one_or_none()
+                if max_sequence is not None:
+                    sequence_number = max_sequence + 1
+
             chain_exec = ChainExecution(
                 chain_id=chain_id,
                 chain_name=chain_name,
                 batch_id=batch_id,
+                sequence_number=sequence_number,
                 status=ProcessStatus.PENDING.value,
                 initiated_by=initiated_by,
                 input_data=input_data,
@@ -89,6 +101,7 @@ class AsyncCRUDChainExecution(
         *,
         days: int = 7,
         limit: int = 100,
+        offset: int = 0,
     ) -> list[ChainExecution]:
         """TaskLog와 함께 여러 체인 실행 조회"""
         cutoff_date = datetime.now() - timedelta(days=days)
@@ -99,6 +112,7 @@ class AsyncCRUDChainExecution(
             .where(ChainExecution.created_at > cutoff_date)
             .order_by(desc(ChainExecution.created_at))
             .limit(limit)
+            .offset(offset)
         )
 
         result = await db.execute(stmt)

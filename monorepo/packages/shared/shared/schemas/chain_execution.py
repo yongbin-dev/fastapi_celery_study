@@ -31,6 +31,9 @@ class ChainExecutionResponse(BaseModel):
     id: int
     status: ProcessStatus
     batch_id: Optional[str]
+    sequence_number: int = Field(
+        default=1, description="같은 batch_id 내에서의 실행 순번"
+    )
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
     initiated_by: Optional[str]
