@@ -30,7 +30,7 @@ COPY packages/shared /app/shared
 
 # shared 재설치 (editable 모드, 항상 재설치)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --force-reinstall --no-deps -e /app/shared
+    uv pip install --force-reinstall -e /app/shared
 
 # celery_worker의 tasks 모듈 복사 (Celery 태스크 호출용)
 COPY packages/celery_worker/tasks /app/tasks
