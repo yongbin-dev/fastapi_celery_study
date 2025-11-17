@@ -8,20 +8,30 @@ WORKDIR /app
 # 1. 빌드 인수
 ARG DOMAIN_EXTRA=ocr-gpu
 
-# 2. shared 패키지 먼저 복사
-COPY packages/shared /app/shared
+# 2. 워크스페이스 설정 복사
+COPY pyproject.toml /app/pyproject.toml
 
-# 3. OCR 전용 의존성 설치 (shared 포함)
+# 3. shared 패키지 먼저 복사
+COPY packages/shared /app/packages/shared
+
+# 4. ml_server 의존성 파일 복사
+COPY packages/ml_server/pyproject.toml /app/packages/ml_server/pyproject.toml
+
+# 5. 작업 디렉토리를 패키지 디렉토리로 변경
+WORKDIR /app/packages/ml_server
+
+# 6. OCR 전용 의존성 설치 (shared 포함)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra ${DOMAIN_EXTRA} --no-dev
 
-# 4. 소스 코드 복사
-COPY packages/ml_server/ml_app ./ml_app
+# 7. 소스 코드 복사
+COPY packages/ml_server/ml_app /app/packages/ml_server/ml_app
 
-# 5. 환경 변수 설정
+# 8. 환경 변수 설정
 ENV FLAGS_use_gpu=True \
     HOST=0.0.0.0 \
-    PORT=8001
+    PORT=8001 \
+    PYTHONPATH=/app/packages/ml_server:/app/packages/shared
 
-# 6. 컨테이너 시작
-CMD ["/app/.venv/bin/uvicorn", "ml_app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# 9. 컨테이너 시작
+CMD ["/app/packages/ml_server/.venv/bin/uvicorn", "ml_app.main:app", "--host", "0.0.0.0", "--port", "8001"]

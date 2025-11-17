@@ -22,18 +22,24 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # 작업 디렉토리 설정
 WORKDIR /app
 
+# 워크스페이스 설정 복사
+COPY pyproject.toml /app/pyproject.toml
+
 # shared 패키지 먼저 복사
-COPY packages/shared /app/shared
+COPY packages/shared /app/packages/shared
 
 # celery_worker 의존성 파일 복사
-COPY packages/celery_worker/pyproject.toml ./
+COPY packages/celery_worker/pyproject.toml /app/packages/celery_worker/pyproject.toml
+
+# 작업 디렉토리를 패키지 디렉토리로 변경
+WORKDIR /app/packages/celery_worker
 
 # 가상환경 생성 및 모든 의존성 설치 (shared 포함)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --python 3.12 --no-dev
 
 # celery_worker 소스 코드 복사
-COPY packages/celery_worker/ ./celery_worker/
+COPY packages/celery_worker/ /app/packages/celery_worker/
 
 # 실행 단계
 FROM python:3.12-slim AS runtime
@@ -41,8 +47,8 @@ FROM python:3.12-slim AS runtime
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/app/.venv/bin:$PATH" \
-    PYTHONPATH="/app:/app/shared:/app/celery_worker" \
+    PATH="/app/packages/celery_worker/.venv/bin:$PATH" \
+    PYTHONPATH="/app/packages/celery_worker:/app/packages/shared" \
     SERVICE_NAME=celery_worker \
     CELERY_LOG_LEVEL=info \
     CELERY_CONCURRENCY=4
@@ -56,9 +62,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # 빌드 단계에서 가상환경과 소스 복사
-COPY --from=base /app/.venv /app/.venv
-COPY --from=base /app/shared /app/shared
-COPY --from=base /app/celery_worker /app/celery_worker
+COPY --from=base /app/packages/celery_worker/.venv /app/packages/celery_worker/.venv
+COPY --from=base /app/packages/shared /app/packages/shared
+COPY --from=base /app/packages/celery_worker /app/packages/celery_worker
 
 # 비특권 사용자 생성 및 로그 디렉토리 생성
 # logging.py에서 계산하는 경로: /logs/celery_worker/
@@ -71,7 +77,7 @@ RUN useradd -m -u 1000 appuser && \
 USER appuser
 
 # Celery 워커 작업 디렉토리
-WORKDIR /app/celery_worker
+WORKDIR /app/packages/celery_worker
 
 # 헬스체크 설정
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
