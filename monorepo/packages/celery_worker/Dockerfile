@@ -47,7 +47,7 @@ FROM python:3.12-slim AS runtime
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/app/packages/celery_worker/.venv/bin:$PATH" \
+    PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/packages/celery_worker:/app/packages/shared" \
     SERVICE_NAME=celery_worker \
     CELERY_LOG_LEVEL=info \
@@ -61,8 +61,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# 빌드 단계에서 가상환경과 소스 복사
-COPY --from=base /app/packages/celery_worker/.venv /app/packages/celery_worker/.venv
+# 빌드 단계에서 가상환경과 소스 복사 (workspace .venv는 루트에 생성됨)
+COPY --from=base /app/.venv /app/.venv
 COPY --from=base /app/packages/shared /app/packages/shared
 COPY --from=base /app/packages/celery_worker /app/packages/celery_worker
 

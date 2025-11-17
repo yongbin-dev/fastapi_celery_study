@@ -40,8 +40,9 @@ COPY packages/celery_worker/celery_app.py /app/packages/celery_worker/celery_app
 COPY packages/api_server/app /app/packages/api_server/app
 COPY packages/api_server/main.py /app/packages/api_server/main.py
 
-# 환경 변수
-ENV PYTHONPATH=/app/packages/api_server:/app/packages/celery_worker:/app/packages/shared \
+# 환경 변수 (workspace .venv는 루트에 생성됨)
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app/packages/api_server:/app/packages/celery_worker:/app/packages/shared \
     TZ=Asia/Seoul
 
 # 포트 노출
@@ -52,4 +53,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # 컨테이너 시작
-CMD ["/app/packages/api_server/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
