@@ -18,8 +18,7 @@ ML_SERVER_DIR = packages/ml_server
 # ==============================================================================
 docker-base-build:
 	@echo "📦 Docker Base Image..."
-	@docker build -f $(ML_SERVER_DIR)/Dockerfile.base -t ml-server-base .
-
+	@docker build --platform linux/amd64 -f $(ML_SERVER_DIR)/Dockerfile.base -t ml-server-base .
 
 
 # ==============================================================================

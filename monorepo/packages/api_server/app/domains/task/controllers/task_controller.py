@@ -1,6 +1,7 @@
 # app/domains/task/controllers/task_controller.py
 import uuid
 
+# Celery 태스크는 celery app을 통해 호출
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from shared.config import settings
 from shared.core.database import get_db
@@ -13,11 +14,26 @@ from shared.utils.path_builder import StoragePathBuilder
 from shared.utils.response_builder import ResponseBuilder
 from shared.utils.storage_base import StorageProvider
 from sqlalchemy.ext.asyncio import AsyncSession
-from tasks.batch import start_pdf_batch_pipeline
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/task", tags=["TASK"])
+
+# Celery 앱 인스턴스 (태스크 호출용)
+celery_app = None
+
+
+def get_celery_app():
+    """Celery 앱 인스턴스를 지연 로딩"""
+    global celery_app
+    if celery_app is None:
+        from celery import Celery
+
+        celery_app = Celery(
+            broker=settings.CELERY_BROKER_URL,
+            backend=settings.CELERY_RESULT_BACKEND,
+        )
+    return celery_app
 
 
 def _validate_content_type(content_type: str | None, filename: str) -> None:
@@ -152,15 +168,20 @@ async def run_ocr_pdf_extract_async(
         chunk_size = 10
 
         # 3. Celery 태스크 전송 (PDF를 Celery에서 페이지별 분할 처리)
-        task_id = start_pdf_batch_pipeline(
-            batch_id=batch_id,
-            batch_name=batch_name,
-            original_filename=filename,
-            pdf_url=pdf_response.private_img,  # public url
-            chunk_size=chunk_size,
-            initiated_by="pdf_converter",
-            options={},
+        celery = get_celery_app()
+        task = celery.send_task(
+            "batch.convert_pdf_and_process",
+            args=[
+                batch_id,
+                batch_name,
+                pdf_response.private_img,  # pdf_url
+                filename,  # original_filename
+                {},  # options
+                chunk_size,
+                "api_server",  # initiated_by
+            ],
         )
+        task_id = task.id
 
         logger.info(
             f"✅ PDF 배치 작업 시작: batch_id={batch_id}, "
