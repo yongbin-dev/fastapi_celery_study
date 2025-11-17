@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # 7. 소스 코드 복사
 COPY packages/ml_server/ml_app /app/packages/ml_server/ml_app
+COPY packages/ml_server/main.py /app/packages/ml_server/main.py
 
 # 8. 환경 변수 설정 (workspace .venv는 루트에 생성됨)
 ENV FLAGS_use_gpu=True \
@@ -34,5 +35,5 @@ ENV FLAGS_use_gpu=True \
     PATH=/app/.venv/bin:$PATH \
     PYTHONPATH=/app/packages/ml_server:/app/packages/shared
 
-# 9. 컨테이너 시작
-CMD ["/app/.venv/bin/uvicorn", "ml_app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# 9. 컨테이너 시작 (BentoML 서비스 실행)
+CMD ["/app/.venv/bin/python", "main.py"]

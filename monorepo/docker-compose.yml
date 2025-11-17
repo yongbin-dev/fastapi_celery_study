@@ -43,45 +43,45 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       CELERY_BROKER_URL: "redis://redis:6379/1"
       CELERY_RESULT_BACKEND: "redis://redis:6379/2"
-      MODEL_SERVER_URL: "http://ml_server:8002"
+      MODEL_SERVER_URL: "http://ml_server:800"
       ML_SERVER_GRPC_ADDRESS: "ml_server:50051"
     networks:
       - app-network
     restart: unless-stopped
 
   # # ML Server (OCR) - gRPC
-  # ml_server:
-  #   image: ml_server:latest
-  #   container_name: ml_server
-  #   platform: linux/amd64
-  #   build:
-  #     context: .
-  #     dockerfile: packages/ml_server/Dockerfile.gpu
-  #   env_file:
-  #     - .env.development
-  #   environment:
-  #     OCR_ENGINE : "paddleocr"
-  #     OCR_REC: ""
-  #     OCR_DET: ""
-  #   ports:
-  #     - "28001:8001"
-  #     - "50051:50051"  # gRPC 포트
-  #   networks:
-  #     - app-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 60s
-  #   restart: unless-stopped
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: 1
-  #             capabilities: [gpu]
+  ml_server:
+    image: ml_server:latest
+    container_name: ml_server
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: packages/ml_server/Dockerfile.gpu
+    env_file:
+      - .env.development
+    environment:
+      OCR_ENGINE : "paddleocr"
+      OCR_REC: ""
+      OCR_DET: ""
+    ports:
+      - "28001:8001"
+      - "50051:50051"  # gRPC 포트
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 networks:
   app-network:

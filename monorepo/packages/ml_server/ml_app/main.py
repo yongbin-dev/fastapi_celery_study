@@ -3,7 +3,6 @@ ML Server Main Application
 AI/ML 모델 추론을 담당하는 서버
 """
 
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -23,10 +22,10 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 ML 서버 시작")
 
     # gRPC 서버 시작 (필요시 주석 해제)
-    from ml_app.services.grpc_services.server import serve
+    # from ml_app.services.grpc_services.server import serve
 
-    grpc_task = asyncio.create_task(serve())
-    logger.info("✅ gRPC 서버 태스크 시작 (포트: 50051)")
+    # grpc_task = asyncio.create_task(serve())
+    # logger.info("✅ gRPC 서버 태스크 시작 (포트: 50051)")
 
     # BentoML 서버 시작
 
@@ -36,12 +35,12 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 ML 서버 종료")
 
     # gRPC 종료 (필요시 주석 해제)
-    if grpc_task:
-        grpc_task.cancel()
-        try:
-            await grpc_task
-        except asyncio.CancelledError:
-            logger.info("gRPC 서버 태스크 종료")
+    # if grpc_task:
+    #     grpc_task.cancel()
+    #     try:
+    #         await grpc_task
+    #     except asyncio.CancelledError:
+    #         logger.info("gRPC 서버 태스크 종료")
 
 
 app = FastAPI(
