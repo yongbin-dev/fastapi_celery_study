@@ -18,7 +18,7 @@ services:
       MODEL_SERVER_URL: "http://ml_server:8002"
       DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres-db:15432/postgres"
     ports:
-      - "8000:8000"
+      - "28000:8000"
     networks:
       - app-network
     healthcheck:
@@ -66,7 +66,7 @@ services:
       OCR_REC: ""
       OCR_DET: ""
     ports:
-      - "8001:8001"
+      - "28001:8001"
       - "50051:50051"  # gRPC 포트
     networks:
       - app-network
