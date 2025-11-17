@@ -3,9 +3,7 @@
 각 스테이지(OCR, LLM, Layout, Excel)의 기본 구조를 정의합니다.
 """
 
-import uuid
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from celery.beat import get_logger
 
@@ -77,43 +75,6 @@ class PipelineStage(ABC):
         """
         _ = context  # 서브클래스에서 구현
 
-    def create_task_log(
-        self, context: PipelineContext, task_name: Optional[str] = None
-    ) -> Optional[TaskLog]:
-        """TaskLog 생성 헬퍼 메서드
-
-        Args:
-            context: 파이프라인 컨텍스트
-            task_name: 태스크 이름 (기본값: stage_name)
-
-        Returns:
-            생성된 TaskLog 또는 None (chain_execution_id가 없는 경우)
-        """
-        if context.chain_execution_id is None:
-            logger.warning(
-                f"chain_execution_id가 없어 task_log를 생성하지 않습니다. "
-                f"stage={self.stage_name}"
-            )
-            return None
-
-        task_id = str(uuid.uuid4())
-        task_name = task_name or self.stage_name
-
-        with get_db_manager().get_sync_session() as session:
-            task_log = task_log_crud.create_task_log(
-                db=session,
-                task_id=task_id,
-                task_name=task_name,
-                status="STARTED",
-                chain_execution_id=context.chain_execution_id,
-            )
-            logger.info(
-                f"TaskLog 생성 완료: task_id={task_id}, "
-                f"task_name={task_name}, "
-                f"chain_execution_id={context.chain_execution_id}"
-            )
-            return task_log
-
     def update_task_log_success(self, task_log: TaskLog) -> None:
         """TaskLog 성공 상태로 업데이트
 
@@ -122,7 +83,7 @@ class PipelineStage(ABC):
         """
         with get_db_manager().get_sync_session() as session:
             task_log_crud.update_status(db=session, task_log=task_log, status="SUCCESS")
-            logger.info(f"TaskLog 성공 업데이트: task_id={task_log.task_id}")
+            logger.info(f"TaskLog 성공 업데이트: task_id={task_log.id}")
 
     def update_task_log_failure(self, task_log: TaskLog, error: str) -> None:
         """TaskLog 실패 상태로 업데이트
@@ -135,9 +96,7 @@ class PipelineStage(ABC):
             task_log_crud.update_status(
                 db=session, task_log=task_log, status="FAILURE", error=error
             )
-            logger.error(
-                f"TaskLog 실패 업데이트: task_id={task_log.task_id}, error={error}"
-            )
+            logger.error(f"TaskLog 실패 업데이트: task_id={task_log.id}, error={error}")
 
     async def run(self, context: PipelineContext) -> PipelineContext:
         """전체 실행 플로우 (템플릿 메서드 패턴)

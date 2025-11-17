@@ -103,7 +103,9 @@ async def get_pipeline_history(
     Returns:
         파이프라인 실행 이력 리스트
     """
-    result = await chain_execution_crud.get_multi_with_task_logs(db)
+    result = await chain_execution_crud.get_multi_with_task_logs(
+        db, limit=limit, offset=offset
+    )
     list = []
 
     if result is None:

@@ -43,7 +43,7 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       CELERY_BROKER_URL: "redis://redis:6379/1"
       CELERY_RESULT_BACKEND: "redis://redis:6379/2"
-      MODEL_SERVER_URL: "http://ml_server:800"
+      MODEL_SERVER_URL: "http://ml_server:8002"
       ML_SERVER_GRPC_ADDRESS: "ml_server:50051"
     networks:
       - app-network

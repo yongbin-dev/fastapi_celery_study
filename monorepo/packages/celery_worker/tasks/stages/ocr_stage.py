@@ -97,8 +97,7 @@ class OCRStage(PipelineStage):
         Args:
             context: 파이프라인 컨텍스트
         """
-        if context.is_batch:
-            self.repository.save_batch(context)
+        self.repository.save_batch(context)
 
     async def execute_grpc(self, context: PipelineContext) -> PipelineContext:
         """gRPC로 OCR 실행 (신규 방식)"""

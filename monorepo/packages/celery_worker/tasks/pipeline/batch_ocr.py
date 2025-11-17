@@ -13,8 +13,8 @@ from shared.repository.crud.sync_crud.chain_execution import chain_execution_cru
 from shared.schemas.common import ImageResponse
 from shared.schemas.enums import ProcessStatus
 
-from tasks.stages.llm_stage import LLMStage
-from tasks.stages.ocr_stage import OCRStage
+from tasks.batch.llm_tasks import start_llm_stage
+from tasks.batch.ocr_tasks import start_ocr_stage
 
 logger = get_logger(__name__)
 cache_service = get_pipeline_cache_service()
@@ -37,7 +37,6 @@ def execute_batch_ocr_pipeline(
     Returns:
         처리 결과 dict (completed_count, failed_count, chain_id)
     """
-    import asyncio
 
     if options is None:
         options = {}
@@ -79,11 +78,22 @@ def execute_batch_ocr_pipeline(
 
         # 4. OCR Stage 실행 (배치)
         try:
-            stage = OCRStage()
-            context = asyncio.run(stage.run(context))
+            # PipelineContext를 딕셔너리로 변환하여 Celery 태스크 실행
+            context_dict = context.model_dump()
 
-            llm_stage = LLMStage()
-            context = asyncio.run(llm_stage.run(context))
+            # OCR Stage 실행 (Celery 태스크)
+            start_ocr_stage.apply_async(args=[context_dict])
+
+            context_dict = context.model_dump()
+
+            # LLM Stage 실행 (Celery 태스크)
+            start_llm_stage.apply_async(args=[context_dict])
+
+            # stage = OCRStage()
+            # context = asyncio.run(stage.run(context))
+
+            # llm_stage = LLMStage()
+            # context = asyncio.run(llm_stage.run(context))
 
             # 6. ChainExecution 상태 업데이트 (성공)
             chain_execution_crud.update_status(

@@ -59,8 +59,8 @@ class Settings(BaseSettings):
     SUPABASE_STORAGE_BUCKET: str = "yb_test_storage"  # Supabase Storage 버킷 이름
     SUPABASE_STORAGE_PATH: str = "uploads"  # 버킷 내 저장 경로
     DB_ECHO: bool = False  # SQL 쿼리 로깅 활성화/비활성화
-    DB_POOL_SIZE: int = 2  # 데이터베이스 연결 풀 크기 (Supabase 세션 모드 제한 고려)
-    DB_MAX_OVERFLOW: int = 3  # 추가 연결 허용 개수 (최대 5개까지 허용)
+    DB_POOL_SIZE: int = 5  # 데이터베이스 연결 풀 크기 (Supabase 세션 모드 제한 고려)
+    DB_MAX_OVERFLOW: int = 5  # 추가 연결 허용 개수 (최대 10개까지 허용)
     DB_TIMEZONE: str = "Asia/Seoul"  # 데이터베이스 시간대
     DB_POOL_PRE_PING: bool = True  # 연결 유효성 검사
     DB_POOL_RECYCLE: int = 300  # 연결 재활용 시간(초) - 5분 (Supabase 권장)

@@ -9,17 +9,16 @@ from pydantic import BaseModel, ConfigDict, Field
 class TaskLogBase(BaseModel):
     """TaskLog 기본 스키마"""
 
-    id: int
-    task_id: str
     task_name: str = Field(..., description="작업 함수명")
     status: str = Field(default="PENDING", description="작업 상태")
+    celery_task_id: Optional[str] = Field(None, description="Celery Task UUID")
     chain_execution_id: Optional[int] = Field(None, description="소속된 체인 실행 ID")
 
 
 class TaskLogCreate(TaskLogBase):
     """TaskLog 생성용 스키마"""
 
-    task_id: str = Field(..., description="Celery 작업 ID (UUID)")
+    pass
 
 
 class TaskLogUpdate(BaseModel):
@@ -37,6 +36,8 @@ class TaskLogUpdate(BaseModel):
 class TaskLogResponse(TaskLogBase):
     """TaskLog 응답용 스키마"""
 
+    id: int
+    celery_task_id: Optional[str] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)

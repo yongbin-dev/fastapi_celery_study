@@ -15,12 +15,12 @@ class TaskLog(Base):
 
     # 기본 필드
     id = mapped_column(Integer, primary_key=True, comment="고유 식별자")
-    task_id = mapped_column(
+    celery_task_id = mapped_column(
         String(255),
+        nullable=True,
         unique=True,
-        nullable=False,
         index=True,
-        comment="Celery 작업 ID (UUID)",
+        comment="Celery Task UUID",
     )
     task_name = mapped_column(
         String(255),
