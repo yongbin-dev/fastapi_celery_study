@@ -3,8 +3,8 @@
 OCR 결과를 데이터베이스에 저장하는 책임만 담당하는 클래스
 """
 
-from celery.beat import get_logger
 from shared.core.database import get_db_manager
+from shared.core.logging import get_logger
 from shared.pipeline.context import PipelineContext
 from shared.repository.crud.sync_crud import ocr_execution_crud, ocr_text_box_crud
 from shared.repository.crud.sync_crud.batch_execution import batch_execution_crud
