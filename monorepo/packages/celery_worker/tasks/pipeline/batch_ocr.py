@@ -5,6 +5,7 @@
 
 from typing import Any, Dict, Optional
 
+from celery import chain
 from shared.core.database import get_db_manager
 from shared.core.logging import get_logger
 from shared.pipeline.cache import get_pipeline_cache_service
@@ -13,8 +14,7 @@ from shared.repository.crud.sync_crud.chain_execution import chain_execution_cru
 from shared.schemas.common import ImageResponse
 from shared.schemas.enums import ProcessStatus
 
-from tasks.batch.llm_tasks import start_llm_stage
-from tasks.batch.ocr_tasks import start_ocr_stage
+from tasks.batch import start_llm_stage, start_ocr_stage, start_yolo_stage
 
 logger = get_logger(__name__)
 cache_service = get_pipeline_cache_service()
@@ -81,19 +81,21 @@ def execute_batch_ocr_pipeline(
             # PipelineContext를 딕셔너리로 변환하여 Celery 태스크 실행
             context_dict = context.model_dump()
 
-            # OCR Stage 실행 (Celery 태스크)
-            start_ocr_stage.apply_async(args=[context_dict])
+            # Celery chain을 사용하여 순차적으로 태스크 실행
+            # 각 태스크의 출력이 다음 태스크의 입력으로 자동 전달됨
+            workflow = chain(
+                start_ocr_stage.s(context_dict),  # .s()는 signature 생성
+                start_llm_stage.s(),  # 이전 결과를 자동으로 받음
+                start_yolo_stage.s(),  # 이전 결과를 자동으로 받음
+            )
 
-            context_dict = context.model_dump()
+            # 비동기로 실행
+            result = workflow.apply_async()
 
-            # LLM Stage 실행 (Celery 태스크)
-            start_llm_stage.apply_async(args=[context_dict])
-
-            # stage = OCRStage()
-            # context = asyncio.run(stage.run(context))
-
-            # llm_stage = LLMStage()
-            # context = asyncio.run(llm_stage.run(context))
+            logger.info(
+                f"파이프라인 체인 실행 시작: chain_id={chain_execution.id}, "
+                f"task_id={result.id}"
+            )
 
             # 6. ChainExecution 상태 업데이트 (성공)
             chain_execution_crud.update_status(

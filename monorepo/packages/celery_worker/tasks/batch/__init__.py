@@ -18,11 +18,13 @@ from .image_tasks import (
 from .llm_tasks import start_llm_stage
 from .ocr_tasks import start_ocr_stage
 from .pdf_tasks import start_pdf_batch_pipeline
+from .yolo_tasks import start_yolo_stage
 
 __all__ = [
     # Public API Functions
     "start_ocr_stage",
     "start_llm_stage",
+    "start_yolo_stage",
     "start_image_batch_pipeline",
     "start_pdf_batch_pipeline",
     # Celery Tasks

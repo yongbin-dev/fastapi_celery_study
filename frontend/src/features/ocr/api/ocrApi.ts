@@ -8,6 +8,26 @@ interface OcrRequest {
   use_angle_cls?: boolean;
 }
 
+interface CompareRequest {
+  execution_id1: string;
+  execution_id2: string;
+}
+
+interface CompareResponse {
+  execution_id1: string;
+  execution_id2: string;
+  result1: OcrResponse;
+  result2: OcrResponse;
+  comparison: {
+    similarity_score: number;
+    differences: Array<{
+      line: number;
+      text1: string;
+      text2: string;
+    }>;
+  };
+}
+
 export const ocrApi = {
   extractTextSync: async (data: OcrRequest): Promise<OcrResponse> => {
     const formData = new FormData();
@@ -49,4 +69,11 @@ export const ocrApi = {
     const response = await api.get<OcrResponse[]>('/ocr/results');
     return response.data;
   },
+
+  compareExecutions: async (data: CompareRequest): Promise<CompareResponse> => {
+    const response = await api.post<CompareResponse>('/compare', data);
+    return response.data;
+  },
 };
+
+export type { CompareRequest, CompareResponse };
