@@ -22,6 +22,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # 작업 디렉토리 설정
 WORKDIR /app
 
+# shared의 pyproject.toml 먼저 복사 (의존성 변경 감지)
+COPY packages/shared/pyproject.toml /app/shared/pyproject.toml
+
 # celery_worker 의존성 파일 복사
 COPY packages/celery_worker/pyproject.toml ./
 
@@ -29,10 +32,12 @@ COPY packages/celery_worker/pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --python 3.12 --no-dev
 
-# shared 패키지 복사 및 editable 설치
+# shared 전체 복사 (소스 코드 변경 감지)
 COPY packages/shared /app/shared
+
+# shared 재설치 (editable 모드, 항상 재설치)
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e /app/shared
+    uv pip install --force-reinstall --no-deps -e /app/shared
 
 # celery_worker 소스 코드 복사
 COPY packages/celery_worker/ ./celery_worker/
