@@ -19,7 +19,7 @@ USE_GRPC = settings.USE_GRPC == "true"
 async def lifespan(app: FastAPI):
     """애플리케이션 생명주기 관리"""
 
-    logger.info("🚀 ML 서버 시작")
+    logger.info(f"🚀 ML 서버 시작 : ${settings.ML_SERVER_PORT}")
 
     # gRPC 서버 시작 (필요시 주석 해제)
     # from ml_app.services.grpc_services.server import serve

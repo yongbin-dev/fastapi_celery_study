@@ -91,6 +91,7 @@ class OCRClient:
     async def call_batch(
         self, image_paths: List[str], options: dict
     ) -> List[OCRExtractDTO]:
+        logger.info(f"port = ${self.server_url}")
         """배치 이미지 OCR 요청
 
         Args:
