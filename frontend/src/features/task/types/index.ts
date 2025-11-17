@@ -39,17 +39,66 @@ export interface ModelsResponse {
 }
 
 // 채팅 예측 API 관련 타입들
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 export interface ChatPredictRequest {
-  prompt: string;
+  messages: ChatMessage[];
+  model?: string;
+  description?: string;
+}
+
+// OpenAI 호환 응답 형식
+export interface ChatCompletionMessage {
+  content: string;
+  role: string;
+  refusal: string | null;
+  annotations: unknown | null;
+  audio: unknown | null;
+  function_call: unknown | null;
+  tool_calls: unknown[];
+  reasoning_content: string | null;
+}
+
+export interface ChatCompletionChoice {
+  finish_reason: string;
+  index: number;
+  logprobs: unknown | null;
+  message: ChatCompletionMessage;
+  stop_reason: string | null;
+  token_ids: unknown | null;
+}
+
+export interface ChatCompletionUsage {
+  completion_tokens: number;
+  prompt_tokens: number;
+  total_tokens: number;
+  completion_tokens_details: unknown | null;
+  prompt_tokens_details: unknown | null;
+}
+
+export interface ChatCompletionResult {
+  id: string;
+  choices: ChatCompletionChoice[];
+  created: number;
   model: string;
-  stream: boolean;
+  object: string;
+  service_tier: string | null;
+  system_fingerprint: string | null;
+  usage: ChatCompletionUsage;
+  prompt_logprobs: unknown | null;
+  prompt_token_ids: unknown | null;
+  kv_transfer_params: unknown | null;
 }
 
 export interface ChatPredictResponse {
-  response: string;
-  model: string;
-  tokens_used?: number;
-  processing_time?: number;
+  data: {
+    servers: string;
+    result: ChatCompletionResult;
+  };
+  message: string;
 }
 
 // pipeline 관련 타입 re-export

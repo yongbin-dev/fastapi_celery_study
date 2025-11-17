@@ -13,6 +13,7 @@ from shared.repository.crud.sync_crud.chain_execution import chain_execution_cru
 from shared.schemas.common import ImageResponse
 from shared.schemas.enums import ProcessStatus
 
+from tasks.stages.llm_stage import LLMStage
 from tasks.stages.ocr_stage import OCRStage
 
 logger = get_logger(__name__)
@@ -80,6 +81,9 @@ def execute_batch_ocr_pipeline(
         try:
             stage = OCRStage()
             context = asyncio.run(stage.run(context))
+
+            llm_stage = LLMStage()
+            context = asyncio.run(llm_stage.run(context))
 
             # 6. ChainExecution 상태 업데이트 (성공)
             chain_execution_crud.update_status(

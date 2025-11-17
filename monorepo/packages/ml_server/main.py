@@ -19,7 +19,7 @@ if __name__ == "__main__":
         # 서비스 실행 - bentoml serve와 동일하게 동작
         # blocking=True로 설정하여 서버가 종료될 때까지 대기
         server = bentoml.serve(
-            "ml_app.bentoml_services:OCRBentoService",
+            "ml_app.services.bentoml_services:OCRBentoService",
             host=settings.HOST,
             port=settings.ML_SERVER_PORT,
             reload=False,

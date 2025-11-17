@@ -14,7 +14,7 @@ from shared.pipeline.stage import PipelineStage
 from shared.schemas.enums import ProcessStatus
 from shared.schemas.ocr_db import OCRExtractDTO
 
-from .ocr_client import OCRClient
+from ..client.ocr_client import OCRClient
 
 logger = get_logger(__name__)
 

@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 ML 서버 시작")
 
     # gRPC 서버 시작 (필요시 주석 해제)
-    from ml_app.grpc_services.server import serve
+    from ml_app.services.grpc_services.server import serve
 
     grpc_task = asyncio.create_task(serve())
     logger.info("✅ gRPC 서버 태스크 시작 (포트: 50051)")

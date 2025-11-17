@@ -1,26 +1,30 @@
+"""LLM 서버 통신 Client
+
+OpenAI API를 통해 vLLM 서버와 통신하는 책임만 담당하는 클래스
+"""
+
 from typing import Any, Dict, Iterator, List, Optional
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from shared.core.logging import get_logger
-from shared.service.base_service import BaseService
 
 logger = get_logger(__name__)
 
 
-class LLMService(BaseService):
+class LLMClient:
     """vLLM 서버 통신 전담 클래스 (OpenAI API 호환)"""
 
     def __init__(
         self,
-        server_url: str = "http://192.168.0.122:38000/v1",
+        server_url: str = "http://localhost:38000/v1",
         api_key: str = "EMPTY",
         timeout: float = 60.0,
     ):
         """LLMClient 초기화
 
         Args:
-            server_url: vLLM 서버 URL (기본값: http://192.168.0.122:38000/v1)
+            server_url: vLLM 서버 URL (기본값: http://localhost:38000/v1)
             api_key: API 키 (vLLM은 "EMPTY" 사용)
             timeout: 요청 타임아웃 (초 단위, 기본값: 60.0)
         """
@@ -112,9 +116,67 @@ class LLMService(BaseService):
             logger.error(f"채팅 완성 실패: {str(e)}")
             raise
 
+    def simple_chat(
+        self,
+        user_message: str,
+        system_message: Optional[str] = None,
+        model: Optional[str] = None,
+        **kwargs: Any,
+    ) -> str:
+        """간단한 채팅 요청 (단일 메시지)
 
-llm_service = LLMService()
+        Args:
+            user_message: 사용자 메시지
+            system_message: 시스템 메시지 (선택사항)
+            model: 사용할 모델 ID (기본값: 첫 번째 사용 가능한 모델)
+            **kwargs: 추가 OpenAI API 파라미터
 
+        Returns:
+            str: 어시스턴트 응답 텍스트
 
-def get_llm_service():
-    return llm_service
+        Raises:
+            Exception: API 호출 실패
+        """
+        messages = []
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
+        messages.append({"role": "user", "content": user_message})
+
+        response = self.chat_completion(messages=messages, model=model, **kwargs)
+
+        if not isinstance(response, ChatCompletion):
+            raise ValueError("스트리밍 응답이 아닌 일반 응답을 기대했습니다")
+
+        return response.choices[0].message.content or ""
+
+    def stream_chat(
+        self,
+        messages: List[Dict[str, str]],
+        model: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Iterator[str]:
+        """스트리밍 채팅 요청
+
+        Args:
+            messages: 메시지 리스트
+            model: 사용할 모델 ID (기본값: 첫 번째 사용 가능한 모델)
+            **kwargs: 추가 OpenAI API 파라미터
+
+        Yields:
+            str: 스트리밍 텍스트 청크
+
+        Raises:
+            Exception: API 호출 실패
+        """
+        stream_response = self.chat_completion(
+            messages=messages, model=model, stream=True, **kwargs
+        )
+
+        # 스트리밍 응답인지 확인
+        if isinstance(stream_response, ChatCompletion):
+            raise ValueError("스트리밍 응답을 기대했지만 일반 응답을 받았습니다")
+
+        # 스트리밍 청크 처리
+        for chunk in stream_response:
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content

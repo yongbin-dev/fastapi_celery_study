@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useModels, useChatPredict } from '../hooks';
+import type { ChatMessage } from '../types';
 
-// 대화 메시지 타입
-interface ChatMessage {
+// UI용 대화 메시지 타입
+interface UIChatMessage {
   id: string;
   type: 'user' | 'bot';
   content: string;
@@ -12,7 +13,7 @@ interface ChatMessage {
 
 export const SimpleChatbot: React.FC = () => {
   const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<UIChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,7 +43,7 @@ export const SimpleChatbot: React.FC = () => {
     e.preventDefault();
     if (!prompt.trim() || !selectedModel) return;
 
-    const userMessage: ChatMessage = {
+    const userMessage: UIChatMessage = {
       id: Date.now().toString(),
       type: 'user',
       content: prompt,
@@ -55,17 +56,32 @@ export const SimpleChatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
+      // UI 메시지를 API 메시지 형식으로 변환
+      const apiMessages: ChatMessage[] = [
+        ...messages.map(msg => ({
+          role: msg.type === 'user' ? 'user' as const : 'assistant' as const,
+          content: msg.content
+        })),
+        {
+          role: 'user' as const,
+          content: currentPrompt
+        }
+      ];
+
       // 실제 API 호출
       const response = await chatPredict({
-        prompt: currentPrompt,
+        messages: apiMessages,
         model: selectedModel,
-        stream: false
+        description: ''
       });
 
-      const botMessage: ChatMessage = {
+      // OpenAI 호환 응답에서 content 추출
+      const content = response.data.result.choices[0]?.message?.content || '응답을 받지 못했습니다.';
+
+      const botMessage: UIChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: response.response,
+        content: content,
         timestamp: new Date(),
         model: selectedModel
       };
@@ -73,7 +89,7 @@ export const SimpleChatbot: React.FC = () => {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('채팅 API 오류:', error);
-      const errorMessage: ChatMessage = {
+      const errorMessage: UIChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
         content: '죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.',
@@ -220,7 +236,8 @@ export const SimpleChatbot: React.FC = () => {
             className="flex-1 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={2}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              // 한글 입력 중(composing)일 때는 Enter 이벤트 무시
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 handleSubmit(e);
               }

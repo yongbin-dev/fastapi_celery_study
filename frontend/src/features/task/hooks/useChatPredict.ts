@@ -6,13 +6,12 @@ import type { ChatPredictRequest, ChatPredictResponse } from '../types';
 const chatPredict = async (
   request: ChatPredictRequest
 ): Promise<ChatPredictResponse> => {
-  const response = await api.post(`/llm/predict`, request, {
+  return await api.post(`/llm/chat`, request, {
     headers: {
       accept: 'application/json',
       'Content-Type': 'application/json',
     },
   });
-  return response.data;
 };
 
 // 채팅 예측 hook

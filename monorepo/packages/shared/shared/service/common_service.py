@@ -1,6 +1,7 @@
 # app/domains/common/services/common_service.py
 """공통 서비스 - 파일 저장 및 DB 저장 로직"""
 
+import asyncio
 from typing import List
 
 import fitz
@@ -20,7 +21,7 @@ class CommonService(BaseService):
     async def download_and_split_pdf(
         self, pdf_url: str, original_filename: str
     ) -> List[ImageResponse]:
-        """PDF를 다운로드하여 페이지별로 이미지로 변환하고 저장합니다.
+        """PDF를 다운로드하여 페이지별로 이미지로 변환하고 병렬로 저장합니다.
 
         Args:
             pdf_url: 다운로드할 PDF의 URL (경로)
@@ -31,7 +32,6 @@ class CommonService(BaseService):
         """
         logger.info(f"📥 PDF 다운로드 시작: {pdf_url}")
         storage = get_default_storage()
-        image_responses = []
 
         # 1. PDF 다운로드
         pdf_file_bytes = await storage.download(pdf_url)
@@ -41,7 +41,8 @@ class CommonService(BaseService):
         folder = StoragePathBuilder.extract_folder_from_path(pdf_url)
         logger.info(f"📁 이미지 저장 폴더: {folder}")
 
-        # 3. PDF 페이지별 이미지 변환 및 저장
+        # 3. PDF 페이지별 이미지 변환 (동기 작업)
+        page_data_list = []
         with fitz.open(stream=pdf_file_bytes, filetype="pdf") as doc:
             total_pages = len(doc)
             logger.info(f"📄 총 {total_pages}페이지 변환 시작")
@@ -58,19 +59,37 @@ class CommonService(BaseService):
                     folder=folder, filename=original_filename, page_num=page_num + 1
                 )
 
-                # Storage에 직접 업로드
-                image_response = await storage.upload(
-                    file_data=img_bytes, path=image_path, content_type="image/png"
+                page_data_list.append(
+                    {
+                        "img_bytes": img_bytes,
+                        "image_path": image_path,
+                        "page_num": page_num + 1,
+                    }
                 )
 
-                image_responses.append(image_response)
-                logger.info(
-                    f"✅ '{original_filename}' {page_num + 1}/{total_pages} "
-                    f"페이지 저장 완료: {image_path}"
-                )
+        # 4. 병렬 업로드
+        logger.info(f"🚀 {total_pages}개 페이지 병렬 업로드 시작")
 
-        logger.info(f"🎉 PDF 변환 완료: 총 {total_pages}개 이미지 생성")
-        return image_responses
+        async def upload_page(page_data):
+            """단일 페이지 업로드"""
+            image_response = await storage.upload(
+                file_data=page_data["img_bytes"],
+                path=page_data["image_path"],
+                content_type="image/png",
+            )
+            logger.info(
+                f"✅ '{original_filename}' {page_data['page_num']}/{total_pages} "
+                f"페이지 저장 완료: {page_data['image_path']}"
+            )
+            return image_response
+
+        # asyncio.gather로 병렬 업로드 실행
+        image_responses = await asyncio.gather(
+            *[upload_page(page_data) for page_data in page_data_list]
+        )
+
+        logger.info(f"🎉 PDF 변환 완료: 총 {total_pages}개 이미지 병렬 생성")
+        return list(image_responses)
 
 
 # 싱글톤 인스턴스

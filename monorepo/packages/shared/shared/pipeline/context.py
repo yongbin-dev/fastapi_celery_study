@@ -43,11 +43,7 @@ class LLMResult(BaseModel):
         metadata: 추가 메타데이터 (모델 정보, 프롬프트, 토큰 사용량 등)
     """
 
-    analysis: str = Field(..., description="분석 결과 텍스트")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="신뢰도 점수")
-    entities: Optional[Dict[str, Any]] = Field(
-        default=None, description="추출된 엔티티 정보"
-    )
+    entities: Any = Field(description="추출된 결과 정보")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="추가 메타데이터"
     )
