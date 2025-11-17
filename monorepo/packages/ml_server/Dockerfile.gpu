@@ -8,12 +8,10 @@ WORKDIR /app
 # 1. 빌드 인수
 ARG DOMAIN_EXTRA=ocr-gpu
 
-# 2. shared 패키지 먼저 복사 및 설치
+# 2. shared 패키지 먼저 복사
 COPY packages/shared /app/shared
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e /app/shared
 
-# 3. OCR 전용 의존성 설치 (shared는 이미 설치됨)
+# 3. OCR 전용 의존성 설치 (shared 포함)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra ${DOMAIN_EXTRA} --no-dev
 

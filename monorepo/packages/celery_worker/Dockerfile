@@ -22,15 +22,13 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # 작업 디렉토리 설정
 WORKDIR /app
 
-# shared 패키지 먼저 복사 및 설치
+# shared 패키지 먼저 복사
 COPY packages/shared /app/shared
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -e /app/shared
 
 # celery_worker 의존성 파일 복사
 COPY packages/celery_worker/pyproject.toml ./
 
-# celery_worker 패키지 의존성 설치 (shared는 이미 설치됨)
+# 가상환경 생성 및 모든 의존성 설치 (shared 포함)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --python 3.12 --no-dev
 
