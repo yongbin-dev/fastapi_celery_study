@@ -1,8 +1,9 @@
 # Dockerfile.ml-gpu-base - ML GPU 베이스 이미지
 # CUDA + cuDNN + torch GPU + 기본 ML 라이브러리
 
-# 1. NVIDIA CUDA + cuDNN 베이스
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+# 1. NVIDIA CUDA + cuDNN 베이스 (runtime → devel로 변경)
+# devel 이미지는 개발 도구와 완전한 CUDA 라이브러리를 포함
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 
 WORKDIR /app
 

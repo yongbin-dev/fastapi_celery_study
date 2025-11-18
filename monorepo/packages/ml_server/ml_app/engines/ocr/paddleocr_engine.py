@@ -43,7 +43,7 @@ class PaddleOCREngine(BaseOCREngine):
                 "lang": "korean" if self.lang == "korean" else "en",
                 "det_model_dir": settings.OCR_DET,
                 "rec_model_dir": settings.OCR_REC,
-                "use_gpu": False,
+                "use_gpu": True,
                 "show_log": False,
             }
 
