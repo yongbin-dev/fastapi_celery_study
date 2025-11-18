@@ -21,29 +21,34 @@ class OCRModel(BaseModel):
         self.use_angle_cls = use_angle_cls
         self.lang = lang
         self.engine: Optional[BaseOCREngine] = None
+        self.is_loading = False  # 로딩 중 상태 추가
 
     def load_model(self) -> None:
         """모델 로드"""
-        # Factory를 통해 적절한 엔진 생성
-        self.engine = OCREngineFactory.create_engine(
-            engine_type=settings.OCR_ENGINE,
-            use_angle_cls=self.use_angle_cls,
-            lang=self.lang,
-        )
+        self.is_loading = True
+        try:
+            # Factory를 통해 적절한 엔진 생성
+            self.engine = OCREngineFactory.create_engine(
+                engine_type=settings.OCR_ENGINE,
+                use_angle_cls=self.use_angle_cls,
+                lang=self.lang,
+            )
 
-        if self.engine is None:
-            logger.error("OCR 엔진 생성 실패")
-            self.is_loaded = False
-            return
+            if self.engine is None:
+                logger.error("OCR 엔진 생성 실패")
+                self.is_loaded = False
+                return
 
-        # 엔진 모델 로드
-        self.engine.load_model()
-        self.is_loaded = self.engine.is_loaded
+            # 엔진 모델 로드
+            self.engine.load_model()
+            self.is_loaded = self.engine.is_loaded
 
-        if self.is_loaded:
-            logger.info(f"{self.engine.get_engine_name()} 엔진 로드 완료")
-        else:
-            logger.error(f"{self.engine.get_engine_name()} 엔진 로드 실패")
+            if self.is_loaded:
+                logger.info(f"{self.engine.get_engine_name()} 엔진 로드 완료")
+            else:
+                logger.error(f"{self.engine.get_engine_name()} 엔진 로드 실패")
+        finally:
+            self.is_loading = False
 
     def predict(
         self, input_data: bytes, confidence_threshold: float = 0.5

@@ -14,7 +14,7 @@ from shared.repository.crud.sync_crud.chain_execution import chain_execution_cru
 from shared.schemas.common import ImageResponse
 from shared.schemas.enums import ProcessStatus
 
-from tasks.batch import start_llm_stage, start_ocr_stage, start_yolo_stage
+from tasks.batch import start_ocr_stage
 
 logger = get_logger(__name__)
 cache_service = get_pipeline_cache_service()
@@ -85,8 +85,8 @@ def execute_batch_ocr_pipeline(
             # 각 태스크의 출력이 다음 태스크의 입력으로 자동 전달됨
             workflow = chain(
                 start_ocr_stage.s(context_dict),  # .s()는 signature 생성
-                start_llm_stage.s(),  # 이전 결과를 자동으로 받음
-                start_yolo_stage.s(),  # 이전 결과를 자동으로 받음
+                # start_llm_stage.s(),  # 이전 결과를 자동으로 받음
+                # start_yolo_stage.s(),  # 이전 결과를 자동으로 받음
             )
 
             # 비동기로 실행

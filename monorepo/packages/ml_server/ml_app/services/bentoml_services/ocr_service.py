@@ -52,9 +52,14 @@ class BatchOCRResponse(BaseModel):
 class HealthCheckResponse(BaseModel):
     """헬스 체크 응답 스키마"""
 
-    status: str = Field(description="서비스 상태 (healthy/unhealthy)")
+    status: str = Field(
+        description="서비스 상태 (healthy/loading/unhealthy)"
+    )
     engine_type: str = Field(description="OCR 엔진 타입")
     model_loaded: bool = Field(description="모델 로드 여부")
+    model_loading: bool = Field(
+        default=False, description="모델 로딩 중 여부"
+    )
     version: str = Field(description="서비스 버전")
     error: str | None = Field(default=None, description="에러 메시지")
 
@@ -201,10 +206,19 @@ class OCRBentoService:
         try:
             model = get_ocr_model()
 
+            # 상태 결정
+            if model.is_loading:
+                status = "loading"
+            elif model.is_loaded:
+                status = "healthy"
+            else:
+                status = "unhealthy"
+
             return HealthCheckResponse(
-                status="healthy" if model.is_loaded else "unhealthy",
+                status=status,
                 engine_type=self.engine_type,
                 model_loaded=model.is_loaded,
+                model_loading=model.is_loading,
                 version="1.0.0",
             )
 
@@ -214,6 +228,7 @@ class OCRBentoService:
                 status="unhealthy",
                 engine_type="unknown",
                 model_loaded=False,
+                model_loading=False,
                 version="1.0.0",
                 error=str(e),
             )
