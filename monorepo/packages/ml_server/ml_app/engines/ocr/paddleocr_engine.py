@@ -26,9 +26,9 @@ class PaddleOCREngine(BaseOCREngine):
             from paddleocr import PaddleOCR
 
             # GPU 환경 정보 로깅
-            logger.debug(f"CUDA 지원 여부: {paddle.device.is_compiled_with_cuda()}")
-            logger.debug(f"현재 디바이스: {paddle.get_device()}")
-            logger.debug(f"GPU 개수: {paddle.device.cuda.device_count()}")
+            logger.info(f"CUDA 지원 여부: {paddle.device.is_compiled_with_cuda()}")
+            logger.info(f"현재 디바이스: {paddle.get_device()}")
+            logger.info(f"GPU 개수: {paddle.device.cuda.device_count()}")
 
         except ImportError as e:
             logger.error(f"PaddleOCR 또는 Paddle 모듈을 불러올 수 없습니다: {e}")
@@ -43,7 +43,7 @@ class PaddleOCREngine(BaseOCREngine):
                 "lang": "korean" if self.lang == "korean" else "en",
                 "det_model_dir": settings.OCR_DET,
                 "rec_model_dir": settings.OCR_REC,
-                "use_gpu": True,
+                "use_gpu": False,
                 "show_log": False,
             }
 

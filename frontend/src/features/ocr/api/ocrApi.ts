@@ -13,19 +13,38 @@ interface CompareRequest {
   execution_id2: string;
 }
 
+interface Difference {
+  line: number;
+  text1: string;
+  text2: string;
+}
+
+interface MatchedText {
+  text: string;
+  line1: number;
+  line2: number;
+}
+
+interface SimilarityMetrics {
+  levenshtein_distance: number;
+  levenshtein_similarity: number;
+  jaro_winkler: number;
+  sequence_matcher: number;
+  jaccard_index: number;
+  cosine_similarity: number | null;
+  semantic_similarity: number | null;
+}
+
 interface CompareResponse {
-  execution_id1: string;
-  execution_id2: string;
-  result1: OcrResponse;
-  result2: OcrResponse;
-  comparison: {
-    similarity_score: number;
-    differences: Array<{
-      line: number;
-      text1: string;
-      text2: string;
-    }>;
-  };
+  overall_similarity: number;
+  string_similarity: number;
+  token_similarity: number;
+  semantic_similarity: number | null;
+  metrics: SimilarityMetrics;
+  matched_texts: MatchedText[];
+  differences: Difference[];
+  execution_id1: number;
+  execution_id2: number;
 }
 
 export const ocrApi = {

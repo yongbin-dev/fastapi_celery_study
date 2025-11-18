@@ -7,7 +7,7 @@ from shared.core.logging import get_logger
 from shared.utils.response_builder import ResponseBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..schemas.similarity import SimilarityRequest, SimilarityResponse
+from ..schemas.similarity import SimilarityRequest
 from ..services.ocr_comparison_service import ocr_comparison_service
 
 logger = get_logger(__name__)
@@ -17,28 +17,14 @@ router = APIRouter(prefix="/compare", tags=["OCR Comparison"])
 
 @router.post(
     "",
-    response_model=SimilarityResponse,
     summary="OCR 결과 비교",
     description="""
     두 OCR 실행 결과를 비교하여 텍스트 유사도를 측정합니다.
-3
+
     **지원하는 유사도 측정 방법:**
     - `string`: 문자열 기반 유사도 (Levenshtein, Jaro-Winkler, SequenceMatcher)
     - `token`: 토큰 기반 유사도 (Jaccard, Cosine)
     - `all`: 모든 방법 조합 (기본값)
-
-    **가중치 설정 예시:**
-    ```json
-    {
-        "execution_id1": 1,
-        "execution_id2": 2,
-        "method": "all",
-        "weights": {
-            "string": 0.5,
-            "token": 0.5
-        }
-    }
-    ```
     """,
 )
 async def compare_ocr_results(

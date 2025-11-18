@@ -2,6 +2,7 @@
 import uuid
 
 # Celery 태스크는 celery app을 통해 호출
+from app.main import get_celery_app
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from shared.config import settings
 from shared.core.database import get_db
@@ -18,22 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/task", tags=["TASK"])
-
-# Celery 앱 인스턴스 (태스크 호출용)
-celery_app = None
-
-
-def get_celery_app():
-    """Celery 앱 인스턴스를 지연 로딩"""
-    global celery_app
-    if celery_app is None:
-        from celery import Celery
-
-        celery_app = Celery(
-            broker=settings.CELERY_BROKER_URL,
-            backend=settings.CELERY_RESULT_BACKEND,
-        )
-    return celery_app
 
 
 def _validate_content_type(content_type: str | None, filename: str) -> None:

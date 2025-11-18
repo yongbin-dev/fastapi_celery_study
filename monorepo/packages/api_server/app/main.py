@@ -172,5 +172,22 @@ def create_application() -> FastAPI:
     return app
 
 
+# Celery 앱 인스턴스 (태스크 호출용)
+celery_app = None
+
+
+def get_celery_app():
+    """Celery 앱 인스턴스를 지연 로딩"""
+    global celery_app
+    if celery_app is None:
+        from celery import Celery
+
+        celery_app = Celery(
+            broker=settings.CELERY_BROKER_URL,
+            backend=settings.CELERY_RESULT_BACKEND,
+        )
+    return celery_app
+
+
 # 애플리케이션 초기화 실행
 create_application()
