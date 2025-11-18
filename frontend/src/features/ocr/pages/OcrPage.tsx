@@ -35,7 +35,7 @@ const OcrPage: React.FC = () => {
     onSuccess: (data: any) => {
       refetch();
 
-      // console.log(data)
+      console.log(data)
       // setSelectedResult(data);
     },
   });

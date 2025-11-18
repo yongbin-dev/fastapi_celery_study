@@ -13,16 +13,11 @@ interface CompareRequest {
   execution_id2: string;
 }
 
-interface Difference {
-  line: number;
+interface MatchedText {
   text1: string;
   text2: string;
-}
-
-interface MatchedText {
-  text: string;
-  line1: number;
-  line2: number;
+  similarity: number;
+  position: number;
 }
 
 interface SimilarityMetrics {
@@ -42,7 +37,7 @@ interface CompareResponse {
   semantic_similarity: number | null;
   metrics: SimilarityMetrics;
   matched_texts: MatchedText[];
-  differences: Difference[];
+  differences: string[];
   execution_id1: number;
   execution_id2: number;
 }

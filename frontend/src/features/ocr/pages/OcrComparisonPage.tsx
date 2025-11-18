@@ -172,11 +172,15 @@ const OcrComparisonPage: React.FC<OcrComparisonPageProps> = ({
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200 max-h-60 overflow-y-auto">
                   <ul className="space-y-2">
                     {compareResult.matched_texts.map((match, idx) => (
-                      <li key={idx} className="text-sm text-green-800">
-                        <span className="font-mono bg-green-100 px-2 py-1 rounded">
-                          L{match.line1}/{match.line2}
-                        </span>
-                        <span className="ml-2">{match.text}</span>
+                      <li key={idx} className="text-sm text-green-800 bg-green-100 p-2 rounded">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-xs">Position: {match.position}</span>
+                          <span className="font-bold text-green-900">{(match.similarity * 100).toFixed(0)}% match</span>
+                        </div>
+                        <div className="mt-1 font-mono text-xs">
+                          <p><span className="font-semibold">Text 1:</span> {match.text1}</p>
+                          <p><span className="font-semibold">Text 2:</span> {match.text2}</p>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -192,26 +196,10 @@ const OcrComparisonPage: React.FC<OcrComparisonPageProps> = ({
                   차이점 ({compareResult.differences.length}건)
                 </h3>
                 <div className="bg-red-50 rounded-lg p-4 border border-red-200 max-h-60 overflow-y-auto">
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {compareResult.differences.map((diff, idx) => (
-                      <li key={idx} className="text-sm">
-                        <div className="font-medium text-red-700 mb-1">
-                          라인 {diff.line}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-red-100 rounded p-2">
-                            <p className="text-xs text-red-600 font-medium mb-1">실행 1</p>
-                            <p className="text-red-800 font-mono text-xs break-all">
-                              "{diff.text1}"
-                            </p>
-                          </div>
-                          <div className="bg-red-100 rounded p-2">
-                            <p className="text-xs text-red-600 font-medium mb-1">실행 2</p>
-                            <p className="text-red-800 font-mono text-xs break-all">
-                              "{diff.text2}"
-                            </p>
-                          </div>
-                        </div>
+                      <li key={idx} className="text-sm text-red-800 font-mono bg-red-100 p-2 rounded">
+                        {diff}
                       </li>
                     ))}
                   </ul>
