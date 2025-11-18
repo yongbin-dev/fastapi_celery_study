@@ -3,12 +3,12 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
-from shared.schemas.ocr_text_box import OCRTextBoxCreate
+from shared.schemas import CustomBaseModel, OCRTextBoxCreate
 
 
-class OCRExtractDTO(BaseModel):
+class OCRExtractDTO(CustomBaseModel):
     """OCR 텍스트 추출 응답 스키마"""
 
     status: str = Field(..., description="태스크 상태")
@@ -16,5 +16,3 @@ class OCRExtractDTO(BaseModel):
     text_boxes: List[OCRTextBoxCreate] = Field(
         default=[], description="추출된 텍스트 박스 목록"
     )
-
-    model_config = ConfigDict(from_attributes=True)

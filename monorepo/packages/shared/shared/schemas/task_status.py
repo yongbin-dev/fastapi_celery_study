@@ -7,8 +7,10 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field
 
+from shared.schemas.custom_base_model import CustomBaseModel
 
-class ActiveTaskInfo(BaseModel):
+
+class ActiveTaskInfo(CustomBaseModel):
     """현재 실행 중인 태스크 정보
 
     Attributes:
@@ -30,7 +32,7 @@ class ActiveTaskInfo(BaseModel):
     acknowledged: bool = Field(default=False, description="워커 확인 여부")
 
 
-class ActiveTasksResponse(BaseModel):
+class ActiveTasksResponse(CustomBaseModel):
     """현재 실행 중인 태스크 목록 응답
 
     Attributes:

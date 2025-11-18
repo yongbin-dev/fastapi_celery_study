@@ -3,10 +3,12 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from shared.schemas.custom_base_model import CustomBaseModel
 
 
-class TaskLogBase(BaseModel):
+class TaskLogBase(CustomBaseModel):
     """TaskLog 기본 스키마"""
 
     task_name: str = Field(..., description="작업 함수명")
@@ -21,7 +23,7 @@ class TaskLogCreate(TaskLogBase):
     pass
 
 
-class TaskLogUpdate(BaseModel):
+class TaskLogUpdate(CustomBaseModel):
     """TaskLog 업데이트용 스키마"""
 
     task_name: Optional[str] = Field(None, description="작업 함수명")
@@ -40,4 +42,3 @@ class TaskLogResponse(TaskLogBase):
     celery_task_id: Optional[str] = None
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
-    model_config = ConfigDict(from_attributes=True)

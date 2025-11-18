@@ -1,9 +1,11 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from shared.schemas import CustomBaseModel
 
 
-class OCRTextBoxCreate(BaseModel):
+class OCRTextBoxCreate(CustomBaseModel):
     """텍스트 박스 생성 스키마"""
 
     ocr_execution_id: Optional[int] = Field(default=None, description="OCR 실행 ID")
@@ -12,5 +14,3 @@ class OCRTextBoxCreate(BaseModel):
     bbox: List[List[float]] = Field(
         ..., description="바운딩 박스 좌표 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]"
     )
-
-    model_config = ConfigDict(from_attributes=True)

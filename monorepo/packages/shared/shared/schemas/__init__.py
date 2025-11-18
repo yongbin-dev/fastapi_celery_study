@@ -10,6 +10,7 @@ from .chain_execution import (
     ChainExecutionResponse,
     ChainExecutionUpdate,
 )
+from .custom_base_model import CustomBaseModel
 from .enums import ProcessStatus
 from .ocr_db import OCRExtractDTO
 from .ocr_execution import OCRExecutionCreate
@@ -21,6 +22,7 @@ from .task_log import (
 )
 
 __all__ = [
+    "CustomBaseModel",
     "ProcessStatus",
     # Stage models
     # Batch Execution

@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from shared.schemas import CustomBaseModel
 
 from .enums import ProcessStatus
 
 
-class BatchExecutionCreate(BaseModel):
+class BatchExecutionCreate(CustomBaseModel):
     """BatchExecution 생성용 스키마"""
 
     batch_id: str = Field(..., description="배치 고유 ID")
@@ -20,7 +22,7 @@ class BatchExecutionCreate(BaseModel):
     initiated_by: Optional[str] = Field(None, description="시작한 사용자/시스템")
 
 
-class BatchExecutionUpdate(BaseModel):
+class BatchExecutionUpdate(CustomBaseModel):
     """BatchExecution 업데이트용 스키마"""
 
     status: Optional[ProcessStatus] = Field(None, description="실행 상태")
@@ -32,7 +34,7 @@ class BatchExecutionUpdate(BaseModel):
     error_message: Optional[str] = Field(None, description="오류 메시지")
 
 
-class BatchExecutionResponse(BaseModel):
+class BatchExecutionResponse(CustomBaseModel):
     """BatchExecution 응답용 스키마"""
 
     id: int
@@ -55,10 +57,8 @@ class BatchExecutionResponse(BaseModel):
     final_result: Optional[Dict[str, Any]]
     error_message: Optional[str]
 
-    model_config = ConfigDict(from_attributes=True)
 
-
-class BatchStartRequest(BaseModel):
+class BatchStartRequest(CustomBaseModel):
     """배치 시작 요청 스키마"""
 
     batch_name: str = Field(..., description="배치 이름")
@@ -75,7 +75,7 @@ class BatchStartRequest(BaseModel):
     )
 
 
-class BatchStatusResponse(BaseModel):
+class BatchStatusResponse(CustomBaseModel):
     """배치 상태 응답 스키마"""
 
     batch_id: str

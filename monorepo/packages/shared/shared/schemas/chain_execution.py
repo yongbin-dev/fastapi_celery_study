@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
+
+from shared.schemas import CustomBaseModel
 
 from .enums import ProcessStatus
 from .task_log import TaskLogResponse
@@ -25,7 +27,7 @@ class ChainExecutionUpdate(BaseModel):
     error_message: Optional[str] = Field(None, description="오류 메시지")
 
 
-class ChainExecutionResponse(BaseModel):
+class ChainExecutionResponse(CustomBaseModel):
     """ChainExecution 응답용 스키마"""
 
     id: int
@@ -43,8 +45,6 @@ class ChainExecutionResponse(BaseModel):
     task_logs: List[TaskLogResponse] = Field(
         default_factory=list, description="관련 작업 로그 목록"
     )
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 # Forward reference 해결을 위한 모델 업데이트

@@ -66,7 +66,7 @@ class HealthCheckResponse(BaseModel):
     resources={
         "cpu": "2",
         "memory": "4Gi",
-        "nvidia.com/gpu": "1",  # type: ignore
+        "gpu": 1,  # GPU 개수 (BentoML 서비스 레벨에서는 "gpu" 키 사용)
     },
 )
 class OCRBentoService:
