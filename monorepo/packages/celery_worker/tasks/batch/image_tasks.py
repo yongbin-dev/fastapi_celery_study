@@ -67,6 +67,7 @@ def process_image_chunk_task(
         execute_batch_ocr_pipeline(
             image_responses=image_responses,
             batch_id=batch_id,
+            chunk_index=chunk_index,
             options=options,
         )
 

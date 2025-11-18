@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from shared.models.chain_execution import ChainExecution
@@ -49,35 +50,58 @@ class CRUDChainExecution(
         batch_id: Optional[str] = None,
         initiated_by: Optional[str] = None,
         input_data: Optional[dict] = None,
+        sequence_number: Optional[int] = None,
     ) -> ChainExecution:
-        """새 체인 실행 생성"""
-        # batch_id가 빈 문자열이면 None으로 변환 (외래 키 제약 조건 위반 방지)
+        """새 체인 실행 생성. 멱등성 보장.
+
+        sequence_number가 주어지면 해당 번호를 사용하고, 없으면 새로 계산합니다.
+        데이터베이스에 이미 해당 batch_id와 sequence_number가 존재하면
+        IntegrityError를 잡아서 기존 객체를 반환합니다.
+        """
+        # batch_id가 빈 문자열이면 None으로 변환
         batch_id = batch_id if batch_id else None
 
-        # batch_id가 있는 경우, 같은 batch_id의 최대 sequence_number 조회
-        sequence_number = 1
-        if batch_id:
-            max_sequence = (
-                db.query(func.max(ChainExecution.sequence_number))
-                .filter(ChainExecution.batch_id == batch_id)
-                .scalar()
-            )
-            if max_sequence is not None:
-                sequence_number = max_sequence + 1
+        # sequence_number가 제공되지 않은 경우에만 계산
+        if sequence_number is None:
+            sequence_to_use = 1
+            if batch_id:
+                max_sequence = (
+                    db.query(func.max(ChainExecution.sequence_number))
+                    .filter(ChainExecution.batch_id == batch_id)
+                    .scalar()
+                )
+                if max_sequence is not None:
+                    sequence_to_use = max_sequence + 1
+        else:
+            sequence_to_use = sequence_number
 
-        chain_exec = ChainExecution(
-            chain_name=chain_name,
-            batch_id=batch_id,
-            sequence_number=sequence_number,
-            status=ProcessStatus.PENDING.value,
-            initiated_by=initiated_by,
-            input_data=input_data,
-            started_at=datetime.now(),
-        )
-        db.add(chain_exec)
-        db.commit()
-        db.refresh(chain_exec)
-        return chain_exec
+        try:
+            chain_exec = ChainExecution(
+                chain_name=chain_name,
+                batch_id=batch_id,
+                sequence_number=sequence_to_use,
+                status=ProcessStatus.PENDING.value,
+                initiated_by=initiated_by,
+                input_data=input_data,
+                started_at=datetime.now(),
+            )
+            db.add(chain_exec)
+            db.commit()
+            db.refresh(chain_exec)
+            return chain_exec
+        except IntegrityError:
+            db.rollback()
+            # 이미 존재하는 객체를 조회하여 반환
+            existing_exec = (
+                db.query(ChainExecution)
+                .filter_by(batch_id=batch_id, sequence_number=sequence_to_use)
+                .one_or_none()
+            )
+            if existing_exec:
+                return existing_exec
+            else:
+                # 예상치 못한 다른 IntegrityError일 경우를 대비해 재발생
+                raise
 
     def update_status(
         self, db: Session, *, chain_execution: ChainExecution, status: ProcessStatus

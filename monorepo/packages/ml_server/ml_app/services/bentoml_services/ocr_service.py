@@ -52,14 +52,10 @@ class BatchOCRResponse(BaseModel):
 class HealthCheckResponse(BaseModel):
     """헬스 체크 응답 스키마"""
 
-    status: str = Field(
-        description="서비스 상태 (healthy/loading/unhealthy)"
-    )
+    status: str = Field(description="서비스 상태 (healthy/loading/unhealthy)")
     engine_type: str = Field(description="OCR 엔진 타입")
     model_loaded: bool = Field(description="모델 로드 여부")
-    model_loading: bool = Field(
-        default=False, description="모델 로딩 중 여부"
-    )
+    model_loading: bool = Field(default=False, description="모델 로딩 중 여부")
     version: str = Field(description="서비스 버전")
     error: str | None = Field(default=None, description="에러 메시지")
 
@@ -70,6 +66,7 @@ class HealthCheckResponse(BaseModel):
     resources={
         "cpu": "2",
         "memory": "4Gi",
+        "nvidia.com/gpu": "1",  # type: ignore
     },
 )
 class OCRBentoService:

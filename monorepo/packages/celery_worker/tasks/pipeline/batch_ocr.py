@@ -23,6 +23,7 @@ cache_service = get_pipeline_cache_service()
 def execute_batch_ocr_pipeline(
     image_responses: list[ImageResponse],
     batch_id: Optional[str],
+    chunk_index: int,
     options: Optional[Dict[str, Any]] = None,
 ):
     """배치 OCR 파이프라인 실행
@@ -32,6 +33,7 @@ def execute_batch_ocr_pipeline(
     Args:
         image_responses: 이미지 응답 객체 리스트
         batch_id: 배치 ID
+        chunk_index: 청크 인덱스
         options: 파이프라인 옵션 (기본: None)
 
     Returns:
@@ -43,7 +45,7 @@ def execute_batch_ocr_pipeline(
 
     logger.info(
         f"배치 OCR 파이프라인 실행 시작: "
-        f"batch_id={batch_id}, images={len(image_responses)}"
+        f"batch_id={batch_id}, chunk_index={chunk_index}, images={len(image_responses)}"
     )
 
     # batch_id가 빈 문자열이면 None으로 변환
@@ -54,10 +56,12 @@ def execute_batch_ocr_pipeline(
             raise RuntimeError("DB 세션 생성 실패")
 
         # 2. ChainExecution 생성 (OCR Stage 시작 전)
+        # sequence_number를 chunk_index + 1로 지정하여 멱등성 보장
         chain_execution = chain_execution_crud.create_chain_execution(
             db=session,
             chain_name="batch_ocr_pipeline",
             batch_id=batch_id,
+            sequence_number=chunk_index + 1,  # 0-based index to 1-based sequence
             initiated_by="batch_ocr",
             input_data={"image_count": len(image_responses)},
         )
