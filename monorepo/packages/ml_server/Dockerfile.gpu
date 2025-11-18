@@ -31,7 +31,6 @@ COPY packages/ml_server/main.py /app/packages/ml_server/main.py
 # 8. 환경 변수 설정 (workspace .venv는 루트에 생성됨)
 ENV FLAGS_use_gpu=True \
     HOST=0.0.0.0 \
-    PORT=8001 \
     PATH=/app/.venv/bin:$PATH \
     PYTHONPATH=/app/packages/ml_server:/app/packages/shared
 
