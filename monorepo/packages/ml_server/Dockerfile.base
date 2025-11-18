@@ -8,15 +8,12 @@ FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04
 WORKDIR /app
 
 # 2. 시스템 의존성 설치
+# devel 이미지는 이미 모든 CUDA 라이브러리를 포함하므로 심볼릭 링크 불필요
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git \
     libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 libgl1 \
     python3-dev python3-pip \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /usr/local/cuda/lib64 \
-    && ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.8 /usr/local/cuda/lib64/libcudnn.so \
-    && ln -s /usr/local/cuda-11.8/targets/x86_64-linux/lib/libcublas.so.11 /usr/local/cuda-11.8/targets/x86_64-linux/lib/libcublas.so \
-    && ln -s /usr/local/cuda-11.8/targets/x86_64-linux/lib/libcublasLt.so.11 /usr/local/cuda-11.8/targets/x86_64-linux/lib/libcublasLt.so
+    && rm -rf /var/lib/apt/lists/*
 
 # 3. pip 업그레이드
 RUN pip install --upgrade pip
