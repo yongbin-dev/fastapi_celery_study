@@ -38,7 +38,8 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType) -> ModelType:
         """객체 생성"""
-        obj_in_data = obj_in.dict() if hasattr(obj_in, "dict") else obj_in
+        # model_dump(by_alias=False)를 사용하여 원본 필드명(스네이크 케이스)으로 변환
+        obj_in_data = obj_in.model_dump(by_alias=False)
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         await db.flush()  # ID 할당을 위해 flush
@@ -56,7 +57,8 @@ class AsyncCRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
+            # model_dump(by_alias=False)를 사용하여 원본 필드명으로 변환
+            update_data = obj_in.model_dump(exclude_unset=True, by_alias=False)
 
         for field, value in update_data.items():
             if hasattr(db_obj, field):

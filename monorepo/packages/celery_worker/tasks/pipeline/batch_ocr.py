@@ -15,6 +15,7 @@ from shared.schemas.common import ImageResponse
 from shared.schemas.enums import ProcessStatus
 
 from tasks.batch import start_ocr_stage
+from tasks.batch.finish_tasks import start_finish_stage
 
 logger = get_logger(__name__)
 cache_service = get_pipeline_cache_service()
@@ -91,6 +92,7 @@ def execute_batch_ocr_pipeline(
                 start_ocr_stage.s(context_dict),  # .s()는 signature 생성
                 # start_llm_stage.s(),  # 이전 결과를 자동으로 받음
                 # start_yolo_stage.s(),  # 이전 결과를 자동으로 받음
+                start_finish_stage.s(),
             )
 
             # 비동기로 실행
@@ -107,9 +109,6 @@ def execute_batch_ocr_pipeline(
                 chain_execution=chain_execution,
                 status=ProcessStatus.SUCCESS,
             )
-            logger.info(
-                f"배치 OCR 파이프라인 완료: chain_execution_id={chain_execution.id}, "
-            )
 
         except Exception as e:
             # ChainExecution 상태 업데이트 (실패)
@@ -118,6 +117,9 @@ def execute_batch_ocr_pipeline(
                 chain_execution=chain_execution,
                 status=ProcessStatus.FAILURE,
             )
+
+            context.status = ProcessStatus.FAILURE
+            cache_service.save_context(context)
 
             logger.error(
                 f"배치 OCR 파이프라인 실패: chain_execution.id={chain_execution.id}"

@@ -63,7 +63,7 @@ export const PipelineListCard: React.FC<PipelineListCardProps> = ({
   const toggleAllSelection = () => {
     if (!batchStatus?.contexts) return;
 
-    const allChainIds = batchStatus.contexts.map(ctx => ctx.chain_id);
+    const allChainIds = batchStatus.contexts.map(ctx => ctx.chain_execution_id);
     setSelectedContexts(prev => {
       if (prev.size === allChainIds.length) {
         return new Set();
@@ -78,7 +78,7 @@ export const PipelineListCard: React.FC<PipelineListCardProps> = ({
       alert('취소할 작업을 선택해주세요.');
       return;
     }
-// /cancel/{chain_id}
+// /cancel/{chain_execution_id}
     const confirmed = window.confirm(`선택한 ${selectedContexts.size}개의 작업을 취소하시겠습니까?`);
     if (confirmed) {
       Array.from(selectedContexts).forEach(id => cancelPdfMutation.mutate(id))
@@ -157,34 +157,87 @@ export const PipelineListCard: React.FC<PipelineListCardProps> = ({
               <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
                 {batchStatus.contexts.map((context) => (
                   <div
-                    key={context.chain_id}
+                    key={context.chain_execution_id}
                     className="flex items-center space-x-3 p-4 bg-white hover:bg-gray-50 transition-colors"
                   >
                     {/* Context 체크박스 */}
                     <input
                       type="checkbox"
-                      checked={selectedContexts.has(context.chain_id)}
-                      onChange={() => toggleContextSelection(context.chain_id)}
+                      checked={selectedContexts.has(context.chain_execution_id)}
+                      onChange={() => toggleContextSelection(context.chain_execution_id)}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
 
-                    <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex-1 min-w-0 space-y-3">
+                      {/* 헤더: Chain ID, Status, Stage */}
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-medium text-gray-900 truncate">
-                              Chain ID: {context.chain_id}
+                              Chain ID: {context.chain_execution_id}
                             </span>
+                            {context.is_batch && (
+                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                                배치
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Stage: {context.current_stage || 'N/A'}
-                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <p className="text-xs text-gray-500">
+                              Stage: {context.current_stage || 'N/A'}
+                            </p>
+                            {context.retry_count > 0 && (
+                              <span className="text-xs text-orange-600">
+                                (재시도: {context.retry_count}회)
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <StatusBadge status={context.status} />
                       </div>
 
-                      {/* 이미지 미리보기 */}
-                      {context.public_file_path && (
+                      {/* 에러 메시지 */}
+                      {context.error && (
+                        <div className="bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs text-red-700 flex items-start space-x-1">
+                            <svg className="h-3 w-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                            <span>{context.error}</span>
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 이미지 갤러리 (다중 이미지) */}
+                      {context.is_batch && context.public_file_paths && context.public_file_paths.length > 0 ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-600 font-medium">
+                            이미지 ({context.public_file_paths.length}개)
+                          </p>
+                          <div className="grid grid-cols-5 gap-2">
+                            {context.public_file_paths.map((url, idx) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative aspect-square rounded border border-gray-200 overflow-hidden hover:border-blue-400 transition-colors"
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Page ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center">
+                                  <span className="text-white text-xs opacity-0 group-hover:opacity-100">
+                                    {idx + 1}
+                                  </span>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      ) : context.public_file_path ? (
                         <div className="mt-2">
                           <a
                             href={context.public_file_path}
@@ -198,7 +251,56 @@ export const PipelineListCard: React.FC<PipelineListCardProps> = ({
                             <span>이미지 보기</span>
                           </a>
                         </div>
+                      ) : null}
+
+                      {/* OCR 결과 요약 */}
+                      {context.is_batch && context.ocr_results && context.ocr_results.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-gray-600 font-medium">
+                            OCR 결과 ({context.ocr_results.length}개)
+                          </p>
+                          <div className="space-y-1">
+                            {context.ocr_results.map((result, idx) => {
+                              const statusColor = 'bg-gray-50 text-gray-700 border-gray-200';
+
+                              return (
+                                <details key={idx} className={`border rounded p-2 ${statusColor}`}>
+                                  <summary className="text-xs cursor-pointer flex items-center justify-between">
+                                    <span>페이지 {idx + 1}: </span>
+                                    {result.textBoxes.length > 0 && (
+                                      <span className="text-xs opacity-70">
+                                        {result.textBoxes.length}개 텍스트
+                                      </span>
+                                    )}
+                                  </summary>
+                                  {result.textBoxes.length > 0 && (
+                                    <div className="mt-2 space-y-1 pl-3">
+                                      {result.textBoxes.map((box, boxIdx) => (
+                                        <div key={boxIdx} className="text-xs">
+                                          <span className="font-mono bg-white px-1 py-0.5 rounded">
+                                            {box.text}
+                                          </span>
+                                          <span className="ml-2 text-gray-500">
+                                            ({(box.confidence * 100).toFixed(1)}%)
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </details>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
+
+                      {/* 시간 정보 */}
+                      <div className="flex items-center space-x-3 text-xs text-gray-500">
+                        <span>생성: {new Date(context.created_at).toLocaleString('ko-KR')}</span>
+                        {context.updated_at && (
+                          <span>수정: {new Date(context.updated_at).toLocaleString('ko-KR')}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

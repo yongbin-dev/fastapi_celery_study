@@ -43,6 +43,7 @@ class PaddleOCREngine(BaseOCREngine):
 
             # GPU 사용 가능 여부 확인 (macOS에서는 False)
             import platform
+
             use_gpu = is_cuda_available and platform.system() != "Darwin"
 
             logger.info(f"플랫폼: {platform.system()}, GPU 사용: {use_gpu}")
@@ -63,7 +64,7 @@ class PaddleOCREngine(BaseOCREngine):
 
             logger.info("PaddleOCR 객체 생성 완료")
             self.is_loaded = True
-            logger.info(f"✅ PaddleOCR 모델 로드 완료 (lang={ocr_params['lang']}, gpu={use_gpu})")
+            logger.info("✅ PaddleOCR 모델 로드 완료")
 
         except Exception as e:
             logger.error(f"❌ PaddleOCR 모델 로드 중 오류: {e}", exc_info=True)
@@ -72,9 +73,7 @@ class PaddleOCREngine(BaseOCREngine):
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRExtractDTO:
         """PaddleOCR 예측"""
         if not self.is_loaded or self.model is None:
-            return OCRExtractDTO(
-                text_boxes=[], status="failed", error="Model not loaded"
-            )
+            return OCRExtractDTO(text_boxes=[], error="Model not loaded")
 
         try:
             logger.info("PaddleOCR 실행 시작")
@@ -107,19 +106,17 @@ class PaddleOCREngine(BaseOCREngine):
 
             logger.info(f"PaddleOCR 실행 완료: {len(text_boxes)}개 텍스트 검출")
 
-            return OCRExtractDTO(text_boxes=text_boxes, status="success")
+            return OCRExtractDTO(text_boxes=text_boxes)
 
         except Exception as e:
             logger.error(f"PaddleOCR predict 실행 중 오류: {str(e)}")
-            return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))
+            return OCRExtractDTO(text_boxes=[], error=str(e))
 
     def predict_batch(
         self, image_data_list: List[bytes], confidence_threshold: float
     ) -> List[OCRExtractDTO]:
         if not self.is_loaded or self.model is None:
-            return [
-                OCRExtractDTO(text_boxes=[], status="failed", error="Model not loaded")
-            ]
+            return [OCRExtractDTO(text_boxes=[], error="Model not loaded")]
 
         result = self.model.ocr(image_data_list)
         return result

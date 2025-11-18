@@ -31,9 +31,7 @@ class MockOCREngine(BaseOCREngine):
     def predict(self, image_data: bytes, confidence_threshold: float) -> OCRExtractDTO:
         """Mock OCR 예측 - 테스트용 가짜 결과 반환"""
         if not self.is_loaded:
-            return OCRExtractDTO(
-                text_boxes=[], status="failed", error="Model not loaded"
-            )
+            return OCRExtractDTO(text_boxes=[], error="Model not loaded")
 
         try:
             logger.info("MockOCR 실행 시작")
@@ -64,8 +62,10 @@ class MockOCREngine(BaseOCREngine):
 
             logger.info(f"MockOCR 실행 완료: {len(filtered_boxes)}개 텍스트 박스 반환")
 
-            return OCRExtractDTO(text_boxes=filtered_boxes, status="success")
+            return OCRExtractDTO(
+                text_boxes=filtered_boxes,
+            )
 
         except Exception as e:
             logger.error(f"MockOCR predict 실행 중 오류: {str(e)}")
-            return OCRExtractDTO(text_boxes=[], status="failed", error=str(e))
+            return OCRExtractDTO(text_boxes=[], error=str(e))

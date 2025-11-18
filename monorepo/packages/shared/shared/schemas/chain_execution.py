@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from shared.schemas import CustomBaseModel
+from shared.schemas.custom_base_model import CustomBaseModel
 
 from .enums import ProcessStatus
 from .task_log import TaskLogResponse

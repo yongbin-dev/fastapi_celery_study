@@ -35,8 +35,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
         """객체 생성"""
-        obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.model(**obj_in_data)  # type: ignore
+        # model_dump(by_alias=False)를 사용하여 원본 필드명(스네이크 케이스)으로 변환
+        obj_in_data = obj_in.model_dump(by_alias=False)
+        db_obj = self.model(**obj_in_data)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -54,7 +55,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
+            # model_dump(by_alias=False)를 사용하여 원본 필드명(스네이크 케이스)으로 변환
+            update_data = obj_in.model_dump(exclude_unset=True, by_alias=False)
 
         for field in obj_data:
             if field in update_data:

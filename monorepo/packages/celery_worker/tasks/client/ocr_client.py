@@ -9,7 +9,6 @@ from typing import List
 import httpx
 from celery.beat import get_logger
 from shared.pipeline.exceptions import RetryableError
-from shared.schemas.enums import ProcessStatus
 from shared.schemas.ocr_db import OCRExtractDTO
 from shared.schemas.ocr_text_box import OCRTextBoxCreate
 
@@ -78,7 +77,6 @@ class OCRClient:
 
                 return OCRExtractDTO(
                     text_boxes=text_boxes,
-                    status=ProcessStatus.STARTED,
                 )
 
         except httpx.TimeoutException as e:
@@ -147,16 +145,9 @@ class OCRClient:
                 ocr_results = []
                 for r in result["results"]:
                     text_boxes = self._parse_text_boxes(r.get("text_boxes", []))
-
-                    # 텍스트 박스가 있으면 성공, 없으면 실패로 간주
-                    status = (
-                        ProcessStatus.STARTED if text_boxes else ProcessStatus.FAILURE
-                    )
-
                     ocr_results.append(
                         OCRExtractDTO(
                             text_boxes=text_boxes,
-                            status=status,
                         )
                     )
 

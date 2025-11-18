@@ -1,4 +1,5 @@
 import { TaskStatus } from ".";
+export type PROCESS_STATE = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
 
 export interface TaskLog {
   id: number;
@@ -31,15 +32,39 @@ export interface PipelineStatusResponse {
   result : string;
 }
 
+// OCR TextBox 정보
+export interface OcrTextBox {
+  ocrExecutionId: string | null;
+  text: string;
+  confidence: number;
+  bbox: number[][];
+}
+
+// OCR 결과 정보
+export interface OcrResult {
+  error: string | null;
+  textBoxes: OcrTextBox[];
+}
+
 // Batch 내 Context 정보
 export interface BatchContext {
-  chain_id: string;
   batch_id: string;
-  current_stage: string | null;
-  status: string;
+  chain_execution_id: string;
   private_img: string;
   public_file_path: string;
+  private_imgs: string[];
+  public_file_paths: string[];
+  is_batch: boolean;
   options: Record<string, any>;
+  ocr_result: OcrResult | null;
+  ocr_results: OcrResult[];
+  llm_result: any | null;
+  status: string;
+  current_stage: string;
+  error: string | null;
+  retry_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Batch 상태 응답
@@ -53,7 +78,7 @@ export interface BatchStatusResponse {
 export interface Task {
   id: string;
   name: string;
-  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  status: PROCESS_STATE;
   progress?: number;
   createdAt?: string;
 }
@@ -61,7 +86,7 @@ export interface Task {
 export interface Batch {
   id: string;
   name: string;
-  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  status: PROCESS_STATE;
   tasks: Task[];
   createdAt?: string;
 }
@@ -69,7 +94,7 @@ export interface Batch {
 export interface Pipeline {
   id: string;
   name: string;
-  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+  status: PROCESS_STATE;
   batches: Batch[];
   createdAt?: string;
 }

@@ -126,7 +126,7 @@
           "8000"
         ],
         "justMyCode": false,
-        "envFile": "${workspaceFolder:Root}/.env.development",
+        "envFile": "${workspaceFolder:Root}/.env.dev",
         "env": {
           "ENVIRONMENT": "development"
         },
@@ -150,7 +150,7 @@
         ],
         "jinja": true,
         "justMyCode": false,
-        "envFile": "${workspaceFolder:Root}/.env.development",
+        "envFile": "${workspaceFolder:Root}/.env.dev",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/celery_worker",
         "python": "${workspaceFolder:Root}/.venv/bin/python"
@@ -163,7 +163,7 @@
         "args": ["-A", "celery_app", "flower", "--port=5555"],
         "jinja": true,
         "justMyCode": false,
-        "envFile": "${workspaceFolder:Root}/.env.development",
+        "envFile": "${workspaceFolder:Root}/.env.dev",
         "console": "integratedTerminal",
         "cwd": "${workspaceFolder:Root}/packages/celery_worker",
         "python": "${workspaceFolder:Root}/.venv/bin/python"
@@ -174,7 +174,7 @@
         "request": "launch",
         "program": "${workspaceFolder:Root}/packages/ml_server/main.py",
         "justMyCode": false,
-        "envFile": "${workspaceFolder:Root}/.env.development",
+        "envFile": "${workspaceFolder:Root}/.env.dev",
         "env": {
           "ENVIRONMENT": "development"
         },

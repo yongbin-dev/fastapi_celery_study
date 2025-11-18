@@ -8,10 +8,10 @@ from celery.beat import get_logger
 from repository.ocr_repository import OCRRepository
 from shared.config import settings
 from shared.grpc.generated import common_pb2
+from shared.pipeline.cache import get_pipeline_cache_service
 from shared.pipeline.context import PipelineContext
 from shared.pipeline.exceptions import RetryableError
 from shared.pipeline.stage import PipelineStage
-from shared.schemas.enums import ProcessStatus
 from shared.schemas.ocr_db import OCRExtractDTO
 
 from ..client.ocr_client import OCRClient
@@ -34,6 +34,7 @@ class OCRStage(PipelineStage):
         self.client = OCRClient(settings.MODEL_SERVER_URL)
         # self.client = OCRClient("http://localhost:8002")
         self.repository = OCRRepository()
+        self.cache_service = get_pipeline_cache_service()
         self.use_grpc = settings.USE_GRPC
 
     def validate_input(self, context: PipelineContext) -> None:
@@ -70,10 +71,7 @@ class OCRStage(PipelineStage):
             context.ocr_results = await self.client.call_batch(
                 context.private_imgs, context.options
             )
-        else:
-            context.ocr_result = await self.client.call_single(
-                context.private_img, context.options
-            )
+
         return context
 
     def validate_output(self, context: PipelineContext) -> None:
@@ -99,6 +97,7 @@ class OCRStage(PipelineStage):
             context: 파이프라인 컨텍스트
         """
         self.repository.save_batch(context)
+        self.cache_service.save_context(context)
 
     async def execute_grpc(self, context: PipelineContext) -> PipelineContext:
         """gRPC로 OCR 실행 (신규 방식)"""
@@ -142,7 +141,6 @@ class OCRStage(PipelineStage):
 
                 context.ocr_result = OCRExtractDTO(
                     text_boxes=text_boxes,
-                    status=ProcessStatus.STARTED,
                 )
 
             logger.info("gRPC OCR 완료")

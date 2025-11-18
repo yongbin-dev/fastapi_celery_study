@@ -55,9 +55,7 @@ class OCRModel(BaseModel):
     ) -> OCRExtractDTO:
         """OCR 텍스트 추출 실행"""
         if not self.is_loaded or self.engine is None:
-            return OCRExtractDTO(
-                text_boxes=[], status="failed", error="Model not loaded"
-            )
+            return OCRExtractDTO(text_boxes=[], error="Model not loaded")
 
         # 엔진에 위임
         return self.engine.predict(input_data, confidence_threshold)

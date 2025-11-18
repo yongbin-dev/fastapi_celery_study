@@ -176,7 +176,6 @@ class OCRBentoService:
                 results.append(
                     OCRExtractDTO(
                         text_boxes=[],
-                        status="",
                         error="true",
                     )
                 )

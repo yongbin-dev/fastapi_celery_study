@@ -43,7 +43,7 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
                 lang=request.language if request.language else "korean",
             )
 
-            result = model.predict(
+            model.predict(
                 image_data,
                 confidence_threshold=request.confidence_threshold
                 if request.confidence_threshold
@@ -58,9 +58,6 @@ class OCRServiceServicer(ocr_pb2_grpc.OCRServiceServicer):
             )
 
             # 4. 텍스트 박스 변환
-
-            # 5. 메타데이터 (OCRExtractDTO에는 metadata가 없으므로 status만 저장)
-            response.metadata.data["status"] = result.status
 
             logger.info(f"gRPC OCR 완료: {len(response.text_boxes)} 텍스트 박스")
             return response

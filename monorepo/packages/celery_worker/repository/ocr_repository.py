@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 class OCRRepository:
     """OCR 결과 DB 저장 전담 클래스"""
 
-    def save_batch(self, context: PipelineContext) -> None:
+    def save_batch(self, context: PipelineContext):
         """배치 OCR 결과를 DB에 저장
 
         배치 전체의 chain_id를 사용하고, 각 이미지 처리마다 task_log를 생성합니다.

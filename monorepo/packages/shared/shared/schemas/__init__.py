@@ -1,3 +1,5 @@
+from shared.schemas.custom_base_model import CustomBaseModel
+
 from .batch_execution import (
     BatchExecutionCreate,
     BatchExecutionResponse,
@@ -10,7 +12,6 @@ from .chain_execution import (
     ChainExecutionResponse,
     ChainExecutionUpdate,
 )
-from .custom_base_model import CustomBaseModel
 from .enums import ProcessStatus
 from .ocr_db import OCRExtractDTO
 from .ocr_execution import OCRExecutionCreate

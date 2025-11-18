@@ -1,5 +1,6 @@
 # app/domains/task/controllers/task_controller.py
 import uuid
+from typing import List
 
 # Celery 태스크는 celery app을 통해 호출
 from app.main import get_celery_app
@@ -7,7 +8,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from shared.config import settings
 from shared.core.database import get_db
 from shared.core.logging import get_logger
-from shared.pipeline.cache import get_pipeline_cache_service
+from shared.pipeline.cache import PipelineCacheService, get_pipeline_cache_service
+from shared.pipeline.context import PipelineContext
 from shared.repository.crud.async_crud import chain_execution_crud
 from shared.schemas.chain_execution import ChainExecutionResponse
 from shared.utils.file_utils import get_default_storage
@@ -194,7 +196,8 @@ async def run_ocr_pdf_extract_async(
 # batch_id로 모든 컨텍스트 조회
 @router.get("/batch/{batch_id}")
 async def get_batch_contexts(
-    batch_id: str, cache_service=Depends(get_pipeline_cache_service)
+    batch_id: str,
+    cache_service: PipelineCacheService = Depends(get_pipeline_cache_service),
 ):
     """
     batch_id로 모든 파이프라인 컨텍스트 조회 (진행 중 + 대기 중)
@@ -208,21 +211,10 @@ async def get_batch_contexts(
     logger.info(f"🔍 배치 컨텍스트 조회: batch_id={batch_id}")
 
     try:
-        contexts = cache_service.load_all_by_batch_id(batch_id)
+        contexts: List[PipelineContext] = cache_service.load_all_by_batch_id(batch_id)
 
         # 컨텍스트 정보를 응답 형식으로 변환
-        contexts_data = [
-            {
-                "chain_id": ctx.chain_id,
-                "batch_id": ctx.batch_id,
-                "current_stage": ctx.current_stage,
-                "status": ctx.status,
-                "private_img": ctx.private_img,
-                "public_file_path": ctx.public_file_path,
-                "options": ctx.options,
-            }
-            for ctx in contexts
-        ]
+        contexts_data = [ctx for ctx in contexts]
 
         logger.info(f"✅ 배치 컨텍스트 조회 완료: {len(contexts)}개 발견")
 
